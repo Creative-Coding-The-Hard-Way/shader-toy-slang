@@ -1,5 +1,5 @@
 [package]
-name = "shader-toy-slang"
+name = "sts" # shader-toy-slang
 version = "0.1.0"
 edition = "2021"
 
