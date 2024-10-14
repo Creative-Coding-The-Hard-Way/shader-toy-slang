@@ -1,6 +1,5 @@
 use {
     anyhow::{bail, Context, Result},
-    ash::vk,
     glfw::{Action, Key, WindowEvent},
     sts::{
         app::{app_main, App},

@@ -1,3 +1,5 @@
+mod debug;
+
 use {
     crate::{graphics::vulkan::raii, trace},
     anyhow::{Context, Result},
@@ -7,6 +9,7 @@ use {
 pub struct Instance {
     pub ash: raii::InstanceArc,
     extensions: Vec<String>,
+    _debug_utils: Option<raii::DebugUtilsArc>,
 }
 
 impl Instance {
@@ -15,11 +18,16 @@ impl Instance {
     where
         S: AsRef<str>,
     {
-        let cstrs = extensions
+        let mut cstrs = extensions
             .iter()
             .cloned()
             .map(|str| std::ffi::CString::new(str).unwrap())
             .collect::<Vec<std::ffi::CString>>();
+
+        if cfg!(debug_assertions) {
+            cstrs.push(std::ffi::CString::new("VK_EXT_debug_utils").unwrap());
+        }
+
         let ptrs = cstrs
             .iter()
             .map(|cstr| cstr.as_ptr())
@@ -45,9 +53,13 @@ impl Instance {
         let ash = raii::Instance::new(&create_info)
             .with_context(trace!("Unable to create instance!"))?;
 
+        let debug_utils = debug::setup_debug_logging(ash.clone())
+            .with_context(trace!("Unable to setup debug logging!"))?;
+
         Ok(Self {
             ash,
             extensions: extensions.to_vec(),
+            _debug_utils: debug_utils,
         })
     }
 }
