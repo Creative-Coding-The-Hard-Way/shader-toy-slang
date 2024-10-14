@@ -1,10 +1,16 @@
 use {
-    anyhow::Result,
+    anyhow::{bail, Context, Result},
+    ash::vk,
     glfw::{Action, Key, WindowEvent},
-    sts::app::{app_main, App},
+    sts::{
+        app::{app_main, App},
+        graphics::vulkan::instance::Instance,
+    },
 };
 
-struct Example {}
+struct Example {
+    instance: Instance,
+}
 
 impl App for Example {
     fn new(window: &mut glfw::Window) -> Result<Self>
@@ -12,8 +18,23 @@ impl App for Example {
         Self: Sized,
     {
         window.set_all_polling(true);
-        log::info!("hello world");
-        Ok(Self {})
+
+        if !window.glfw.vulkan_supported() {
+            bail!(sts::trace!("Vulkan not supported on this platform!")());
+        }
+
+        let extensions = window
+            .glfw
+            .get_required_instance_extensions()
+            .with_context(sts::trace!(
+                "Unable to get required extensions for Vulkan instance!"
+            ))?;
+        let instance = Instance::new("Example", &extensions)
+            .with_context(sts::trace!("Unable to create vulkan instance!"))?;
+
+        log::debug!("Created instance: {:#?}", instance);
+
+        Ok(Self { instance })
     }
 
     fn handle_event(

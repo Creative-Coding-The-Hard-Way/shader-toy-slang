@@ -7,6 +7,7 @@ edition = "2021"
 opt-level = 1
 
 [dependencies]
+ash = "*"
 log = "*"
 anyhow = "*"
 regex = "*"

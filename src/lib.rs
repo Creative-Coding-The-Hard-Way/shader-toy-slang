@@ -1,4 +1,5 @@
 pub mod app;
+pub mod graphics;
 
 /// Add context to an anyhow error which includes a formatted error message, the
 /// file path, and the line number.

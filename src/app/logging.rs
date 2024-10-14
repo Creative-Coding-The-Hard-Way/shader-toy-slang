@@ -35,7 +35,7 @@ static LOGGER_HANDLE: LazyLock<LoggerHandle> = LazyLock::new(|| {
             flexi_logger::Cleanup::KeepLogFiles(3),
         )
         .format(multiline_format)
-        .duplicate_to_stdout(Duplicate::Info)
+        .duplicate_to_stdout(Duplicate::Debug)
         .write_mode(WriteMode::Async)
         .start()
         .expect("Unable to start the logger!")

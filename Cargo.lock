@@ -386,6 +386,7 @@ name = "sts"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "ash",
  "flexi_logger",
  "glfw",
  "log",
