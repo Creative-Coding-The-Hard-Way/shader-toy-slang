@@ -8,6 +8,6 @@ mod instance;
 mod instance_extensions;
 
 pub use self::{
-    instance::{Instance, InstanceArc},
-    instance_extensions::{DebugUtils, DebugUtilsArc},
+    instance::Instance,
+    instance_extensions::{DebugUtils, Surface},
 };

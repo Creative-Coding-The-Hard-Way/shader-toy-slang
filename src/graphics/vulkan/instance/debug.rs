@@ -5,15 +5,15 @@ use {
         self, DebugUtilsMessageSeverityFlagsEXT, DebugUtilsMessageTypeFlagsEXT,
         DebugUtilsMessengerCallbackDataEXT,
     },
-    std::{borrow::Cow, ffi::CStr},
+    std::{borrow::Cow, ffi::CStr, sync::Arc},
 };
 
 /// Setup debug logging.
 ///
 /// This is a no-op if the debug_asserts are not enabled.
 pub(super) fn setup_debug_logging(
-    instance: raii::InstanceArc,
-) -> Result<Option<raii::DebugUtilsArc>> {
+    instance: Arc<raii::Instance>,
+) -> Result<Option<Arc<raii::DebugUtils>>> {
     if !cfg!(debug_assertions) {
         return Ok(None);
     }

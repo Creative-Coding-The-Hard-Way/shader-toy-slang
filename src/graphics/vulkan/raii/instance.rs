@@ -12,8 +12,6 @@ pub struct Instance {
     pub raw: ash::Instance,
 }
 
-pub type InstanceArc = Arc<Instance>;
-
 impl Instance {
     pub fn new(create_info: &vk::InstanceCreateInfo) -> Result<Arc<Self>> {
         let entry = unsafe {

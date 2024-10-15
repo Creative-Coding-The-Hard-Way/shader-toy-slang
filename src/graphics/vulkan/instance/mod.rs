@@ -4,12 +4,13 @@ use {
     crate::{graphics::vulkan::raii, trace},
     anyhow::{Context, Result},
     ash::vk,
+    std::sync::Arc,
 };
 
 pub struct Instance {
-    pub ash: raii::InstanceArc,
+    pub ash: Arc<raii::Instance>,
     extensions: Vec<String>,
-    _debug_utils: Option<raii::DebugUtilsArc>,
+    _debug_utils: Option<Arc<raii::DebugUtils>>,
 }
 
 impl Instance {
