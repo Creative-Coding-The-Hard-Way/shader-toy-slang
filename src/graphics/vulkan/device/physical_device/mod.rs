@@ -1,0 +1,153 @@
+use {
+    crate::{
+        graphics::vulkan::{
+            device::{instance, physical_device},
+            raii, Instance,
+        },
+        trace,
+    },
+    anyhow::{bail, Context, Result},
+    ash::vk,
+    indoc::indoc,
+};
+
+/// Select a physical device based on the application's requried features and
+/// properties.
+pub fn pick_suitable_device(
+    instance: &Instance,
+    surface_khr: &raii::Surface,
+) -> Result<vk::PhysicalDevice> {
+    let physical_devices = unsafe {
+        instance
+            .ash
+            .enumerate_physical_devices()
+            .with_context(trace!("Unable to enumerate physical devices!"))?
+    };
+
+    log::info!("Searching for suitable physical device...");
+
+    let mut preferred_device = None;
+
+    for physical_device in physical_devices {
+        let properties = unsafe {
+            instance.ash.get_physical_device_properties(physical_device)
+        };
+        let name = properties.device_name_as_c_str().unwrap_or_default();
+
+        log::info!("Check device {:?}", name);
+        log::trace!("Device properties: {:#?}", properties);
+
+        let has_features = has_required_features(instance, physical_device);
+        let has_queues = has_required_queues(instance, physical_device);
+        let has_extensions = has_required_extensions(instance, physical_device);
+        let has_surface_formats =
+            has_required_surface_formats(surface_khr, physical_device)?;
+
+        log::info!(
+            indoc::indoc! {"
+                Device: {:?}
+                 - has_required_features: {}
+                 - has_required_queues: {}
+                 - has_required_extensions: {}
+                 - has_required_surface_formats: {}
+            "},
+            name,
+            has_features,
+            has_queues,
+            has_extensions,
+            has_surface_formats,
+        );
+
+        if has_features
+            && has_queues
+            && has_extensions
+            && has_surface_formats
+            && (preferred_device.is_none()
+                || properties.device_type
+                    == vk::PhysicalDeviceType::DISCRETE_GPU)
+        {
+            preferred_device = Some(physical_device)
+        }
+    }
+
+    preferred_device.with_context(trace!("No suitable device could be found!"))
+}
+
+/// Returns true when the listed physical device has the features required by
+/// the application.
+fn has_required_features(
+    instance: &Instance,
+    physical_device: vk::PhysicalDevice,
+) -> bool {
+    let mut features = vk::PhysicalDeviceFeatures2::default();
+    unsafe {
+        instance
+            .ash
+            .get_physical_device_features2(physical_device, &mut features);
+    }
+    log::trace!("{:#?}", features);
+
+    if features.features.geometry_shader != vk::TRUE {
+        log::warn!("Physical Device does not support geometry shaders!");
+        return false;
+    }
+
+    true
+}
+
+fn has_required_queues(
+    instance: &Instance,
+    physical_device: vk::PhysicalDevice,
+) -> bool {
+    let queue_propertes = unsafe {
+        instance
+            .ash
+            .get_physical_device_queue_family_properties(physical_device)
+    };
+    log::trace!("{:#?}", queue_propertes);
+
+    queue_propertes.iter().any(|properties| {
+        properties.queue_flags.contains(vk::QueueFlags::GRAPHICS)
+    })
+}
+
+fn has_required_extensions(
+    instance: &Instance,
+    physical_device: vk::PhysicalDevice,
+) -> bool {
+    let extension_properties = unsafe {
+        instance
+            .ash
+            .enumerate_device_extension_properties(physical_device)
+            .unwrap_or_default()
+    };
+    log::trace!("{:#?}", extension_properties);
+
+    extension_properties.iter().any(|props| {
+        props.extension_name_as_c_str().unwrap_or_default()
+            == ash::khr::swapchain::NAME
+    })
+}
+
+fn has_required_surface_formats(
+    surface_khr: &raii::Surface,
+    physical_device: vk::PhysicalDevice,
+) -> Result<bool> {
+    let formats = unsafe {
+        surface_khr.ext.get_physical_device_surface_formats(
+            physical_device,
+            surface_khr.raw,
+        )?
+    };
+    log::trace!("{:#?}", formats);
+
+    let present_modes = unsafe {
+        surface_khr.ext.get_physical_device_surface_present_modes(
+            physical_device,
+            surface_khr.raw,
+        )?
+    };
+    log::trace!("{:#?}", present_modes);
+
+    Ok(!formats.is_empty() && !present_modes.is_empty())
+}

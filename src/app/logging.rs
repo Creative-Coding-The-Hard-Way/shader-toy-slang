@@ -18,9 +18,8 @@ use {
 static RELATIVE_ROOT_DIR: LazyLock<PathBuf> =
     LazyLock::new(|| std::env::current_dir().unwrap());
 
-//::new(r"(┃)(.*)$").unwrap();
 static LAST_NEWLINE_DELIM_MACHER: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(┃)(.*)$").unwrap());
+    LazyLock::new(|| Regex::new(r"(│)(.*)$").unwrap());
 
 /// A global handle to the initialized flexi_logger.
 ///
@@ -55,10 +54,10 @@ fn multiline_format(
     now: &mut DeferredNow,
     record: &Record,
 ) -> Result<(), std::io::Error> {
-    let size = termwidth().min(74);
+    let size = termwidth().min(80);
     let wrap_options = Options::new(size)
-        .initial_indent("┏ ")
-        .subsequent_indent("┃ ");
+        .initial_indent("╭ ")
+        .subsequent_indent("│ ");
 
     let file = Path::new(record.file().unwrap());
     let file_message = if let Ok(relative_path) =
@@ -84,7 +83,7 @@ fn multiline_format(
         .expect("unable to format log!");
 
     let wrapped = textwrap::fill(&full_line, wrap_options);
-    let formatted = LAST_NEWLINE_DELIM_MACHER.replace(&wrapped, "┗$2");
+    let formatted = LAST_NEWLINE_DELIM_MACHER.replace(&wrapped, "╰$2");
 
     writeln!(w, "{formatted}")
 }

@@ -12,6 +12,7 @@ log = "*"
 anyhow = "*"
 regex = "*"
 flexi_logger = {version = "*", features = ["async"]}
+indoc = "*"
 
 [dependencies.glfw]
 version = "*"

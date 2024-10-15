@@ -21,7 +21,7 @@ macro_rules! instance_extension {
         pub struct $name {
             pub ext: $ext_type,
             pub raw: $raw_type,
-            pub instance: Arc<raii::Instance>,
+            pub ash: Arc<raii::Instance>,
         }
 
         impl std::fmt::Debug for $name {
@@ -29,7 +29,7 @@ macro_rules! instance_extension {
                 f.debug_struct(stringify!($name))
                     .field("ext", &"<extension loader>")
                     .field("raw", &self.raw)
-                    .field("instance", &self.instance)
+                    .field("ash", &self.ash)
                     .finish()
             }
         }
@@ -59,16 +59,13 @@ instance_extension!(
 
 impl DebugUtils {
     pub fn new(
-        instance: Arc<raii::Instance>,
+        ash: Arc<raii::Instance>,
         create_info: &vk::DebugUtilsMessengerCreateInfoEXT,
     ) -> Result<Arc<Self>> {
-        let ext = ash::ext::debug_utils::Instance::new(
-            &instance.entry,
-            &instance.raw,
-        );
+        let ext = ash::ext::debug_utils::Instance::new(&ash.entry, &ash);
         let raw =
             unsafe { ext.create_debug_utils_messenger(create_info, None)? };
-        Ok(Arc::new(Self { ext, raw, instance }))
+        Ok(Arc::new(Self { ext, raw, ash }))
     }
 }
 
@@ -81,23 +78,22 @@ instance_extension!(
 
 impl Surface {
     pub fn new(
-        instance: Arc<raii::Instance>,
+        ash: Arc<raii::Instance>,
         raw: vk::SurfaceKHR,
     ) -> Result<Arc<Self>> {
-        let ext =
-            ash::khr::surface::Instance::new(&instance.entry, &instance.raw);
-        Ok(Arc::new(Self { raw, ext, instance }))
+        let ext = ash::khr::surface::Instance::new(&ash.entry, &ash);
+        Ok(Arc::new(Self { raw, ext, ash }))
     }
 
     pub fn from_glfw_window(
-        instance: Arc<raii::Instance>,
+        ash: Arc<raii::Instance>,
         window: &glfw::Window,
     ) -> Result<Arc<Self>> {
         let handle = {
             let mut surface = ash::vk::SurfaceKHR::null();
             window
                 .create_window_surface(
-                    instance.raw.handle(),
+                    ash.raw.handle(),
                     std::ptr::null(),
                     &mut surface,
                 )
@@ -107,6 +103,6 @@ impl Surface {
                 ))?;
             surface
         };
-        Self::new(instance, handle)
+        Self::new(ash, handle)
     }
 }

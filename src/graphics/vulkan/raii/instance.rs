@@ -46,6 +46,6 @@ impl Drop for Instance {
 
 impl std::fmt::Debug for Instance {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Instance").finish()
+        f.debug_struct("<Ash Library Instance>").finish()
     }
 }

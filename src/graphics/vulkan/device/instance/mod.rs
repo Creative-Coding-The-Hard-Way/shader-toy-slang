@@ -2,11 +2,17 @@ mod debug;
 
 use {
     crate::{graphics::vulkan::raii, trace},
-    anyhow::{Context, Result},
+    anyhow::{bail, Context, Result},
     ash::vk,
     std::sync::Arc,
 };
 
+/// The logical Vulkan instance.
+///
+/// The instance contains the ash library entry, instance, and any associated
+/// debugging information. Within the scope of this library, the Instance is
+/// expected to outlive all other Vulkan resources e.g. it should only be
+/// dropped once all other resources have been destroyed or dropped.
 pub struct Instance {
     pub ash: Arc<raii::Instance>,
     extensions: Vec<String>,
@@ -14,11 +20,30 @@ pub struct Instance {
 }
 
 impl Instance {
+    /// Create a new Vulkan instance for the given GLFW window.
+    pub fn for_window(
+        app_name: impl AsRef<str>,
+        window: &glfw::Window,
+    ) -> Result<Self> {
+        if !window.glfw.vulkan_supported() {
+            bail!(trace!("Vulkan not supported on this platform!")());
+        }
+
+        let extensions = window
+            .glfw
+            .get_required_instance_extensions()
+            .with_context(trace!(
+                "Unable to get required extensions for Vulkan instance!"
+            ))?;
+
+        Self::new(app_name, &extensions)
+    }
+
     /// Create a new Vulkan instance.
-    pub fn new<S>(app_name: S, extensions: &[String]) -> Result<Self>
-    where
-        S: AsRef<str>,
-    {
+    pub fn new(
+        app_name: impl AsRef<str>,
+        extensions: &[String],
+    ) -> Result<Self> {
         let mut cstrs = extensions
             .iter()
             .cloned()
@@ -69,6 +94,7 @@ impl std::fmt::Debug for Instance {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Instance")
             .field("extensions", &self.extensions)
+            .field("ash", &self.ash)
             .finish()
     }
 }
