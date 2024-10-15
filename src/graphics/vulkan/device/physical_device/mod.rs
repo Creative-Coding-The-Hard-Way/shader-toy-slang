@@ -1,14 +1,10 @@
 use {
     crate::{
-        graphics::vulkan::{
-            device::{instance, physical_device},
-            raii, Instance,
-        },
+        graphics::vulkan::{raii, Instance},
         trace,
     },
-    anyhow::{bail, Context, Result},
+    anyhow::{Context, Result},
     ash::vk,
-    indoc::indoc,
 };
 
 /// Select a physical device based on the application's requried features and
