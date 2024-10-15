@@ -1,0 +1,56 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Error codes of `flexi_logger`."><title>flexi_logger::error_info - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="flexi_logger" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../flexi_logger/index.html">flexi_logger</a><span class="version">0.29.3</span></h2></div><h2 class="location"><a href="#">Module error_info</a></h2><div class="sidebar-elems"><h2><a href="../index.html">In crate flexi_logger</a></h2></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Module <a href="../index.html">flexi_logger</a>::<wbr><a class="mod" href="#">error_info</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../../src/flexi_logger/error_info.rs.html#1-96">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Error codes of <code>flexi_logger</code>.</p>
+<p>The following error codes are used to indicate the reason of an error.
+More details on them can be found here.</p>
+<h3 id="write"><a class="doc-anchor" href="#write">§</a><code>Write</code></h3>
+<p>Writing the log line to the output failed.</p>
+<p>Example:</p>
+<div class="example-wrap"><pre class="language-text"><code>[flexi_logger][ERRCODE::Write] writing log line failed, caused by Send
+</code></pre></div>
+<p>Possible reasons depend on the <code>WriteMode</code> and the output channel.</p>
+<p>With an asynchronous <code>WriteMode</code>, the root cause can be that the logger handle that was returned
+from the logger initialization was not assigned to a variable to keep it alive (see also
+<a href="https://docs.rs/flexi_logger/latest/flexi_logger/struct.Logger.html#method.start"><code>Logger::start()</code></a>).
+It is then dropped immediately, and in its <code>Drop</code> impl it cleans up all resources,
+including the asynchronous writer. So the next log output will fail with this error.</p>
+<h3 id="flush"><a class="doc-anchor" href="#flush">§</a><code>Flush</code></h3>
+<p>Explicit or automatic flushing of buffered log lines to the output failed.</p>
+<p>Example:</p>
+<div class="example-wrap"><pre class="language-text"><code>[flexi_logger][ERRCODE::Flush] flushing primary writer failed, caused by Send
+</code></pre></div>
+<p>For possible reasons, see <a href="#write">Write</a>.</p>
+<h3 id="format"><a class="doc-anchor" href="#format">§</a><code>Format</code></h3>
+<p>The chosen format function had produced an error.</p>
+<p>Example:</p>
+<div class="example-wrap"><pre class="language-text"><code>[flexi_logger][ERRCODE::Format] formatting failed, caused by ...
+</code></pre></div>
+<p>If this happens with one of <code>flexi_logger</code>s provided format functions, please open an issue.</p>
+<h3 id="poison"><a class="doc-anchor" href="#poison">§</a><code>Poison</code></h3>
+<p>Log entries can be written by all threads of your program. Loggers thus must be thread-safe,
+by guarding their mutable parts with <code>Mutex</code>es, <code>RwLocks</code>, etc. In case that a thread panics
+while owning one of these locks, the lock is subsequently considered “poisoned”.</p>
+<p>A typical root cause for this is some <code>panic!</code> in a <code>Debug</code> or <code>Display</code> implementation
+of a logged object.</p>
+<h3 id="logfile"><a class="doc-anchor" href="#logfile">§</a><code>LogFile</code></h3>
+<p>The <code>FileLogWriter</code> is not able to rotate the log file. The reason should be printed as well.</p>
+<h3 id="logfilewatcher"><a class="doc-anchor" href="#logfilewatcher">§</a><code>LogFileWatcher</code></h3>
+<p>The <code>FileLogWriter</code> is not able to watch the log file. The reason should be printed as well.</p>
+<h3 id="logspecfile"><a class="doc-anchor" href="#logspecfile">§</a><code>LogSpecFile</code></h3>
+<p>This error can only occur if you use <code>Logger::start_with_specfile</code>, where you specify a
+log-specification-file that you can edit, while the program is running, to influence
+which log lines it should write.</p>
+<p>Examples:</p>
+<div class="example-wrap"><pre class="language-text"><code>[flexi_logger][ERRCODE::LogSpecFile] continuing with previous log specification,
+because rereading the log specification file failed, caused by ...
+</code></pre></div>
+<p>The log-specification-file you chose with <code>Logger::start_with_specfile</code> cannot be opened,
+read, or successfully parsed.</p>
+<div class="example-wrap"><pre class="language-text"><code>[flexi_logger][ERRCODE::LogSpecFile] error while watching the specfile, caused by ...
+</code></pre></div>
+<p>Watching the log-specification-file failed.</p>
+<h3 id="symlink"><a class="doc-anchor" href="#symlink">§</a><code>Symlink</code></h3>
+<p>This error can only occur on unix systems, and when you use <code>Logger::create_symlink</code>, and
+indicates an issue with creating or replacing the symbolic link to the log file.</p>
+<h3 id="writerspec"><a class="doc-anchor" href="#writerspec">§</a><code>WriterSpec</code></h3>
+<p>The code uses in some log macro call the syntax to send the log line to a certain <code>LogWriter</code>,
+but this log writer does not exist.</p>
+</div></details></section></div></main></body></html>
