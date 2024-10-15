@@ -87,7 +87,6 @@
 <a href="#87" id="87">87</a>
 <a href="#88" id="88">88</a>
 <a href="#89" id="89">89</a>
-<a href="#90" id="90">90</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     anyhow::Result,
     flexi_logger::{
@@ -108,9 +107,8 @@
 </span><span class="kw">static </span>RELATIVE_ROOT_DIR: LazyLock&lt;PathBuf&gt; =
     LazyLock::new(|| std::env::current_dir().unwrap());
 
-<span class="comment">//::new(r"(┃)(.*)$").unwrap();
-</span><span class="kw">static </span>LAST_NEWLINE_DELIM_MACHER: LazyLock&lt;Regex&gt; =
-    LazyLock::new(|| Regex::new(<span class="string">r"(┃)(.*)$"</span>).unwrap());
+<span class="kw">static </span>LAST_NEWLINE_DELIM_MACHER: LazyLock&lt;Regex&gt; =
+    LazyLock::new(|| Regex::new(<span class="string">r"(│)(.*)$"</span>).unwrap());
 
 <span class="doccomment">/// A global handle to the initialized flexi_logger.
 ///
@@ -145,10 +143,10 @@
     now: <span class="kw-2">&amp;mut </span>DeferredNow,
     record: <span class="kw-2">&amp;</span>Record,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), std::io::Error&gt; {
-    <span class="kw">let </span>size = termwidth().min(<span class="number">74</span>);
+    <span class="kw">let </span>size = termwidth().min(<span class="number">80</span>);
     <span class="kw">let </span>wrap_options = Options::new(size)
-        .initial_indent(<span class="string">"┏ "</span>)
-        .subsequent_indent(<span class="string">"┃ "</span>);
+        .initial_indent(<span class="string">"╭ "</span>)
+        .subsequent_indent(<span class="string">"│ "</span>);
 
     <span class="kw">let </span>file = Path::new(record.file().unwrap());
     <span class="kw">let </span>file_message = <span class="kw">if let </span><span class="prelude-val">Ok</span>(relative_path) =
@@ -174,7 +172,7 @@
         .expect(<span class="string">"unable to format log!"</span>);
 
     <span class="kw">let </span>wrapped = textwrap::fill(<span class="kw-2">&amp;</span>full_line, wrap_options);
-    <span class="kw">let </span>formatted = LAST_NEWLINE_DELIM_MACHER.replace(<span class="kw-2">&amp;</span>wrapped, <span class="string">"┗$2"</span>);
+    <span class="kw">let </span>formatted = LAST_NEWLINE_DELIM_MACHER.replace(<span class="kw-2">&amp;</span>wrapped, <span class="string">"╰$2"</span>);
 
     <span class="macro">writeln!</span>(w, <span class="string">"{formatted}"</span>)
 }

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["instance","raii"]};
+window.SIDEBAR_ITEMS = {"mod":["raii"],"struct":["Device","Instance"]};

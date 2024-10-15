@@ -106,10 +106,6 @@
 <a href="#106" id="106">106</a>
 <a href="#107" id="107">107</a>
 <a href="#108" id="108">108</a>
-<a href="#109" id="109">109</a>
-<a href="#110" id="110">110</a>
-<a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! RAII wrappers for Vulkan objects that extend the Vulkan instance.
 
 </span><span class="kw">use </span>{
@@ -133,7 +129,7 @@
         </span><span class="kw">pub struct </span><span class="macro-nonterminal">$name </span>{
             <span class="kw">pub </span>ext: <span class="macro-nonterminal">$ext_type</span>,
             <span class="kw">pub </span>raw: <span class="macro-nonterminal">$raw_type</span>,
-            <span class="kw">pub </span>instance: Arc&lt;raii::Instance&gt;,
+            <span class="kw">pub </span>ash: Arc&lt;raii::Instance&gt;,
         }
 
         <span class="kw">impl </span>std::fmt::Debug <span class="kw">for </span><span class="macro-nonterminal">$name </span>{
@@ -141,7 +137,7 @@
                 f.debug_struct(<span class="macro">stringify!</span>(<span class="macro-nonterminal">$name</span>))
                     .field(<span class="string">"ext"</span>, <span class="kw-2">&amp;</span><span class="string">"&lt;extension loader&gt;"</span>)
                     .field(<span class="string">"raw"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.raw)
-                    .field(<span class="string">"instance"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.instance)
+                    .field(<span class="string">"ash"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.ash)
                     .finish()
             }
         }
@@ -171,16 +167,13 @@
 
 <span class="kw">impl </span>DebugUtils {
     <span class="kw">pub fn </span>new(
-        instance: Arc&lt;raii::Instance&gt;,
+        ash: Arc&lt;raii::Instance&gt;,
         create_info: <span class="kw-2">&amp;</span>vk::DebugUtilsMessengerCreateInfoEXT,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="self">Self</span>&gt;&gt; {
-        <span class="kw">let </span>ext = ash::ext::debug_utils::Instance::new(
-            <span class="kw-2">&amp;</span>instance.entry,
-            <span class="kw-2">&amp;</span>instance.raw,
-        );
+        <span class="kw">let </span>ext = ash::ext::debug_utils::Instance::new(<span class="kw-2">&amp;</span>ash.entry, <span class="kw-2">&amp;</span>ash);
         <span class="kw">let </span>raw =
             <span class="kw">unsafe </span>{ ext.create_debug_utils_messenger(create_info, <span class="prelude-val">None</span>)<span class="question-mark">? </span>};
-        <span class="prelude-val">Ok</span>(Arc::new(<span class="self">Self </span>{ ext, raw, instance }))
+        <span class="prelude-val">Ok</span>(Arc::new(<span class="self">Self </span>{ ext, raw, ash }))
     }
 }
 
@@ -193,23 +186,22 @@
 
 <span class="kw">impl </span>Surface {
     <span class="kw">pub fn </span>new(
-        instance: Arc&lt;raii::Instance&gt;,
+        ash: Arc&lt;raii::Instance&gt;,
         raw: vk::SurfaceKHR,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="self">Self</span>&gt;&gt; {
-        <span class="kw">let </span>ext =
-            ash::khr::surface::Instance::new(<span class="kw-2">&amp;</span>instance.entry, <span class="kw-2">&amp;</span>instance.raw);
-        <span class="prelude-val">Ok</span>(Arc::new(<span class="self">Self </span>{ raw, ext, instance }))
+        <span class="kw">let </span>ext = ash::khr::surface::Instance::new(<span class="kw-2">&amp;</span>ash.entry, <span class="kw-2">&amp;</span>ash);
+        <span class="prelude-val">Ok</span>(Arc::new(<span class="self">Self </span>{ raw, ext, ash }))
     }
 
     <span class="kw">pub fn </span>from_glfw_window(
-        instance: Arc&lt;raii::Instance&gt;,
+        ash: Arc&lt;raii::Instance&gt;,
         window: <span class="kw-2">&amp;</span>glfw::Window,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="self">Self</span>&gt;&gt; {
         <span class="kw">let </span>handle = {
             <span class="kw">let </span><span class="kw-2">mut </span>surface = ash::vk::SurfaceKHR::null();
             window
                 .create_window_surface(
-                    instance.raw.handle(),
+                    ash.raw.handle(),
                     std::ptr::null(),
                     <span class="kw-2">&amp;mut </span>surface,
                 )
@@ -219,7 +211,7 @@
                 </span>))<span class="question-mark">?</span>;
             surface
         };
-        <span class="self">Self</span>::new(instance, handle)
+        <span class="self">Self</span>::new(ash, handle)
     }
 }
 </code></pre></div></section></main></body></html>
