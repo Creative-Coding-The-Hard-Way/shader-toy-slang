@@ -1,14 +1,16 @@
 use {
     anyhow::Result,
     glfw::{Action, Key, WindowEvent},
+    std::sync::Arc,
     sts::{
         app::{app_main, App},
-        graphics::vulkan::Device,
+        graphics::vulkan::{Device, Swapchain},
     },
 };
 
 struct Example {
-    device: Device,
+    swapchain: Arc<Swapchain>,
+    device: Arc<Device>,
 }
 
 impl App for Example {
@@ -22,7 +24,10 @@ impl App for Example {
 
         log::debug!("Created device: {:#?}", device);
 
-        Ok(Self { device })
+        let (w, h) = window.get_framebuffer_size();
+        let swapchain = Swapchain::new(device.clone(), (w as u32, h as u32))?;
+
+        Ok(Self { device, swapchain })
     }
 
     fn handle_event(

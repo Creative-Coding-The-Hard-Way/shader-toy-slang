@@ -26,7 +26,7 @@ pub struct Device {
 }
 
 impl Device {
-    pub fn new(window: &glfw::Window) -> Result<Self> {
+    pub fn new(window: &glfw::Window) -> Result<Arc<Self>> {
         let instance = Instance::for_window("Shader-Toy-Slang", window)
             .with_context(trace!("Unable to create vulkan instance!"))?;
 
@@ -54,14 +54,14 @@ impl Device {
             logical_device.get_device_queue(graphics_queue_family_index, 0)
         };
 
-        Ok(Self {
+        Ok(Arc::new(Self {
             instance,
             surface_khr,
             physical_device,
             logical_device,
             graphics_queue_family_index,
             graphics_queue,
-        })
+        }))
     }
 }
 
