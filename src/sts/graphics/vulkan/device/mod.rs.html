@@ -51,13 +51,51 @@
 <a href="#51" id="51">51</a>
 <a href="#52" id="52">52</a>
 <a href="#53" id="53">53</a>
+<a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>instance;
+<span class="kw">mod </span>logical_device;
 <span class="kw">mod </span>physical_device;
 
 <span class="kw">use </span>{
     <span class="kw">crate</span>::{graphics::vulkan::raii, trace},
     anyhow::{Context, <span class="prelude-ty">Result</span>},
-    ash::vk,
+    ash::vk::{<span class="self">self</span>},
     std::sync::Arc,
 };
 
@@ -68,6 +106,13 @@
     <span class="kw">pub </span>instance: Instance,
     <span class="kw">pub </span>surface_khr: Arc&lt;raii::Surface&gt;,
     <span class="kw">pub </span>physical_device: vk::PhysicalDevice,
+    <span class="kw">pub </span>logical_device: Arc&lt;raii::Device&gt;,
+
+    <span class="doccomment">/// The queue family index for the graphics + present queue.
+    </span><span class="kw">pub </span>graphics_queue_family_index: u32,
+
+    <span class="doccomment">/// The graphics queue supports GRAPHICS and presentation operations.
+    </span><span class="kw">pub </span>graphics_queue: vk::Queue,
 }
 
 <span class="kw">impl </span>Device {
@@ -76,7 +121,7 @@
             .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to create vulkan instance!"</span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>surface_khr =
-            raii::Surface::from_glfw_window(instance.ash.clone(), window)
+            raii::Surface::for_window(instance.ash.clone(), window)
                 .with_context(<span class="macro">trace!</span>(
                     <span class="string">"Unable to create Vulkan surface from glfw window!"
                 </span>))<span class="question-mark">?</span>;
@@ -87,11 +132,34 @@
                     <span class="string">"Error while picking a suitable physical device!"
                 </span>))<span class="question-mark">?</span>;
 
+        <span class="kw">let </span>(logical_device, graphics_queue_family_index) =
+            logical_device::create_logical_device(
+                <span class="kw-2">&amp;</span>instance,
+                <span class="kw-2">&amp;</span>surface_khr,
+                physical_device,
+            )
+            .with_context(<span class="macro">trace!</span>(<span class="string">"Error while creating the logical device!"</span>))<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>graphics_queue = <span class="kw">unsafe </span>{
+            logical_device.get_device_queue(graphics_queue_family_index, <span class="number">0</span>)
+        };
+
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             instance,
             surface_khr,
             physical_device,
+            logical_device,
+            graphics_queue_family_index,
+            graphics_queue,
         })
+    }
+}
+
+<span class="kw">impl </span>std::ops::Deref <span class="kw">for </span>Device {
+    <span class="kw">type </span>Target = ash::Device;
+
+    <span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Target {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.logical_device.raw
     }
 }
 
@@ -101,6 +169,12 @@
             .field(<span class="string">"instance"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.instance)
             .field(<span class="string">"surface_khr"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.surface_khr)
             .field(<span class="string">"physical_device"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.physical_device)
+            .field(<span class="string">"logical_device"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.logical_device)
+            .field(
+                <span class="string">"graphics_queue_family_index"</span>,
+                <span class="kw-2">&amp;</span><span class="self">self</span>.graphics_queue_family_index,
+            )
+            .field(<span class="string">"graphics_queue"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.graphics_queue)
             .finish()
     }
 }
