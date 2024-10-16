@@ -1,10 +1,11 @@
 mod instance;
+mod logical_device;
 mod physical_device;
 
 use {
     crate::{graphics::vulkan::raii, trace},
     anyhow::{Context, Result},
-    ash::vk::{self, QueueFlags},
+    ash::vk::{self},
     std::sync::Arc,
 };
 
@@ -16,6 +17,12 @@ pub struct Device {
     pub surface_khr: Arc<raii::Surface>,
     pub physical_device: vk::PhysicalDevice,
     pub logical_device: Arc<raii::Device>,
+
+    /// The queue family index for the graphics + present queue.
+    pub graphics_queue_family_index: u32,
+
+    /// The graphics queue supports GRAPHICS and presentation operations.
+    pub graphics_queue: vk::Queue,
 }
 
 impl Device {
@@ -24,7 +31,7 @@ impl Device {
             .with_context(trace!("Unable to create vulkan instance!"))?;
 
         let surface_khr =
-            raii::Surface::from_glfw_window(instance.ash.clone(), window)
+            raii::Surface::for_window(instance.ash.clone(), window)
                 .with_context(trace!(
                     "Unable to create Vulkan surface from glfw window!"
                 ))?;
@@ -35,64 +42,34 @@ impl Device {
                     "Error while picking a suitable physical device!"
                 ))?;
 
-        let queue_family_properties = unsafe {
-            instance
-                .ash
-                .get_physical_device_queue_family_properties(physical_device)
-        };
+        let (logical_device, graphics_queue_family_index) =
+            logical_device::create_logical_device(
+                &instance,
+                &surface_khr,
+                physical_device,
+            )
+            .with_context(trace!("Error while creating the logical device!"))?;
 
-        let (graphics_present_queue, _) = queue_family_properties
-            .iter()
-            .enumerate()
-            .find(|(index, properties)| {
-                let supports_present = unsafe {
-                    surface_khr
-                        .ext
-                        .get_physical_device_surface_support(
-                            physical_device,
-                            *index as u32,
-                            surface_khr.raw,
-                        )
-                        .unwrap_or(false)
-                };
-                supports_present
-                    && properties.queue_flags.contains(QueueFlags::GRAPHICS)
-            })
-            .with_context(trace!(
-                "Unable to find a queue that supports GRAPHICS."
-            ))?;
-        let queue_priorities = [1.0f32];
-        let queue_create_infos = [vk::DeviceQueueCreateInfo {
-            queue_family_index: graphics_present_queue as u32,
-            queue_count: 1,
-            p_queue_priorities: queue_priorities.as_ptr(),
-            ..Default::default()
-        }];
-        let extensions = [ash::khr::swapchain::NAME.as_ptr()];
-        let features = vk::PhysicalDeviceFeatures {
-            geometry_shader: vk::TRUE,
-            ..Default::default()
+        let graphics_queue = unsafe {
+            logical_device.get_device_queue(graphics_queue_family_index, 0)
         };
-        let create_info = vk::DeviceCreateInfo {
-            queue_create_info_count: queue_create_infos.len() as u32,
-            p_queue_create_infos: queue_create_infos.as_ptr(),
-            enabled_extension_count: extensions.len() as u32,
-            pp_enabled_extension_names: extensions.as_ptr(),
-            p_enabled_features: &features,
-            ..Default::default()
-        };
-        let logical_device = raii::Device::new(
-            instance.ash.clone(),
-            physical_device,
-            &create_info,
-        )?;
 
         Ok(Self {
             instance,
             surface_khr,
             physical_device,
             logical_device,
+            graphics_queue_family_index,
+            graphics_queue,
         })
+    }
+}
+
+impl std::ops::Deref for Device {
+    type Target = ash::Device;
+
+    fn deref(&self) -> &Self::Target {
+        &self.logical_device.raw
     }
 }
 
@@ -102,6 +79,12 @@ impl std::fmt::Debug for Device {
             .field("instance", &self.instance)
             .field("surface_khr", &self.surface_khr)
             .field("physical_device", &self.physical_device)
+            .field("logical_device", &self.logical_device)
+            .field(
+                "graphics_queue_family_index",
+                &self.graphics_queue_family_index,
+            )
+            .field("graphics_queue", &self.graphics_queue)
             .finish()
     }
 }

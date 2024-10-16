@@ -85,7 +85,7 @@ impl Surface {
         Ok(Arc::new(Self { raw, ext, ash }))
     }
 
-    pub fn from_glfw_window(
+    pub fn for_window(
         ash: Arc<raii::Instance>,
         window: &glfw::Window,
     ) -> Result<Arc<Self>> {
