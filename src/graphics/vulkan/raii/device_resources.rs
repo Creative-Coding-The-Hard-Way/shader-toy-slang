@@ -1,7 +1,7 @@
 use {
     crate::graphics::vulkan::raii,
     anyhow::Result,
-    ash::vk::{self, ImageViewCreateInfo},
+    ash::vk::{self},
     std::sync::Arc,
 };
 
@@ -60,7 +60,23 @@ macro_rules! resource {
 resource!(
     ImageView,
     vk::ImageView,
-    ImageViewCreateInfo,
+    vk::ImageViewCreateInfo,
     create_image_view,
     destroy_image_view
+);
+
+resource!(
+    Semaphore,
+    vk::Semaphore,
+    vk::SemaphoreCreateInfo,
+    create_semaphore,
+    destroy_semaphore
+);
+
+resource!(
+    CommandPool,
+    vk::CommandPool,
+    vk::CommandPoolCreateInfo,
+    create_command_pool,
+    destroy_command_pool
 );
