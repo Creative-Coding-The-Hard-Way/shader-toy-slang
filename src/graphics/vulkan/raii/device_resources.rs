@@ -80,3 +80,19 @@ resource!(
     create_command_pool,
     destroy_command_pool
 );
+
+resource!(
+    RenderPass,
+    vk::RenderPass,
+    vk::RenderPassCreateInfo,
+    create_render_pass,
+    destroy_render_pass
+);
+
+resource!(
+    Framebuffer,
+    vk::Framebuffer,
+    vk::FramebufferCreateInfo,
+    create_framebuffer,
+    destroy_framebuffer
+);

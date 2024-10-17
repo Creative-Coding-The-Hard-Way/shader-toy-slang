@@ -13,7 +13,9 @@ mod instance_extensions;
 pub use self::{
     device::Device,
     device_extensions::Swapchain,
-    device_resources::{CommandPool, ImageView, Semaphore},
+    device_resources::{
+        CommandPool, Framebuffer, ImageView, RenderPass, Semaphore,
+    },
     instance::Instance,
     instance_extensions::{DebugUtils, Surface},
 };

@@ -16,6 +16,88 @@ struct Example {
     device: Arc<Device>,
     command_pool: raii::CommandPool,
     command_buffer: vk::CommandBuffer,
+    render_pass: raii::RenderPass,
+    framebuffers: Vec<raii::Framebuffer>,
+}
+
+/// Create a renderpass for the application.
+///
+/// The renderpass has a single subpass with a single color attachment for the
+/// swapchain image.
+fn create_renderpass(
+    device: &Device,
+    swapchain: &Swapchain,
+) -> Result<raii::RenderPass> {
+    let attachment_description = vk::AttachmentDescription {
+        format: swapchain.format.format,
+        samples: vk::SampleCountFlags::TYPE_1,
+        load_op: vk::AttachmentLoadOp::CLEAR,
+        store_op: vk::AttachmentStoreOp::STORE,
+        stencil_load_op: vk::AttachmentLoadOp::DONT_CARE,
+        stencil_store_op: vk::AttachmentStoreOp::DONT_CARE,
+        initial_layout: vk::ImageLayout::UNDEFINED,
+        final_layout: vk::ImageLayout::PRESENT_SRC_KHR,
+        ..Default::default()
+    };
+    let attachment_reference = vk::AttachmentReference {
+        attachment: 0,
+        layout: vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL,
+    };
+    let subpass_description = vk::SubpassDescription {
+        pipeline_bind_point: vk::PipelineBindPoint::GRAPHICS,
+        input_attachment_count: 0,
+        p_input_attachments: std::ptr::null(),
+        color_attachment_count: 1,
+        p_color_attachments: &attachment_reference,
+        ..Default::default()
+    };
+    let subpass_dependency = vk::SubpassDependency {
+        src_subpass: vk::SUBPASS_EXTERNAL,
+        dst_subpass: 0,
+        src_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
+        src_access_mask: vk::AccessFlags::empty(),
+        dst_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
+        dst_access_mask: vk::AccessFlags::COLOR_ATTACHMENT_WRITE,
+        dependency_flags: vk::DependencyFlags::empty(),
+    };
+    let create_info = vk::RenderPassCreateInfo {
+        attachment_count: 1,
+        p_attachments: &attachment_description,
+        subpass_count: 1,
+        p_subpasses: &subpass_description,
+        dependency_count: 1,
+        p_dependencies: &subpass_dependency,
+        ..Default::default()
+    };
+    raii::RenderPass::new(device.logical_device.clone(), &create_info)
+}
+
+/// Creates one framebuffer per swapchain image view.
+///
+/// Framebuffers must be replaced when the swapchain is rebuilt.
+fn create_framebuffers(
+    device: &Device,
+    render_pass: &raii::RenderPass,
+    swapchain: &Swapchain,
+) -> Result<Vec<raii::Framebuffer>> {
+    let mut framebuffers = vec![];
+    let vk::Extent2D { width, height } = swapchain.extent;
+    for image_view in &swapchain.image_views {
+        let create_info = vk::FramebufferCreateInfo {
+            render_pass: render_pass.raw,
+            attachment_count: 1,
+            p_attachments: &image_view.raw,
+            width,
+            height,
+            layers: 1,
+            ..Default::default()
+        };
+        framebuffers.push(raii::Framebuffer::new(
+            device.logical_device.clone(),
+            &create_info,
+        )?);
+    }
+    Ok(framebuffers)
 }
 
 impl App for Example {
@@ -52,11 +134,17 @@ impl App for Example {
             })?[0]
         };
 
+        let render_pass = create_renderpass(&device, &swapchain)?;
+        let framebuffers =
+            create_framebuffers(&device, &render_pass, &swapchain)?;
+
         Ok(Self {
             device,
             swapchain,
             command_pool,
             command_buffer,
+            render_pass,
+            framebuffers,
         })
     }
 
@@ -106,35 +194,28 @@ impl App for Example {
                 },
             )?;
 
-            self.device.cmd_pipeline_barrier(
+            let clear_value = vk::ClearValue {
+                color: vk::ClearColorValue {
+                    float32: [0.2, 0.2, 0.5, 1.0],
+                },
+            };
+            self.device.cmd_begin_render_pass(
                 self.command_buffer,
-                vk::PipelineStageFlags::ALL_GRAPHICS,
-                vk::PipelineStageFlags::ALL_GRAPHICS,
-                vk::DependencyFlags::empty(),
-                &[], // memory barriers
-                &[], // buffer barriers
-                &[vk::ImageMemoryBarrier {
-                    src_access_mask: vk::AccessFlags::COLOR_ATTACHMENT_READ,
-                    dst_access_mask: vk::AccessFlags::COLOR_ATTACHMENT_WRITE,
-                    old_layout: vk::ImageLayout::UNDEFINED,
-                    new_layout: vk::ImageLayout::PRESENT_SRC_KHR,
-                    src_queue_family_index: self
-                        .device
-                        .graphics_queue_family_index,
-                    dst_queue_family_index: self
-                        .device
-                        .graphics_queue_family_index,
-                    image: self.swapchain.images[index as usize],
-                    subresource_range: vk::ImageSubresourceRange {
-                        aspect_mask: vk::ImageAspectFlags::COLOR,
-                        base_mip_level: 0,
-                        level_count: 1,
-                        base_array_layer: 0,
-                        layer_count: 1,
+                &vk::RenderPassBeginInfo {
+                    render_pass: self.render_pass.raw,
+                    framebuffer: self.framebuffers[index as usize].raw,
+                    render_area: vk::Rect2D {
+                        offset: vk::Offset2D { x: 0, y: 0 },
+                        extent: self.swapchain.extent,
                     },
+                    clear_value_count: 1,
+                    p_clear_values: &clear_value,
                     ..Default::default()
-                }],
+                },
+                vk::SubpassContents::INLINE,
             );
+
+            self.device.cmd_end_render_pass(self.command_buffer);
 
             self.device.end_command_buffer(self.command_buffer)?;
 
