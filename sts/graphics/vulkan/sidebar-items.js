@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["raii"],"struct":["Device","Instance"]};
+window.SIDEBAR_ITEMS = {"enum":["AcquireImageStatus","PresentImageStatus"],"mod":["raii"],"struct":["Device","Instance","Swapchain"]};

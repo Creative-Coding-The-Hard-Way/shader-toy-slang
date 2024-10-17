@@ -116,7 +116,7 @@
 }
 
 <span class="kw">impl </span>Device {
-    <span class="kw">pub fn </span>new(window: <span class="kw-2">&amp;</span>glfw::Window) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+    <span class="kw">pub fn </span>new(window: <span class="kw-2">&amp;</span>glfw::Window) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="self">Self</span>&gt;&gt; {
         <span class="kw">let </span>instance = Instance::for_window(<span class="string">"Shader-Toy-Slang"</span>, window)
             .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to create vulkan instance!"</span>))<span class="question-mark">?</span>;
 
@@ -144,14 +144,14 @@
             logical_device.get_device_queue(graphics_queue_family_index, <span class="number">0</span>)
         };
 
-        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+        <span class="prelude-val">Ok</span>(Arc::new(<span class="self">Self </span>{
             instance,
             surface_khr,
             physical_device,
             logical_device,
             graphics_queue_family_index,
             graphics_queue,
-        })
+        }))
     }
 }
 
