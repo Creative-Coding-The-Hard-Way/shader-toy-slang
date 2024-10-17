@@ -36,10 +36,14 @@ impl Swapchain {
     pub fn new(
         device: Arc<Device>,
         framebuffer_size: (u32, u32),
+        previous_swapchain: Option<vk::SwapchainKHR>,
     ) -> Result<Arc<Self>> {
-        let (raw, extent, format) =
-            settings::create_swapchain(&device, framebuffer_size, None)
-                .with_context(trace!("Unable to initialize swapchain!"))?;
+        let (raw, extent, format) = settings::create_swapchain(
+            &device,
+            framebuffer_size,
+            previous_swapchain,
+        )
+        .with_context(trace!("Unable to initialize swapchain!"))?;
 
         let images = unsafe { raw.ext.get_swapchain_images(raw.raw)? };
         let mut image_views = vec![];

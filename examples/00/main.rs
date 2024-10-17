@@ -18,6 +18,195 @@ struct Example {
     command_buffer: vk::CommandBuffer,
     render_pass: raii::RenderPass,
     framebuffers: Vec<raii::Framebuffer>,
+    swapchain_needs_rebuild: bool,
+}
+
+impl Example {
+    fn rebuild_swapchain(&mut self, window: &mut glfw::Window) -> Result<()> {
+        unsafe {
+            // wait for all pending work to finish
+            self.device.device_wait_idle()?;
+        }
+
+        self.framebuffers.clear();
+
+        let (w, h) = window.get_framebuffer_size();
+        self.swapchain = Swapchain::new(
+            self.device.clone(),
+            (w as u32, h as u32),
+            Some(self.swapchain.raw.raw),
+        )?;
+
+        self.render_pass = create_renderpass(&self.device, &self.swapchain)?;
+        self.framebuffers = create_framebuffers(
+            &self.device,
+            &self.render_pass,
+            &self.swapchain,
+        )?;
+
+        log::info!("{:#?}", self.swapchain);
+
+        Ok(())
+    }
+}
+
+impl App for Example {
+    fn new(window: &mut glfw::Window) -> Result<Self>
+    where
+        Self: Sized,
+    {
+        window.set_all_polling(true);
+
+        let device = Device::new(window)?;
+
+        log::debug!("Created device: {:#?}", device);
+
+        let (w, h) = window.get_framebuffer_size();
+        let swapchain =
+            Swapchain::new(device.clone(), (w as u32, h as u32), None)?;
+
+        log::debug!("Created swapchain: {:#?}", swapchain);
+
+        let command_pool = raii::CommandPool::new(
+            device.logical_device.clone(),
+            &vk::CommandPoolCreateInfo {
+                flags: vk::CommandPoolCreateFlags::empty(),
+                queue_family_index: device.graphics_queue_family_index,
+                ..Default::default()
+            },
+        )?;
+
+        let command_buffer = unsafe {
+            device.allocate_command_buffers(&vk::CommandBufferAllocateInfo {
+                command_pool: command_pool.raw,
+                level: vk::CommandBufferLevel::PRIMARY,
+                command_buffer_count: 1,
+                ..Default::default()
+            })?[0]
+        };
+
+        let render_pass = create_renderpass(&device, &swapchain)?;
+        let framebuffers =
+            create_framebuffers(&device, &render_pass, &swapchain)?;
+
+        Ok(Self {
+            device,
+            swapchain,
+            command_pool,
+            command_buffer,
+            render_pass,
+            framebuffers,
+            swapchain_needs_rebuild: false,
+        })
+    }
+
+    fn handle_event(
+        &mut self,
+        window: &mut glfw::Window,
+        event: glfw::WindowEvent,
+    ) -> Result<()> {
+        if let WindowEvent::Key(Key::Escape, _, Action::Release, _) = event {
+            window.set_should_close(true);
+        }
+        Ok(())
+    }
+
+    fn update(&mut self, window: &mut glfw::Window) -> Result<()> {
+        if self.swapchain_needs_rebuild {
+            self.swapchain_needs_rebuild = false;
+            self.rebuild_swapchain(window)?;
+        }
+
+        unsafe {
+            self.device.reset_command_pool(
+                self.command_pool.raw,
+                vk::CommandPoolResetFlags::empty(),
+            )?;
+        }
+
+        let image_acquired = raii::Semaphore::new(
+            self.device.logical_device.clone(),
+            &vk::SemaphoreCreateInfo::default(),
+        )?;
+        let graphics_complete = raii::Semaphore::new(
+            self.device.logical_device.clone(),
+            &vk::SemaphoreCreateInfo::default(),
+        )?;
+
+        let status = self.swapchain.acquire_image(image_acquired.raw)?;
+        let index = match status {
+            AcquireImageStatus::ImageAcquired(index) => index,
+            _ => {
+                self.swapchain_needs_rebuild = true;
+                log::warn!("Swapchain needs rebuilt!");
+                return Ok(());
+            }
+        };
+
+        unsafe {
+            self.device.begin_command_buffer(
+                self.command_buffer,
+                &vk::CommandBufferBeginInfo {
+                    flags: vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT,
+                    ..Default::default()
+                },
+            )?;
+
+            let clear_value = vk::ClearValue {
+                color: vk::ClearColorValue {
+                    float32: [0.2, 0.2, 0.5, 1.0],
+                },
+            };
+            self.device.cmd_begin_render_pass(
+                self.command_buffer,
+                &vk::RenderPassBeginInfo {
+                    render_pass: self.render_pass.raw,
+                    framebuffer: self.framebuffers[index as usize].raw,
+                    render_area: vk::Rect2D {
+                        offset: vk::Offset2D { x: 0, y: 0 },
+                        extent: self.swapchain.extent,
+                    },
+                    clear_value_count: 1,
+                    p_clear_values: &clear_value,
+                    ..Default::default()
+                },
+                vk::SubpassContents::INLINE,
+            );
+
+            self.device.cmd_end_render_pass(self.command_buffer);
+
+            self.device.end_command_buffer(self.command_buffer)?;
+
+            let wait_stage = vk::PipelineStageFlags::ALL_GRAPHICS;
+            self.device.queue_submit(
+                self.device.graphics_queue,
+                &[vk::SubmitInfo {
+                    wait_semaphore_count: 1,
+                    p_wait_semaphores: &image_acquired.raw,
+                    p_wait_dst_stage_mask: &wait_stage,
+                    command_buffer_count: 1,
+                    p_command_buffers: &self.command_buffer,
+                    signal_semaphore_count: 1,
+                    p_signal_semaphores: &graphics_complete.raw,
+                    ..Default::default()
+                }],
+                vk::Fence::null(),
+            )?;
+        }
+
+        let result =
+            self.swapchain.present_image(graphics_complete.raw, index)?;
+        if result == PresentImageStatus::SwapchainNeedsRebuild {
+            log::warn!("needs rebuild after present");
+            self.swapchain_needs_rebuild = true;
+        }
+
+        unsafe {
+            self.device.device_wait_idle()?;
+        }
+
+        Ok(())
+    }
 }
 
 /// Create a renderpass for the application.
@@ -98,156 +287,6 @@ fn create_framebuffers(
         )?);
     }
     Ok(framebuffers)
-}
-
-impl App for Example {
-    fn new(window: &mut glfw::Window) -> Result<Self>
-    where
-        Self: Sized,
-    {
-        window.set_all_polling(true);
-
-        let device = Device::new(window)?;
-
-        log::debug!("Created device: {:#?}", device);
-
-        let (w, h) = window.get_framebuffer_size();
-        let swapchain = Swapchain::new(device.clone(), (w as u32, h as u32))?;
-
-        log::debug!("Created swapchain: {:#?}", swapchain);
-
-        let command_pool = raii::CommandPool::new(
-            device.logical_device.clone(),
-            &vk::CommandPoolCreateInfo {
-                flags: vk::CommandPoolCreateFlags::empty(),
-                queue_family_index: device.graphics_queue_family_index,
-                ..Default::default()
-            },
-        )?;
-
-        let command_buffer = unsafe {
-            device.allocate_command_buffers(&vk::CommandBufferAllocateInfo {
-                command_pool: command_pool.raw,
-                level: vk::CommandBufferLevel::PRIMARY,
-                command_buffer_count: 1,
-                ..Default::default()
-            })?[0]
-        };
-
-        let render_pass = create_renderpass(&device, &swapchain)?;
-        let framebuffers =
-            create_framebuffers(&device, &render_pass, &swapchain)?;
-
-        Ok(Self {
-            device,
-            swapchain,
-            command_pool,
-            command_buffer,
-            render_pass,
-            framebuffers,
-        })
-    }
-
-    fn handle_event(
-        &mut self,
-        window: &mut glfw::Window,
-        event: glfw::WindowEvent,
-    ) -> Result<()> {
-        if let WindowEvent::Key(Key::Escape, _, Action::Release, _) = event {
-            window.set_should_close(true);
-        }
-        Ok(())
-    }
-
-    fn update(&mut self, _window: &mut glfw::Window) -> Result<()> {
-        unsafe {
-            self.device.reset_command_pool(
-                self.command_pool.raw,
-                vk::CommandPoolResetFlags::empty(),
-            )?;
-        }
-
-        let image_acquired = raii::Semaphore::new(
-            self.device.logical_device.clone(),
-            &vk::SemaphoreCreateInfo::default(),
-        )?;
-        let graphics_complete = raii::Semaphore::new(
-            self.device.logical_device.clone(),
-            &vk::SemaphoreCreateInfo::default(),
-        )?;
-
-        let status = self.swapchain.acquire_image(image_acquired.raw)?;
-        let index = match status {
-            AcquireImageStatus::ImageAcquired(index) => index,
-            _ => {
-                log::warn!("AOEU");
-                return Ok(());
-            }
-        };
-
-        unsafe {
-            self.device.begin_command_buffer(
-                self.command_buffer,
-                &vk::CommandBufferBeginInfo {
-                    flags: vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT,
-                    ..Default::default()
-                },
-            )?;
-
-            let clear_value = vk::ClearValue {
-                color: vk::ClearColorValue {
-                    float32: [0.2, 0.2, 0.5, 1.0],
-                },
-            };
-            self.device.cmd_begin_render_pass(
-                self.command_buffer,
-                &vk::RenderPassBeginInfo {
-                    render_pass: self.render_pass.raw,
-                    framebuffer: self.framebuffers[index as usize].raw,
-                    render_area: vk::Rect2D {
-                        offset: vk::Offset2D { x: 0, y: 0 },
-                        extent: self.swapchain.extent,
-                    },
-                    clear_value_count: 1,
-                    p_clear_values: &clear_value,
-                    ..Default::default()
-                },
-                vk::SubpassContents::INLINE,
-            );
-
-            self.device.cmd_end_render_pass(self.command_buffer);
-
-            self.device.end_command_buffer(self.command_buffer)?;
-
-            let wait_stage = vk::PipelineStageFlags::ALL_GRAPHICS;
-            self.device.queue_submit(
-                self.device.graphics_queue,
-                &[vk::SubmitInfo {
-                    wait_semaphore_count: 1,
-                    p_wait_semaphores: &image_acquired.raw,
-                    p_wait_dst_stage_mask: &wait_stage,
-                    command_buffer_count: 1,
-                    p_command_buffers: &self.command_buffer,
-                    signal_semaphore_count: 1,
-                    p_signal_semaphores: &graphics_complete.raw,
-                    ..Default::default()
-                }],
-                vk::Fence::null(),
-            )?;
-        }
-
-        let result =
-            self.swapchain.present_image(graphics_complete.raw, index)?;
-        if result == PresentImageStatus::SwapchainNeedsRebuild {
-            log::warn!("needs rebuild after present");
-        }
-
-        unsafe {
-            self.device.device_wait_idle()?;
-        }
-
-        Ok(())
-    }
 }
 
 pub fn main() {
