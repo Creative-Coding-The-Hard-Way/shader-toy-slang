@@ -9,7 +9,7 @@ use {
 };
 
 pub fn create_swapchain(
-    device: Arc<Device>,
+    device: &Device,
     framebuffer_size: (u32, u32),
     previous_swapchain: Option<vk::SwapchainKHR>,
 ) -> Result<(Arc<raii::Swapchain>, vk::Extent2D, vk::SurfaceFormatKHR)> {

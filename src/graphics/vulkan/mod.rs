@@ -4,5 +4,5 @@ mod swapchain;
 
 pub use self::{
     device::{Device, Instance},
-    swapchain::Swapchain,
+    swapchain::{AcquireImageStatus, PresentImageStatus, Swapchain},
 };

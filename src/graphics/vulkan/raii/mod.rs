@@ -6,12 +6,14 @@
 
 mod device;
 mod device_extensions;
+mod device_resources;
 mod instance;
 mod instance_extensions;
 
 pub use self::{
     device::Device,
     device_extensions::Swapchain,
+    device_resources::ImageView,
     instance::Instance,
     instance_extensions::{DebugUtils, Surface},
 };
