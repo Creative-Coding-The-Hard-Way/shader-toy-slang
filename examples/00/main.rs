@@ -1,3 +1,5 @@
+mod pipeline;
+
 use {
     anyhow::Result,
     ash::vk,
@@ -19,6 +21,8 @@ struct Example {
     render_pass: raii::RenderPass,
     framebuffers: Vec<raii::Framebuffer>,
     swapchain_needs_rebuild: bool,
+    pipeline: raii::Pipeline,
+    pipeline_layout: raii::PipelineLayout,
 }
 
 impl Example {
@@ -45,6 +49,14 @@ impl Example {
         )?;
 
         log::info!("{:#?}", self.swapchain);
+
+        let (pipeline, pipeline_layout) = pipeline::create_pipeline(
+            &self.device,
+            &self.swapchain,
+            &self.render_pass,
+        )?;
+        self.pipeline = pipeline;
+        self.pipeline_layout = pipeline_layout;
 
         Ok(())
     }
@@ -88,6 +100,8 @@ impl App for Example {
         let render_pass = create_renderpass(&device, &swapchain)?;
         let framebuffers =
             create_framebuffers(&device, &render_pass, &swapchain)?;
+        let (pipeline, pipeline_layout) =
+            pipeline::create_pipeline(&device, &swapchain, &render_pass)?;
 
         Ok(Self {
             device,
@@ -97,6 +111,8 @@ impl App for Example {
             render_pass,
             framebuffers,
             swapchain_needs_rebuild: false,
+            pipeline,
+            pipeline_layout,
         })
     }
 
@@ -172,6 +188,14 @@ impl App for Example {
                 },
                 vk::SubpassContents::INLINE,
             );
+
+            self.device.cmd_bind_pipeline(
+                self.command_buffer,
+                vk::PipelineBindPoint::GRAPHICS,
+                self.pipeline.raw,
+            );
+
+            self.device.cmd_draw(self.command_buffer, 3, 1, 0, 0);
 
             self.device.cmd_end_render_pass(self.command_buffer);
 

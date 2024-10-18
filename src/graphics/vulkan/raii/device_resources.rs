@@ -1,6 +1,6 @@
 use {
-    crate::graphics::vulkan::raii,
-    anyhow::Result,
+    crate::{graphics::vulkan::raii, trace},
+    anyhow::{Context, Result},
     ash::vk::{self},
     std::sync::Arc,
 };
@@ -96,3 +96,75 @@ resource!(
     create_framebuffer,
     destroy_framebuffer
 );
+
+resource!(
+    ShaderModule,
+    vk::ShaderModule,
+    vk::ShaderModuleCreateInfo,
+    create_shader_module,
+    destroy_shader_module
+);
+
+resource!(
+    PipelineLayout,
+    vk::PipelineLayout,
+    vk::PipelineLayoutCreateInfo,
+    create_pipeline_layout,
+    destroy_pipeline_layout
+);
+
+/// RAII wrapper that destroys itself when Dropped.
+///
+/// The owner is responsible for dropping Vulkan resources in the
+/// correct order.
+pub struct Pipeline {
+    pub raw: vk::Pipeline,
+    pub device: Arc<raii::Device>,
+}
+
+impl Pipeline {
+    pub fn new_graphics_pipeline(
+        device: Arc<raii::Device>,
+        create_info: &vk::GraphicsPipelineCreateInfo,
+    ) -> Result<Self> {
+        let result = unsafe {
+            device.create_graphics_pipelines(
+                vk::PipelineCache::null(),
+                &[*create_info],
+                None,
+            )
+        };
+        let raw = match result {
+            Ok(pipelines) => pipelines[0],
+            Err((_, result)) => {
+                return Err(result).with_context(trace!(
+                    "Error while creating graphics pipeline!"
+                ));
+            }
+        };
+        Ok(Self { device, raw })
+    }
+}
+
+impl std::fmt::Debug for Pipeline {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct(stringify!($name))
+            .field("raw", &self.raw)
+            .field("device", &self.device)
+            .finish()
+    }
+}
+
+impl std::ops::Deref for Pipeline {
+    type Target = vk::Pipeline;
+
+    fn deref(&self) -> &Self::Target {
+        &self.raw
+    }
+}
+
+impl Drop for Pipeline {
+    fn drop(&mut self) {
+        unsafe { self.device.destroy_pipeline(self.raw, None) }
+    }
+}
