@@ -141,6 +141,10 @@
 <a href="#141" id="141">141</a>
 <a href="#142" id="142">142</a>
 <a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>settings;
 
 <span class="kw">use </span>{
@@ -179,10 +183,14 @@
     <span class="kw">pub fn </span>new(
         device: Arc&lt;Device&gt;,
         framebuffer_size: (u32, u32),
+        previous_swapchain: <span class="prelude-ty">Option</span>&lt;vk::SwapchainKHR&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="self">Self</span>&gt;&gt; {
-        <span class="kw">let </span>(raw, extent, format) =
-            settings::create_swapchain(<span class="kw-2">&amp;</span>device, framebuffer_size, <span class="prelude-val">None</span>)
-                .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to initialize swapchain!"</span>))<span class="question-mark">?</span>;
+        <span class="kw">let </span>(raw, extent, format) = settings::create_swapchain(
+            <span class="kw-2">&amp;</span>device,
+            framebuffer_size,
+            previous_swapchain,
+        )
+        .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to initialize swapchain!"</span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>images = <span class="kw">unsafe </span>{ raw.ext.get_swapchain_images(raw.raw)<span class="question-mark">? </span>};
         <span class="kw">let </span><span class="kw-2">mut </span>image_views = <span class="macro">vec!</span>[];
