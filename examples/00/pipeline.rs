@@ -4,14 +4,53 @@ use {
     sts::graphics::vulkan::{raii, Device, Swapchain},
 };
 
+#[derive(Debug, Copy, Clone, PartialEq)]
+#[repr(packed)]
+pub struct FrameData {
+    pub mouse_pos: [f32; 2],
+}
+
+pub fn create_descriptor_pool(device: &Device) -> Result<raii::DescriptorPool> {
+    let sizes = [vk::DescriptorPoolSize {
+        ty: vk::DescriptorType::UNIFORM_BUFFER,
+        descriptor_count: 1,
+    }];
+    let create_info = vk::DescriptorPoolCreateInfo {
+        max_sets: 1,
+        pool_size_count: sizes.len() as u32,
+        p_pool_sizes: sizes.as_ptr(),
+        ..Default::default()
+    };
+    raii::DescriptorPool::new(device.logical_device.clone(), &create_info)
+}
+
+pub fn create_descriptor_set_layout(
+    device: &Device,
+) -> Result<raii::DescriptorSetLayout> {
+    let descriptor_set_bindings = [vk::DescriptorSetLayoutBinding {
+        binding: 0,
+        descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
+        descriptor_count: 1,
+        stage_flags: vk::ShaderStageFlags::FRAGMENT,
+        ..Default::default()
+    }];
+    let create_info = vk::DescriptorSetLayoutCreateInfo {
+        binding_count: descriptor_set_bindings.len() as u32,
+        p_bindings: descriptor_set_bindings.as_ptr(),
+        ..Default::default()
+    };
+    raii::DescriptorSetLayout::new(device.logical_device.clone(), &create_info)
+}
+
 pub fn create_pipeline(
     device: &Device,
     swapchain: &Swapchain,
     render_pass: &raii::RenderPass,
+    descriptor_set_layout: &raii::DescriptorSetLayout,
 ) -> Result<(raii::Pipeline, raii::PipelineLayout)> {
     let layout_create_info = vk::PipelineLayoutCreateInfo {
-        set_layout_count: 0,
-        p_set_layouts: std::ptr::null(),
+        set_layout_count: 1,
+        p_set_layouts: &descriptor_set_layout.raw,
         push_constant_range_count: 0,
         p_push_constant_ranges: std::ptr::null(),
         ..Default::default()

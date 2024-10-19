@@ -58,6 +58,38 @@ macro_rules! resource {
 }
 
 resource!(
+    DeviceMemory,
+    vk::DeviceMemory,
+    vk::MemoryAllocateInfo,
+    allocate_memory,
+    free_memory
+);
+
+resource!(
+    Buffer,
+    vk::Buffer,
+    vk::BufferCreateInfo,
+    create_buffer,
+    destroy_buffer
+);
+
+resource!(
+    DescriptorPool,
+    vk::DescriptorPool,
+    vk::DescriptorPoolCreateInfo,
+    create_descriptor_pool,
+    destroy_descriptor_pool
+);
+
+resource!(
+    DescriptorSetLayout,
+    vk::DescriptorSetLayout,
+    vk::DescriptorSetLayoutCreateInfo,
+    create_descriptor_set_layout,
+    destroy_descriptor_set_layout
+);
+
+resource!(
     ImageView,
     vk::ImageView,
     vk::ImageViewCreateInfo,

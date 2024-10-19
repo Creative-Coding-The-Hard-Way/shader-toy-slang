@@ -1,9 +1,14 @@
+mod buffer;
 mod pipeline;
 
 use {
     anyhow::Result,
     ash::vk,
+    buffer::CPUBuffer,
     glfw::{Action, Key, WindowEvent},
+    pipeline::{
+        create_descriptor_pool, create_descriptor_set_layout, FrameData,
+    },
     std::sync::Arc,
     sts::{
         app::{app_main, App},
@@ -23,6 +28,10 @@ struct Example {
     swapchain_needs_rebuild: bool,
     pipeline: raii::Pipeline,
     pipeline_layout: raii::PipelineLayout,
+    descriptor_set_layout: raii::DescriptorSetLayout,
+    _descriptor_pool: raii::DescriptorPool,
+    descriptor_set: vk::DescriptorSet,
+    uniform_buffer: CPUBuffer,
 }
 
 impl Example {
@@ -54,6 +63,7 @@ impl Example {
             &self.device,
             &self.swapchain,
             &self.render_pass,
+            &self.descriptor_set_layout,
         )?;
         self.pipeline = pipeline;
         self.pipeline_layout = pipeline_layout;
@@ -98,10 +108,54 @@ impl App for Example {
         };
 
         let render_pass = create_renderpass(&device, &swapchain)?;
+        let descriptor_set_layout = create_descriptor_set_layout(&device)?;
         let framebuffers =
             create_framebuffers(&device, &render_pass, &swapchain)?;
-        let (pipeline, pipeline_layout) =
-            pipeline::create_pipeline(&device, &swapchain, &render_pass)?;
+        let (pipeline, pipeline_layout) = pipeline::create_pipeline(
+            &device,
+            &swapchain,
+            &render_pass,
+            &descriptor_set_layout,
+        )?;
+        let descriptor_pool = create_descriptor_pool(&device)?;
+        let descriptor_set = unsafe {
+            let allocate_info = vk::DescriptorSetAllocateInfo {
+                descriptor_pool: descriptor_pool.raw,
+                descriptor_set_count: 1,
+                p_set_layouts: &descriptor_set_layout.raw,
+                ..Default::default()
+            };
+            device.allocate_descriptor_sets(&allocate_info)?[0]
+        };
+        let mut uniform_buffer = CPUBuffer::allocate(
+            &device,
+            std::mem::size_of::<FrameData>() as u64,
+        )?;
+        uniform_buffer.write(FrameData {
+            mouse_pos: [0.0, 0.0],
+        })?;
+
+        unsafe {
+            let buffer_info = vk::DescriptorBufferInfo {
+                buffer: uniform_buffer.buffer.raw,
+                offset: 0,
+                range: std::mem::size_of::<FrameData>() as u64,
+            };
+            device.update_descriptor_sets(
+                &[vk::WriteDescriptorSet {
+                    dst_set: descriptor_set,
+                    dst_binding: 0,
+                    dst_array_element: 0,
+                    descriptor_count: 1,
+                    descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
+                    p_image_info: std::ptr::null(),
+                    p_buffer_info: &buffer_info,
+                    p_texel_buffer_view: std::ptr::null(),
+                    ..Default::default()
+                }],
+                &[],
+            );
+        };
 
         Ok(Self {
             device,
@@ -113,6 +167,10 @@ impl App for Example {
             swapchain_needs_rebuild: false,
             pipeline,
             pipeline_layout,
+            descriptor_set_layout,
+            _descriptor_pool: descriptor_pool,
+            descriptor_set,
+            uniform_buffer,
         })
     }
 
@@ -128,6 +186,16 @@ impl App for Example {
     }
 
     fn update(&mut self, window: &mut glfw::Window) -> Result<()> {
+        let (x, y) = window.get_cursor_pos();
+        let (w, h) = window.get_size();
+
+        self.uniform_buffer.write(FrameData {
+            mouse_pos: [
+                (x.clamp(0.0, w as f64) / w as f64) as f32,
+                1.0 - (y.clamp(0.0, h as f64) / h as f64) as f32,
+            ],
+        })?;
+
         if self.swapchain_needs_rebuild {
             self.swapchain_needs_rebuild = false;
             self.rebuild_swapchain(window)?;
@@ -170,7 +238,7 @@ impl App for Example {
 
             let clear_value = vk::ClearValue {
                 color: vk::ClearColorValue {
-                    float32: [0.2, 0.2, 0.5, 1.0],
+                    float32: [0.0, 0.0, 0.0, 0.0],
                 },
             };
             self.device.cmd_begin_render_pass(
@@ -195,13 +263,22 @@ impl App for Example {
                 self.pipeline.raw,
             );
 
+            self.device.cmd_bind_descriptor_sets(
+                self.command_buffer,
+                vk::PipelineBindPoint::GRAPHICS,
+                self.pipeline_layout.raw,
+                0,
+                &[self.descriptor_set],
+                &[],
+            );
+
             self.device.cmd_draw(self.command_buffer, 3, 1, 0, 0);
 
             self.device.cmd_end_render_pass(self.command_buffer);
 
             self.device.end_command_buffer(self.command_buffer)?;
 
-            let wait_stage = vk::PipelineStageFlags::ALL_GRAPHICS;
+            let wait_stage = vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT;
             self.device.queue_submit(
                 self.device.graphics_queue,
                 &[vk::SubmitInfo {

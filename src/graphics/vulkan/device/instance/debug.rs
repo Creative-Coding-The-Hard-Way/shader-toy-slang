@@ -58,11 +58,19 @@ unsafe extern "system" fn debug_callback(
     }
 
     let raw_message = std::format!(
-        "VULKAN DEBUG CALLBACK - {:?}::{:?} - [{} ({})]\n\n{}",
+        indoc::indoc! {
+            "
+            Vulkan Debug Callback
+
+            - Severity: {:?}::{:?}
+            - Message ID: {}
+
+            {}
+            "
+        },
         message_severity,
         message_type,
         message_id_name,
-        message_number,
         message
     );
 

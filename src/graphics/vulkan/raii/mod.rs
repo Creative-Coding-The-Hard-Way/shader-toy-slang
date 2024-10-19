@@ -14,8 +14,9 @@ pub use self::{
     device::Device,
     device_extensions::Swapchain,
     device_resources::{
-        CommandPool, Framebuffer, ImageView, Pipeline, PipelineLayout,
-        RenderPass, Semaphore, ShaderModule,
+        Buffer, CommandPool, DescriptorPool, DescriptorSetLayout, DeviceMemory,
+        Framebuffer, ImageView, Pipeline, PipelineLayout, RenderPass,
+        Semaphore, ShaderModule,
     },
     instance::Instance,
     instance_extensions::{DebugUtils, Surface},
