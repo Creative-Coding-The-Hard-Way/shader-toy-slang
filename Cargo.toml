@@ -6,6 +6,10 @@ edition = "2021"
 [profile.dev]
 opt-level = 1
 
+[build-dependencies]
+glob = "*"
+anyhow = "*"
+
 [dependencies]
 ash = "*"
 log = "*"
