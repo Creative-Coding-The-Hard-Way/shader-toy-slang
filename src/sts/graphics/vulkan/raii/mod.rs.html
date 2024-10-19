@@ -20,6 +20,7 @@
 <a href="#20" id="20">20</a>
 <a href="#21" id="21">21</a>
 <a href="#22" id="22">22</a>
+<a href="#23" id="23">23</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! RAII wrappers for Vulkan objects.
 //!
 //! Wrappers do not track dependencies. The application is responsible for
@@ -36,8 +37,9 @@
     device::Device,
     device_extensions::Swapchain,
     device_resources::{
-        CommandPool, Framebuffer, ImageView, Pipeline, PipelineLayout,
-        RenderPass, Semaphore, ShaderModule,
+        Buffer, CommandPool, DescriptorPool, DescriptorSetLayout, DeviceMemory,
+        Framebuffer, ImageView, Pipeline, PipelineLayout, RenderPass,
+        Semaphore, ShaderModule,
     },
     instance::Instance,
     instance_extensions::{DebugUtils, Surface},
