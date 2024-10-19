@@ -1,11 +1,19 @@
 static const float2 vertices[] = {
-    float2(-0.5, -0.5),
-    float2(0.0, 0.5),
-    float2(0.5, -0.5),
+    // first triangle
+    float2(-1.0, 1.0), // bottom left
+    float2(-1.0, -1.0),  // top left
+    float2(1.0, 1.0),  // bottom right
+
+    // second triangle
+    float2(-1.0, -1.0), // top left
+    float2(1.0, 1.0), // bottom right
+    float2(1.0, -1.0), // top right
 };
+
 
 struct VertexStageOutput {
     float4 sv_position : SV_Position;
+    float2 frag_pos : SmoothOutput;
 };
 
 [shader("vertex")]
@@ -14,6 +22,7 @@ VertexStageOutput main(int index: SV_VertexID) {
 
     let pos = vertices[index];
     output.sv_position = float4(pos.x, pos.y, 0.0, 1.0);
+    output.frag_pos = float2(pos.x, -pos.y);
 
     return output;
 }

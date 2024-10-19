@@ -186,15 +186,16 @@ impl App for Example {
     }
 
     fn update(&mut self, window: &mut glfw::Window) -> Result<()> {
-        let (x, y) = window.get_cursor_pos();
-        let (w, h) = window.get_size();
+        let (x_64, y_64) = window.get_cursor_pos();
+        let (w_i32, h_i32) = window.get_size();
 
-        self.uniform_buffer.write(FrameData {
-            mouse_pos: [
-                (x.clamp(0.0, w as f64) / w as f64) as f32,
-                1.0 - (y.clamp(0.0, h as f64) / h as f64) as f32,
-            ],
-        })?;
+        let (x, y) = (x_64 as f32, y_64 as f32);
+        let (w, h) = (w_i32 as f32, h_i32 as f32);
+
+        let frame = FrameData {
+            mouse_pos: [(2.0 * x / w) - 1.0, 1.0 - (2.0 * y / h)],
+        };
+        self.uniform_buffer.write(frame)?;
 
         if self.swapchain_needs_rebuild {
             self.swapchain_needs_rebuild = false;
@@ -272,7 +273,7 @@ impl App for Example {
                 &[],
             );
 
-            self.device.cmd_draw(self.command_buffer, 3, 1, 0, 0);
+            self.device.cmd_draw(self.command_buffer, 6, 1, 0, 0);
 
             self.device.cmd_end_render_pass(self.command_buffer);
 

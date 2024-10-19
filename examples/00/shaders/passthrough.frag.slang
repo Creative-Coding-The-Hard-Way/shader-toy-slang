@@ -6,6 +6,11 @@ struct FrameData {
 ConstantBuffer<FrameData> frame;
 
 [shader("fragment")]
-float4 main() : SV_Target {
-    return float4(frame.mouse_pos.x, 0.0, frame.mouse_pos.y, 1.0);
+float4 main(float2 frag_pos: SmoothOutput) : SV_Target {
+    var color = float4(0.0, 0.0, 0.0, 1.0);
+
+    float d = distance(frag_pos, frame.mouse_pos);
+    color.xyz += float3(pow(0.05/d, 10));
+
+    return color;
 }
