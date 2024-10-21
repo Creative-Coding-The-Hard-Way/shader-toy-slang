@@ -9,17 +9,41 @@ use {
 
 /// A CPU accessible buffer with some convenience functions for uploading data.
 #[derive(Debug)]
-pub struct CPUBuffer {
-    pub size: usize,
+pub struct UniformBuffer {
     pub buffer: raii::Buffer,
     pub _memory: raii::DeviceMemory,
+    aligned_unit_size: usize,
+    count: usize,
     mapped_ptr: *mut std::ffi::c_void,
 }
 
-impl CPUBuffer {
-    pub fn allocate(device: &Device, size: u64) -> Result<Self> {
+impl UniformBuffer {
+    /// Allocate a new buffer and GPU memory for holding per-frame uniform data.
+    ///
+    /// The buffer will have enough size for `count` copies of the frame data.
+    pub fn allocate<FrameDataT>(device: &Device, count: usize) -> Result<Self> {
+        // compute the aligned size for each element in the buffer
+        let properties = unsafe {
+            device
+                .instance
+                .ash
+                .get_physical_device_properties(device.physical_device)
+        };
+        let aligned_unit_size: u64 = {
+            let count = std::mem::size_of::<FrameDataT>() as u64
+                / properties.limits.min_uniform_buffer_offset_alignment;
+            (count + 1) * properties.limits.min_uniform_buffer_offset_alignment
+        };
+        log::info!("Unit size: {}", aligned_unit_size);
+
+        // compute the total length of the buffer based on the aligned unit size
+        // round up to the closest megabyte
+        let buffer_size_in_bytes =
+            (aligned_unit_size * count as u64).max(1024 * 1024);
+
+        // create the buffer
         let buffer_create_info = vk::BufferCreateInfo {
-            size,
+            size: buffer_size_in_bytes,
             usage: vk::BufferUsageFlags::UNIFORM_BUFFER,
             sharing_mode: vk::SharingMode::EXCLUSIVE,
             queue_family_index_count: 1,
@@ -31,6 +55,7 @@ impl CPUBuffer {
             &buffer_create_info,
         )?;
 
+        // allocate the backing device memory
         let requirements =
             unsafe { device.get_buffer_memory_requirements(buffer.raw) };
 
@@ -40,7 +65,6 @@ impl CPUBuffer {
                 .ash
                 .get_physical_device_memory_properties(device.physical_device)
         };
-
         let (memory_type_index, _) = memory_properties
             .memory_types
             .iter()
@@ -83,18 +107,40 @@ impl CPUBuffer {
 
         Ok(Self {
             buffer,
-            size: size as usize,
+            count,
+            aligned_unit_size: aligned_unit_size as usize,
             _memory: memory,
             mapped_ptr,
         })
     }
 
-    pub fn write<D: Copy>(&mut self, data: D) -> Result<()> {
-        if std::mem::size_of_val(&data) > self.size {
-            bail!(trace!("Attempted to overwrite gpu buffer!")());
+    /// Returns the byte offset into the buffer for the item at an index.
+    pub fn offset_for_index(&self, index: usize) -> u64 {
+        (index * self.aligned_unit_size) as u64
+    }
+
+    /// Writes data into the GPU memory at the given index.
+    ///
+    /// # Safety
+    ///
+    /// Unsafe because:
+    /// - the caller must synchronize access to the region being written.
+    pub unsafe fn write_indexed<D: Copy>(
+        &mut self,
+        index: usize,
+        data: D,
+    ) -> Result<()> {
+        if index >= self.count {
+            bail!(
+                trace!("Attempt to write to index {}/{}", index, self.count)()
+            );
         }
 
-        unsafe { std::ptr::write_volatile(self.mapped_ptr as *mut D, data) };
+        let offset = self.offset_for_index(index) as isize;
+        std::ptr::write_volatile(
+            self.mapped_ptr.byte_offset(offset) as *mut D,
+            data,
+        );
 
         Ok(())
     }

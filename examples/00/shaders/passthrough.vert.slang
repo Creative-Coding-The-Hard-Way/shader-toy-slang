@@ -1,3 +1,8 @@
+struct FrameData {
+    float2 mouse_pos;
+    float2 screen_size;
+};
+
 static const float2 vertices[] = {
     // first triangle
     float2(-1.0, 1.0), // bottom left
@@ -11,6 +16,9 @@ static const float2 vertices[] = {
 };
 
 
+[[vk_binding(0, 0)]]
+ConstantBuffer<FrameData> frame;
+
 struct VertexStageOutput {
     float4 sv_position : SV_Position;
     float2 frag_pos : SmoothOutput;
@@ -20,9 +28,10 @@ struct VertexStageOutput {
 VertexStageOutput main(int index: SV_VertexID) {
     VertexStageOutput output;
 
+    let aspect = frame.screen_size.x / frame.screen_size.y;
     let pos = vertices[index];
     output.sv_position = float4(pos.x, pos.y, 0.0, 1.0);
-    output.frag_pos = float2(pos.x, -pos.y);
+    output.frag_pos = float2(pos.x * aspect, -pos.y);
 
     return output;
 }

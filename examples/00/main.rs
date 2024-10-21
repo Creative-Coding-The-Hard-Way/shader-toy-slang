@@ -4,34 +4,42 @@ mod pipeline;
 use {
     anyhow::Result,
     ash::vk,
-    buffer::CPUBuffer,
+    buffer::UniformBuffer,
     glfw::{Action, Key, WindowEvent},
     pipeline::{
         create_descriptor_pool, create_descriptor_set_layout, FrameData,
     },
-    std::sync::Arc,
+    std::{
+        sync::Arc,
+        time::{Duration, Instant},
+    },
     sts::{
         app::{app_main, App},
         graphics::vulkan::{
-            raii, AcquireImageStatus, Device, PresentImageStatus, Swapchain,
+            raii, Device, FrameStatus, FramesInFlight, PresentImageStatus,
+            Swapchain,
         },
     },
 };
 
 struct Example {
-    swapchain: Arc<Swapchain>,
     device: Arc<Device>,
-    command_pool: raii::CommandPool,
-    command_buffer: vk::CommandBuffer,
+    start_time: Instant,
+    last_frame: Instant,
+
+    swapchain: Arc<Swapchain>,
+    swapchain_needs_rebuild: bool,
+    frames_in_flight: FramesInFlight,
+
     render_pass: raii::RenderPass,
     framebuffers: Vec<raii::Framebuffer>,
-    swapchain_needs_rebuild: bool,
+
     pipeline: raii::Pipeline,
     pipeline_layout: raii::PipelineLayout,
     descriptor_set_layout: raii::DescriptorSetLayout,
     _descriptor_pool: raii::DescriptorPool,
-    descriptor_set: vk::DescriptorSet,
-    uniform_buffer: CPUBuffer,
+    descriptor_sets: Vec<vk::DescriptorSet>,
+    uniform_buffer: UniformBuffer,
 }
 
 impl Example {
@@ -80,32 +88,14 @@ impl App for Example {
         window.set_all_polling(true);
 
         let device = Device::new(window)?;
-
         log::debug!("Created device: {:#?}", device);
 
         let (w, h) = window.get_framebuffer_size();
         let swapchain =
             Swapchain::new(device.clone(), (w as u32, h as u32), None)?;
-
         log::debug!("Created swapchain: {:#?}", swapchain);
 
-        let command_pool = raii::CommandPool::new(
-            device.logical_device.clone(),
-            &vk::CommandPoolCreateInfo {
-                flags: vk::CommandPoolCreateFlags::empty(),
-                queue_family_index: device.graphics_queue_family_index,
-                ..Default::default()
-            },
-        )?;
-
-        let command_buffer = unsafe {
-            device.allocate_command_buffers(&vk::CommandBufferAllocateInfo {
-                command_pool: command_pool.raw,
-                level: vk::CommandBufferLevel::PRIMARY,
-                command_buffer_count: 1,
-                ..Default::default()
-            })?[0]
-        };
+        let frames_in_flight = FramesInFlight::new(device.clone(), 3)?;
 
         let render_pass = create_renderpass(&device, &swapchain)?;
         let descriptor_set_layout = create_descriptor_set_layout(&device)?;
@@ -117,59 +107,81 @@ impl App for Example {
             &render_pass,
             &descriptor_set_layout,
         )?;
-        let descriptor_pool = create_descriptor_pool(&device)?;
-        let descriptor_set = unsafe {
+
+        let descriptor_pool =
+            create_descriptor_pool(&device, frames_in_flight.frame_count())?;
+        let layouts = (0..frames_in_flight.frame_count())
+            .map(|_| descriptor_set_layout.raw)
+            .collect::<Vec<vk::DescriptorSetLayout>>();
+        let descriptor_sets = unsafe {
             let allocate_info = vk::DescriptorSetAllocateInfo {
                 descriptor_pool: descriptor_pool.raw,
-                descriptor_set_count: 1,
-                p_set_layouts: &descriptor_set_layout.raw,
+                descriptor_set_count: frames_in_flight.frame_count() as u32,
+                p_set_layouts: layouts.as_ptr(),
                 ..Default::default()
             };
-            device.allocate_descriptor_sets(&allocate_info)?[0]
+            device.allocate_descriptor_sets(&allocate_info)?
         };
-        let mut uniform_buffer = CPUBuffer::allocate(
+        let mut uniform_buffer = UniformBuffer::allocate::<FrameData>(
             &device,
-            std::mem::size_of::<FrameData>() as u64,
+            frames_in_flight.frame_count(),
         )?;
-        uniform_buffer.write(FrameData {
-            mouse_pos: [0.0, 0.0],
-        })?;
-
+        for index in 0..frames_in_flight.frame_count() {
+            unsafe {
+                uniform_buffer.write_indexed(
+                    index,
+                    FrameData {
+                        mouse_pos: [0.0, 0.0],
+                        screen_size: [1.0, 1.0],
+                        time: 0.0,
+                        dt: 0.0,
+                    },
+                )?;
+            }
+        }
         unsafe {
-            let buffer_info = vk::DescriptorBufferInfo {
-                buffer: uniform_buffer.buffer.raw,
-                offset: 0,
-                range: std::mem::size_of::<FrameData>() as u64,
-            };
-            device.update_descriptor_sets(
-                &[vk::WriteDescriptorSet {
-                    dst_set: descriptor_set,
+            let buffer_infos = (0..frames_in_flight.frame_count())
+                .map(|index| vk::DescriptorBufferInfo {
+                    buffer: uniform_buffer.buffer.raw,
+                    offset: uniform_buffer.offset_for_index(index),
+                    range: std::mem::size_of::<FrameData>() as u64,
+                })
+                .collect::<Vec<_>>();
+            let writes = buffer_infos
+                .iter()
+                .enumerate()
+                .map(|(index, buffer_info)| vk::WriteDescriptorSet {
+                    dst_set: descriptor_sets[index],
                     dst_binding: 0,
                     dst_array_element: 0,
                     descriptor_count: 1,
                     descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
                     p_image_info: std::ptr::null(),
-                    p_buffer_info: &buffer_info,
+                    p_buffer_info: buffer_info,
                     p_texel_buffer_view: std::ptr::null(),
                     ..Default::default()
-                }],
-                &[],
-            );
+                })
+                .collect::<Vec<_>>();
+            device.update_descriptor_sets(&writes, &[]);
         };
 
         Ok(Self {
             device,
+            start_time: Instant::now(),
+            last_frame: Instant::now(),
+
             swapchain,
-            command_pool,
-            command_buffer,
+            swapchain_needs_rebuild: false,
+            frames_in_flight,
+
             render_pass,
             framebuffers,
-            swapchain_needs_rebuild: false,
+
             pipeline,
             pipeline_layout,
             descriptor_set_layout,
             _descriptor_pool: descriptor_pool,
-            descriptor_set,
+            descriptor_sets,
             uniform_buffer,
         })
     }
@@ -186,67 +198,60 @@ impl App for Example {
     }
 
     fn update(&mut self, window: &mut glfw::Window) -> Result<()> {
-        let (x_64, y_64) = window.get_cursor_pos();
-        let (w_i32, h_i32) = window.get_size();
-
-        let (x, y) = (x_64 as f32, y_64 as f32);
-        let (w, h) = (w_i32 as f32, h_i32 as f32);
-
-        let frame = FrameData {
-            mouse_pos: [(2.0 * x / w) - 1.0, 1.0 - (2.0 * y / h)],
-        };
-        self.uniform_buffer.write(frame)?;
-
+        std::thread::sleep(Duration::from_millis(4));
         if self.swapchain_needs_rebuild {
             self.swapchain_needs_rebuild = false;
             self.rebuild_swapchain(window)?;
         }
-
-        unsafe {
-            self.device.reset_command_pool(
-                self.command_pool.raw,
-                vk::CommandPoolResetFlags::empty(),
-            )?;
-        }
-
-        let image_acquired = raii::Semaphore::new(
-            self.device.logical_device.clone(),
-            &vk::SemaphoreCreateInfo::default(),
-        )?;
-        let graphics_complete = raii::Semaphore::new(
-            self.device.logical_device.clone(),
-            &vk::SemaphoreCreateInfo::default(),
-        )?;
-
-        let status = self.swapchain.acquire_image(image_acquired.raw)?;
-        let index = match status {
-            AcquireImageStatus::ImageAcquired(index) => index,
-            _ => {
+        let frame = match self.frames_in_flight.start_frame(&self.swapchain)? {
+            FrameStatus::FrameStarted(command_buffer) => command_buffer,
+            FrameStatus::SwapchainNeedsRebuild => {
                 self.swapchain_needs_rebuild = true;
-                log::warn!("Swapchain needs rebuilt!");
                 return Ok(());
             }
         };
 
-        unsafe {
-            self.device.begin_command_buffer(
-                self.command_buffer,
-                &vk::CommandBufferBeginInfo {
-                    flags: vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT,
-                    ..Default::default()
-                },
-            )?;
+        // write frame data
+        {
+            let now = Instant::now();
+            let dt = (now - self.last_frame).as_secs_f32();
+            self.last_frame = now;
 
+            let (x_64, y_64) = window.get_cursor_pos();
+            let (w_i32, h_i32) = window.get_size();
+
+            let (x, y) = (x_64 as f32, y_64 as f32);
+            let (w, h) = (w_i32 as f32, h_i32 as f32);
+            let a = w / h;
+
+            let frame_data = FrameData {
+                mouse_pos: [
+                    sts::map(x, 0.0..w, -a..a),
+                    sts::map(y, 0.0..h, 1.0..-1.0),
+                ],
+                screen_size: [w, h],
+                time: (now - self.start_time).as_secs_f32(),
+                dt,
+            };
+            unsafe {
+                self.uniform_buffer
+                    .write_indexed(frame.frame_index(), frame_data)?;
+            }
+        }
+
+        unsafe {
             let clear_value = vk::ClearValue {
                 color: vk::ClearColorValue {
                     float32: [0.0, 0.0, 0.0, 0.0],
                 },
             };
             self.device.cmd_begin_render_pass(
-                self.command_buffer,
+                frame.command_buffer(),
                 &vk::RenderPassBeginInfo {
                     render_pass: self.render_pass.raw,
-                    framebuffer: self.framebuffers[index as usize].raw,
+                    framebuffer: self.framebuffers
+                        [frame.swapchain_image_index() as usize]
+                        .raw,
                     render_area: vk::Rect2D {
                         offset: vk::Offset2D { x: 0, y: 0 },
                         extent: self.swapchain.extent,
@@ -259,52 +264,31 @@ impl App for Example {
             );
 
             self.device.cmd_bind_pipeline(
-                self.command_buffer,
+                frame.command_buffer(),
                 vk::PipelineBindPoint::GRAPHICS,
                 self.pipeline.raw,
             );
 
             self.device.cmd_bind_descriptor_sets(
-                self.command_buffer,
+                frame.command_buffer(),
                 vk::PipelineBindPoint::GRAPHICS,
                 self.pipeline_layout.raw,
                 0,
-                &[self.descriptor_set],
+                &[self.descriptor_sets[frame.frame_index()]],
                 &[],
             );
 
-            self.device.cmd_draw(self.command_buffer, 6, 1, 0, 0);
+            self.device.cmd_draw(frame.command_buffer(), 6, 1, 0, 0);
 
-            self.device.cmd_end_render_pass(self.command_buffer);
-
-            self.device.end_command_buffer(self.command_buffer)?;
-
-            let wait_stage = vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT;
-            self.device.queue_submit(
-                self.device.graphics_queue,
-                &[vk::SubmitInfo {
-                    wait_semaphore_count: 1,
-                    p_wait_semaphores: &image_acquired.raw,
-                    p_wait_dst_stage_mask: &wait_stage,
-                    command_buffer_count: 1,
-                    p_command_buffers: &self.command_buffer,
-                    signal_semaphore_count: 1,
-                    p_signal_semaphores: &graphics_complete.raw,
-                    ..Default::default()
-                }],
-                vk::Fence::null(),
-            )?;
+            self.device.cmd_end_render_pass(frame.command_buffer());
         }
 
-        let result =
-            self.swapchain.present_image(graphics_complete.raw, index)?;
-        if result == PresentImageStatus::SwapchainNeedsRebuild {
-            log::warn!("needs rebuild after present");
+        if self
+            .frames_in_flight
+            .present_frame(&self.swapchain, frame)?
+            == PresentImageStatus::SwapchainNeedsRebuild
+        {
             self.swapchain_needs_rebuild = true;
-        }
-
-        unsafe {
-            self.device.device_wait_idle()?;
         }
 
         Ok(())

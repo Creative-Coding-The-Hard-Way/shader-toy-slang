@@ -1,22 +1,31 @@
 use {
-    anyhow::Result,
+    anyhow::{anyhow, Context, Result},
     ash::vk,
-    sts::graphics::vulkan::{raii, Device, Swapchain},
+    sts::{
+        graphics::vulkan::{raii, Device, Swapchain},
+        trace,
+    },
 };
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 #[repr(packed)]
 pub struct FrameData {
     pub mouse_pos: [f32; 2],
+    pub screen_size: [f32; 2],
+    pub dt: f32,
+    pub time: f32,
 }
 
-pub fn create_descriptor_pool(device: &Device) -> Result<raii::DescriptorPool> {
+pub fn create_descriptor_pool(
+    device: &Device,
+    count: usize,
+) -> Result<raii::DescriptorPool> {
     let sizes = [vk::DescriptorPoolSize {
         ty: vk::DescriptorType::UNIFORM_BUFFER,
-        descriptor_count: 1,
+        descriptor_count: count as u32,
     }];
     let create_info = vk::DescriptorPoolCreateInfo {
-        max_sets: 1,
+        max_sets: count as u32,
         pool_size_count: sizes.len() as u32,
         p_pool_sizes: sizes.as_ptr(),
         ..Default::default()
@@ -31,7 +40,8 @@ pub fn create_descriptor_set_layout(
         binding: 0,
         descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
         descriptor_count: 1,
-        stage_flags: vk::ShaderStageFlags::FRAGMENT,
+        stage_flags: vk::ShaderStageFlags::FRAGMENT
+            | vk::ShaderStageFlags::VERTEX,
         ..Default::default()
     }];
     let create_info = vk::DescriptorSetLayoutCreateInfo {
@@ -64,6 +74,29 @@ pub fn create_pipeline(
 
     let fragment_shader_bytes =
         include_bytes!("./shaders/passthrough.frag.spv");
+
+    // let output = std::process::Command::new("slangc")
+    //     .args([
+    //         "-target",
+    //         "spirv",
+    //         "--",
+    //         "./examples/00/shaders/passthrough.frag.slang",
+    //     ])
+    //     .output()
+    //     .with_context(trace!("Error while compiling!"))?;
+
+    // if !output.status.success() {
+    //     let error_message = String::from_utf8(output.stderr).unwrap();
+    //     return Err(anyhow!(
+    //         "Error while compiling shader!\n\n{}",
+    //         error_message
+    //     ));
+    // }
+
+    // let fragment_shader_bytes_copy = output.stdout.clone();
+    // let fragment_shader_bytes = fragment_shader_bytes_copy.as_slice();
+    log::info!("{}", fragment_shader_bytes.len());
+
     let fragment_module = raii::ShaderModule::new(
         device.logical_device.clone(),
         &vk::ShaderModuleCreateInfo {
@@ -71,7 +104,8 @@ pub fn create_pipeline(
             p_code: fragment_shader_bytes.as_ptr() as *const u32,
             ..Default::default()
         },
-    )?;
+    )
+    .with_context(trace!("Error while creating fragment shader module!"))?;
 
     let vertex_shader_bytes = include_bytes!("./shaders/passthrough.vert.spv");
     let vertex_module = raii::ShaderModule::new(

@@ -58,6 +58,14 @@ macro_rules! resource {
 }
 
 resource!(
+    Fence,
+    vk::Fence,
+    vk::FenceCreateInfo,
+    create_fence,
+    destroy_fence
+);
+
+resource!(
     DeviceMemory,
     vk::DeviceMemory,
     vk::MemoryAllocateInfo,
