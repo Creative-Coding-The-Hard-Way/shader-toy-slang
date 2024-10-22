@@ -106,17 +106,23 @@
 <a href="#106" id="106">106</a>
 <a href="#107" id="107">107</a>
 <a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! The GLFW application implementation.
 //!
 //! This module defines the traits and functions required for managing the
 //! lifecycle of a GLFW application with a single Vulkan-enabled window.
 
-</span><span class="kw">mod </span>logging;
+</span><span class="kw">mod </span>fullscreen_toggle;
+<span class="kw">mod </span>logging;
 <span class="kw">use </span>{
     <span class="kw">crate</span>::trace,
     anyhow::{Context, <span class="prelude-ty">Result</span>},
     glfw::fail_on_errors,
 };
+
+<span class="kw">pub use </span><span class="self">self</span>::fullscreen_toggle::FullscreenToggle;
 
 <span class="doccomment">/// Implementations of this trait can be run with app_main to manage a GLFW
 /// window.

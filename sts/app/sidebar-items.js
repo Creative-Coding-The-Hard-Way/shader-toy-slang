@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["app_main"],"trait":["App"]};
+window.SIDEBAR_ITEMS = {"fn":["app_main"],"struct":["FullscreenToggle"],"trait":["App"]};
