@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["vulkan"]};
+window.SIDEBAR_ITEMS = {"mod":["vulkan"],"struct":["Recompiler"]};

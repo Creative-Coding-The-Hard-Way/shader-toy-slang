@@ -200,6 +200,14 @@
 <a href="#200" id="200">200</a>
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">crate</span>::{graphics::vulkan::raii, trace},
     anyhow::{Context, <span class="prelude-ty">Result</span>},
@@ -258,6 +266,14 @@
         }
     };
 }
+
+<span class="macro">resource!</span>(
+    Fence,
+    vk::Fence,
+    vk::FenceCreateInfo,
+    create_fence,
+    destroy_fence
+);
 
 <span class="macro">resource!</span>(
     DeviceMemory,

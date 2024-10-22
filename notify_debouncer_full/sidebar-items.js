@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["new_debouncer","new_debouncer_opt"],"struct":["DebouncedEvent","Debouncer","FileIdMap","NoCache"],"trait":["DebounceEventHandler","FileIdCache"],"type":["DebounceEventResult"]};

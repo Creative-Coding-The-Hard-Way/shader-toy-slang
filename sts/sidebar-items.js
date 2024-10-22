@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":["trace"],"mod":["app","graphics"]};
+window.SIDEBAR_ITEMS = {"fn":["map"],"macro":["trace"],"mod":["app","graphics"]};

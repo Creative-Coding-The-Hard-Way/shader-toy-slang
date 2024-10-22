@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/flexi_logger-0.29.3/src/formats.rs`."><title>formats.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="flexi_logger" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/flexi_logger-0.29.4/src/formats.rs`."><title>formats.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="flexi_logger" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -576,6 +576,35 @@
 <a href="#576" id="576">576</a>
 <a href="#577" id="577">577</a>
 <a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
+<a href="#594" id="594">594</a>
+<a href="#595" id="595">595</a>
+<a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::DeferredNow;
 <span class="attr">#[cfg(feature = <span class="string">"kv"</span>)]
 </span><span class="kw">use </span>log::kv::{<span class="self">self</span>, Key, Value, VisitSource};
@@ -587,7 +616,7 @@
 <span class="attr">#[cfg(feature = <span class="string">"kv"</span>)]
 </span><span class="kw">use </span>std::collections::BTreeMap;
 <span class="attr">#[cfg(feature = <span class="string">"colors"</span>)]
-</span><span class="kw">use </span>std::sync::{OnceLock, RwLock};
+</span><span class="kw">use </span>std::sync::OnceLock;
 <span class="kw">use </span>std::thread;
 
 <span class="doccomment">/// Time stamp format that is used by the provided format functions.
@@ -939,30 +968,15 @@
     }
 }
 
-<span class="doccomment">/// Helper function that is used in the provided coloring format functions to apply
-/// colors based on the log level and the effective color palette.
-///
-/// See [`Logger::set_palette`](crate::Logger::set_palette) if you want to
-/// modify the color palette.
-</span><span class="attr">#[allow(clippy::missing_panics_doc)]
-#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"colors"</span>)))]
-#[cfg(feature = <span class="string">"colors"</span>)]
-#[must_use]
-</span><span class="kw">pub fn </span>style(level: log::Level) -&gt; Style {
-    <span class="kw">let </span>palette = <span class="kw-2">&amp;*</span>(palette().read().unwrap());
-    <span class="kw">match </span>level {
-        log::Level::Error =&gt; palette.error,
-        log::Level::Warn =&gt; palette.warn,
-        log::Level::Info =&gt; palette.info,
-        log::Level::Debug =&gt; palette.debug,
-        log::Level::Trace =&gt; palette.trace,
-    }
-}
+<span class="attr">#[cfg(feature = <span class="string">"colors"</span>)]
+</span><span class="kw">const </span>DEFAULT_PALETTE: Palette = Palette::default();
 
 <span class="attr">#[cfg(feature = <span class="string">"colors"</span>)]
-</span><span class="kw">fn </span>palette() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>RwLock&lt;Palette&gt; {
-    <span class="kw">static </span>PALETTE: OnceLock&lt;RwLock&lt;Palette&gt;&gt; = OnceLock::new();
-    PALETTE.get_or_init(|| RwLock::new(Palette::default()))
+</span><span class="kw">static </span>PALETTE: OnceLock&lt;Palette&gt; = OnceLock::new();
+
+<span class="attr">#[cfg(feature = <span class="string">"colors"</span>)]
+</span><span class="kw">fn </span>palette() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Palette {
+    PALETTE.get().unwrap_or(<span class="kw-2">&amp;</span>DEFAULT_PALETTE)
 }
 
 <span class="comment">// Overwrites the default PALETTE value either from the environment, if set,
@@ -970,16 +984,60 @@
 // Returns an error if parsing failed.
 </span><span class="attr">#[cfg(feature = <span class="string">"colors"</span>)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_palette(input: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), std::num::ParseIntError&gt; {
-    <span class="kw-2">*</span>(palette().write().unwrap()) = <span class="kw">match </span>std::env::var_os(<span class="string">"FLEXI_LOGGER_PALETTE"</span>) {
-        <span class="prelude-val">Some</span>(<span class="kw-2">ref </span>env_osstring) =&gt; Palette::from(env_osstring.to_string_lossy().as_ref()),
-        <span class="prelude-val">None </span>=&gt; <span class="kw">match </span>input {
-            <span class="prelude-val">Some</span>(input_string) =&gt; Palette::from(input_string),
-            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(()),
-        },
-    }<span class="question-mark">?</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::util::{eprint_msg, ErrorCode};
+
+    PALETTE
+        .set(<span class="kw">match </span>std::env::var_os(<span class="string">"FLEXI_LOGGER_PALETTE"</span>) {
+            <span class="prelude-val">Some</span>(<span class="kw-2">ref </span>env_osstring) =&gt; Palette::from(env_osstring.to_string_lossy().as_ref())<span class="question-mark">?</span>,
+            <span class="prelude-val">None </span>=&gt; <span class="kw">match </span>input {
+                <span class="prelude-val">Some</span>(input_string) =&gt; Palette::from(input_string)<span class="question-mark">?</span>,
+                <span class="prelude-val">None </span>=&gt; DEFAULT_PALETTE,
+            },
+        })
+        .map_err(|_palette| {
+            eprint_msg(
+                ErrorCode::Palette,
+                <span class="string">"Failed to initialize the palette, as it is already initialized"</span>,
+            );
+        })
+        .ok();
     <span class="prelude-val">Ok</span>(())
 }
 
+<span class="doccomment">/// Helper function that is used in the provided coloring format functions to apply
+/// colors based on the log level and the effective color palette.
+///
+/// See [`Logger::set_palette`](crate::Logger::set_palette) if you want to
+/// modify the color palette.
+</span><span class="attr">#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"colors"</span>)))]
+#[cfg(feature = <span class="string">"colors"</span>)]
+#[must_use]
+</span><span class="kw">pub fn </span>style(level: log::Level) -&gt; Style {
+    <span class="kw">match </span>level {
+        log::Level::Error =&gt; palette().error,
+        log::Level::Warn =&gt; palette().warn,
+        log::Level::Info =&gt; palette().info,
+        log::Level::Debug =&gt; palette().debug,
+        log::Level::Trace =&gt; palette().trace,
+    }
+}
+
+<span class="attr">#[cfg(feature = <span class="string">"colors"</span>)]
+</span><span class="kw">const fn </span>default_style() -&gt; Style {
+    Style {
+        foreground: <span class="prelude-val">None</span>,
+        background: <span class="prelude-val">None</span>,
+        is_bold: <span class="bool-val">false</span>,
+        is_dimmed: <span class="bool-val">false</span>,
+        is_italic: <span class="bool-val">false</span>,
+        is_underline: <span class="bool-val">false</span>,
+        is_blink: <span class="bool-val">false</span>,
+        is_reverse: <span class="bool-val">false</span>,
+        is_hidden: <span class="bool-val">false</span>,
+        is_strikethrough: <span class="bool-val">false</span>,
+        prefix_with_reset: <span class="bool-val">false</span>,
+    }
+}
 <span class="attr">#[cfg(feature = <span class="string">"colors"</span>)]
 #[derive(Debug)]
 </span><span class="kw">struct </span>Palette {
@@ -991,13 +1049,13 @@
 }
 <span class="attr">#[cfg(feature = <span class="string">"colors"</span>)]
 </span><span class="kw">impl </span>Palette {
-    <span class="kw">fn </span>default() -&gt; Palette {
+    <span class="kw">const fn </span>default() -&gt; Palette {
         Palette {
-            error: Style::default().fg(Color::Fixed(<span class="number">196</span>)),
-            warn: Style::default().fg(Color::Fixed(<span class="number">208</span>)),
-            info: Style::default(),
-            debug: Style::default().fg(Color::Fixed(<span class="number">27</span>)),
-            trace: Style::default().fg(Color::Fixed(<span class="number">8</span>)),
+            error: default_style().fg(Color::Fixed(<span class="number">196</span>)),
+            warn: default_style().fg(Color::Fixed(<span class="number">208</span>)),
+            info: default_style(),
+            debug: default_style().fg(Color::Fixed(<span class="number">27</span>)),
+            trace: default_style().fg(Color::Fixed(<span class="number">8</span>)),
         }
     }
 
