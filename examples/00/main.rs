@@ -2,25 +2,38 @@ mod buffer;
 mod pipeline;
 
 use {
-    anyhow::Result,
+    anyhow::{Context, Result},
     ash::vk,
     buffer::UniformBuffer,
+    clap::Parser,
     glfw::{Action, Key, WindowEvent},
     pipeline::{
         create_descriptor_pool, create_descriptor_set_layout, FrameData,
     },
     std::{
+        path::PathBuf,
         sync::Arc,
         time::{Duration, Instant},
     },
     sts::{
         app::{app_main, App},
-        graphics::vulkan::{
-            raii, Device, FrameStatus, FramesInFlight, PresentImageStatus,
-            Swapchain,
+        graphics::{
+            vulkan::{
+                raii, Device, FrameStatus, FramesInFlight, PresentImageStatus,
+                Swapchain,
+            },
+            Recompiler,
         },
+        trace,
     },
 };
+
+#[derive(Parser, Debug, Eq, PartialEq)]
+#[command(version, about, long_about=None)]
+struct Args {
+    /// The path to the shader to watch.
+    pub fragment_shader_path: PathBuf,
+}
 
 struct Example {
     device: Arc<Device>,
@@ -40,6 +53,8 @@ struct Example {
     _descriptor_pool: raii::DescriptorPool,
     descriptor_sets: Vec<vk::DescriptorSet>,
     uniform_buffer: UniformBuffer,
+
+    fragment_shader_compiler: Recompiler,
 }
 
 impl Example {
@@ -66,12 +81,13 @@ impl Example {
         )?;
 
         log::info!("{:#?}", self.swapchain);
-
+        self.fragment_shader_compiler.check_for_update()?;
         let (pipeline, pipeline_layout) = pipeline::create_pipeline(
             &self.device,
             &self.swapchain,
             &self.render_pass,
             &self.descriptor_set_layout,
+            self.fragment_shader_compiler.current_shader_bytes(),
         )?;
         self.pipeline = pipeline;
         self.pipeline_layout = pipeline_layout;
@@ -85,10 +101,18 @@ impl App for Example {
     where
         Self: Sized,
     {
+        let cli_args = Args::try_parse()
+            .with_context(trace!("Unable to parse cli args!"))?;
+
         window.set_all_polling(true);
 
         let device = Device::new(window)?;
         log::debug!("Created device: {:#?}", device);
+
+        let fragment_shader_compiler =
+            Recompiler::new(&cli_args.fragment_shader_path).with_context(
+                trace!("Unable to start the fragment shader compiler!"),
+            )?;
 
         let (w, h) = window.get_framebuffer_size();
         let swapchain =
@@ -106,6 +130,7 @@ impl App for Example {
             &swapchain,
             &render_pass,
             &descriptor_set_layout,
+            fragment_shader_compiler.current_shader_bytes(),
         )?;
 
         let descriptor_pool =
@@ -169,6 +194,7 @@ impl App for Example {
             device,
             start_time: Instant::now(),
             last_frame: Instant::now(),
+            fragment_shader_compiler,
 
             swapchain,
             swapchain_needs_rebuild: false,
@@ -203,6 +229,22 @@ impl App for Example {
             self.swapchain_needs_rebuild = false;
             self.rebuild_swapchain(window)?;
         }
+
+        if self.fragment_shader_compiler.check_for_update()? {
+            self.frames_in_flight
+                .wait_for_all_frames_to_complete()
+                .with_context(trace!("Error while waiting for frames"))?;
+            let (pipeline, pipeline_layout) = pipeline::create_pipeline(
+                &self.device,
+                &self.swapchain,
+                &self.render_pass,
+                &self.descriptor_set_layout,
+                self.fragment_shader_compiler.current_shader_bytes(),
+            )?;
+            self.pipeline = pipeline;
+            self.pipeline_layout = pipeline_layout;
+        }
+
         let frame = match self.frames_in_flight.start_frame(&self.swapchain)? {
             FrameStatus::FrameStarted(command_buffer) => command_buffer,
             FrameStatus::SwapchainNeedsRebuild => {

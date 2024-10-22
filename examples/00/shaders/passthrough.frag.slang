@@ -22,8 +22,7 @@ float4 main(float2 frag_pos: SmoothOutput) : SV_Target {
 
     let d = abs(pos.y - h);
 
-    color.xyz += float3(pow(10/d, 1.3), pow(20/d, 2.0), pow(40/d, 1.3));
-
+    color.xyz += float3(0.0, pow(1/d, 2.0), pow(10/d, 1.8));
 
     return color;
 }

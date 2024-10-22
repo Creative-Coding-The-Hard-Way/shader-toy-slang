@@ -60,23 +60,6 @@ pub struct FramesInFlight {
     device: Arc<Device>,
 }
 
-impl Drop for FramesInFlight {
-    fn drop(&mut self) {
-        let fences = self
-            .frames
-            .iter()
-            .map(|frame_sync| frame_sync.graphics_commands_complete.raw)
-            .collect::<Vec<vk::Fence>>();
-        unsafe {
-            self.device
-                .wait_for_fences(&fences, true, u64::MAX)
-                .unwrap();
-            self.device.reset_fences(&fences).unwrap();
-            self.device.device_wait_idle().unwrap();
-        }
-    }
-}
-
 impl FramesInFlight {
     pub fn new(device: Arc<Device>, frame_count: usize) -> Result<Self> {
         let mut frames = Vec::with_capacity(frame_count);
@@ -145,6 +128,22 @@ impl FramesInFlight {
     /// Get the total number of configured frames in flight.
     pub fn frame_count(&self) -> usize {
         self.frames.len()
+    }
+
+    pub fn wait_for_all_frames_to_complete(&self) -> Result<()> {
+        let fences = self
+            .frames
+            .iter()
+            .map(|frame_sync| frame_sync.graphics_commands_complete.raw)
+            .collect::<Vec<vk::Fence>>();
+        unsafe {
+            self.device
+                .wait_for_fences(&fences, true, u64::MAX)
+                .with_context(trace!(
+                    "Error while waiting for all frames to finish rendering!"
+                ))?;
+        }
+        Ok(())
     }
 
     /// Starts the next frame in flight.
@@ -274,5 +273,14 @@ impl FramesInFlight {
                 frame.swapchain_image_index(),
             )
             .with_context(trace!("Error while presenting swapchain image!"))
+    }
+}
+
+impl Drop for FramesInFlight {
+    fn drop(&mut self) {
+        self.wait_for_all_frames_to_complete().unwrap();
+        unsafe {
+            self.device.device_wait_idle().unwrap();
+        }
     }
 }

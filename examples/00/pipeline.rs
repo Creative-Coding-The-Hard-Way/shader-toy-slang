@@ -1,5 +1,5 @@
 use {
-    anyhow::{anyhow, Context, Result},
+    anyhow::{Context, Result},
     ash::vk,
     sts::{
         graphics::vulkan::{raii, Device, Swapchain},
@@ -57,6 +57,7 @@ pub fn create_pipeline(
     swapchain: &Swapchain,
     render_pass: &raii::RenderPass,
     descriptor_set_layout: &raii::DescriptorSetLayout,
+    fragment_shader_source: &[u8],
 ) -> Result<(raii::Pipeline, raii::PipelineLayout)> {
     let layout_create_info = vk::PipelineLayoutCreateInfo {
         set_layout_count: 1,
@@ -72,47 +73,27 @@ pub fn create_pipeline(
 
     let main = std::ffi::CString::new("main")?;
 
-    let fragment_shader_bytes =
-        include_bytes!("./shaders/passthrough.frag.spv");
-
-    // let output = std::process::Command::new("slangc")
-    //     .args([
-    //         "-target",
-    //         "spirv",
-    //         "--",
-    //         "./examples/00/shaders/passthrough.frag.slang",
-    //     ])
-    //     .output()
-    //     .with_context(trace!("Error while compiling!"))?;
-
-    // if !output.status.success() {
-    //     let error_message = String::from_utf8(output.stderr).unwrap();
-    //     return Err(anyhow!(
-    //         "Error while compiling shader!\n\n{}",
-    //         error_message
-    //     ));
-    // }
-
-    // let fragment_shader_bytes_copy = output.stdout.clone();
-    // let fragment_shader_bytes = fragment_shader_bytes_copy.as_slice();
-    log::info!("{}", fragment_shader_bytes.len());
+    let fragment_shader_words =
+        ash::util::read_spv(&mut std::io::Cursor::new(fragment_shader_source))?;
 
     let fragment_module = raii::ShaderModule::new(
         device.logical_device.clone(),
         &vk::ShaderModuleCreateInfo {
-            code_size: fragment_shader_bytes.len(),
-            p_code: fragment_shader_bytes.as_ptr() as *const u32,
+            code_size: fragment_shader_words.len() * 4,
+            p_code: fragment_shader_words.as_ptr(),
             ..Default::default()
         },
     )
     .with_context(trace!("Error while creating fragment shader module!"))?;
 
-    let vertex_shader_bytes = include_bytes!("./shaders/passthrough.vert.spv");
+    let vertex_shader_words = ash::util::read_spv(&mut std::io::Cursor::new(
+        include_bytes!("./shaders/passthrough.vert.spv"),
+    ))?;
     let vertex_module = raii::ShaderModule::new(
         device.logical_device.clone(),
         &vk::ShaderModuleCreateInfo {
-            code_size: vertex_shader_bytes.len(),
-            p_code: vertex_shader_bytes.as_ptr() as *const u32,
+            code_size: vertex_shader_words.len() * 4,
+            p_code: vertex_shader_words.as_ptr(),
             ..Default::default()
         },
     )?;
