@@ -1,27 +1,48 @@
 use {
-    anyhow::{bail, Context, Result},
-    ash::vk,
-    sts::{
+    crate::{
         graphics::vulkan::{raii, Device},
         trace,
     },
+    anyhow::{bail, Context, Result},
+    ash::vk,
+    std::marker::PhantomData,
 };
 
 /// A CPU accessible buffer with some convenience functions for uploading data.
+///
+/// # How It Works
+///
+/// The UniformBuffer allocates enough data to hold N copies of the FrameDataT
+/// data type. This allows up to N independent frames-in-flight that can
+/// independently update their data.
+///
+/// Notably, the implementation ensures that each copy of the frame data is
+/// aligned to the devices min uniform buffer offset alignment.
+///
+/// # Performance
+///
+/// This implementation always uses a dedicated host-coherent allocation for
+/// storing per-frame uniform data. This is fine for an application that's
+/// *only* presenting a single uniform buffer, but will need to be changed if
+/// used as part of a larger application.
 #[derive(Debug)]
-pub struct UniformBuffer {
+pub struct UniformBuffer<FrameDataT: Sized + Copy + Default> {
     pub buffer: raii::Buffer,
     pub _memory: raii::DeviceMemory,
     aligned_unit_size: usize,
     count: usize,
     mapped_ptr: *mut std::ffi::c_void,
+    _phantom_data: PhantomData<FrameDataT>,
 }
 
-impl UniformBuffer {
+impl<FrameDataT> UniformBuffer<FrameDataT>
+where
+    FrameDataT: Sized + Copy + Default,
+{
     /// Allocate a new buffer and GPU memory for holding per-frame uniform data.
     ///
     /// The buffer will have enough size for `count` copies of the frame data.
-    pub fn allocate<FrameDataT>(device: &Device, count: usize) -> Result<Self> {
+    pub fn allocate(device: &Device, count: usize) -> Result<Self> {
         // compute the aligned size for each element in the buffer
         let properties = unsafe {
             device
@@ -111,6 +132,7 @@ impl UniformBuffer {
             aligned_unit_size: aligned_unit_size as usize,
             _memory: memory,
             mapped_ptr,
+            _phantom_data: PhantomData::default(),
         })
     }
 
@@ -125,10 +147,10 @@ impl UniformBuffer {
     ///
     /// Unsafe because:
     /// - the caller must synchronize access to the region being written.
-    pub unsafe fn write_indexed<D: Copy>(
+    pub unsafe fn write_indexed(
         &mut self,
         index: usize,
-        data: D,
+        data: FrameDataT,
     ) -> Result<()> {
         if index >= self.count {
             bail!(
@@ -138,7 +160,7 @@ impl UniformBuffer {
 
         let offset = self.offset_for_index(index) as isize;
         std::ptr::write_volatile(
-            self.mapped_ptr.byte_offset(offset) as *mut D,
+            self.mapped_ptr.byte_offset(offset) as *mut FrameDataT,
             data,
         );
 

@@ -1,57 +1,15 @@
 use {
-    anyhow::{Context, Result},
-    ash::vk,
-    sts::{
+    crate::{
         graphics::vulkan::{raii, Device, Swapchain},
         trace,
     },
+    anyhow::{Context, Result},
+    ash::vk,
 };
 
-#[derive(Debug, Copy, Clone, PartialEq)]
-#[repr(packed)]
-pub struct FrameData {
-    pub mouse_pos: [f32; 2],
-    pub screen_size: [f32; 2],
-    pub dt: f32,
-    pub time: f32,
-}
-
-pub fn create_descriptor_pool(
-    device: &Device,
-    count: usize,
-) -> Result<raii::DescriptorPool> {
-    let sizes = [vk::DescriptorPoolSize {
-        ty: vk::DescriptorType::UNIFORM_BUFFER,
-        descriptor_count: count as u32,
-    }];
-    let create_info = vk::DescriptorPoolCreateInfo {
-        max_sets: count as u32,
-        pool_size_count: sizes.len() as u32,
-        p_pool_sizes: sizes.as_ptr(),
-        ..Default::default()
-    };
-    raii::DescriptorPool::new(device.logical_device.clone(), &create_info)
-}
-
-pub fn create_descriptor_set_layout(
-    device: &Device,
-) -> Result<raii::DescriptorSetLayout> {
-    let descriptor_set_bindings = [vk::DescriptorSetLayoutBinding {
-        binding: 0,
-        descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
-        descriptor_count: 1,
-        stage_flags: vk::ShaderStageFlags::FRAGMENT
-            | vk::ShaderStageFlags::VERTEX,
-        ..Default::default()
-    }];
-    let create_info = vk::DescriptorSetLayoutCreateInfo {
-        binding_count: descriptor_set_bindings.len() as u32,
-        p_bindings: descriptor_set_bindings.as_ptr(),
-        ..Default::default()
-    };
-    raii::DescriptorSetLayout::new(device.logical_device.clone(), &create_info)
-}
-
+/// Creates a new graphics pipeline that targets the entire swapchain viewport,
+/// is compatible with the provided render pass, and uses the provided fragment
+/// shader source.
 pub fn create_pipeline(
     device: &Device,
     swapchain: &Swapchain,
@@ -87,7 +45,7 @@ pub fn create_pipeline(
     .with_context(trace!("Error while creating fragment shader module!"))?;
 
     let vertex_shader_words = ash::util::read_spv(&mut std::io::Cursor::new(
-        include_bytes!("./shaders/passthrough.vert.spv"),
+        include_bytes!("./shaders/fullscreen_quad.vert.spv"),
     ))?;
     let vertex_module = raii::ShaderModule::new(
         device.logical_device.clone(),
@@ -199,6 +157,10 @@ pub fn create_pipeline(
     let pipeline = raii::Pipeline::new_graphics_pipeline(
         device.logical_device.clone(),
         &create_info,
-    )?;
+    )
+    .with_context(trace!(
+        "Error while creating graphics pipeline for FullscreenQuad!"
+    ))?;
+
     Ok((pipeline, layout))
 }

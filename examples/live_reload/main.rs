@@ -1,15 +1,8 @@
-mod buffer;
-mod pipeline;
-
 use {
     anyhow::{Context, Result},
     ash::vk,
-    buffer::UniformBuffer,
     clap::Parser,
-    glfw::{Action, Key, WindowEvent, WindowMode},
-    pipeline::{
-        create_descriptor_pool, create_descriptor_set_layout, FrameData,
-    },
+    glfw::{Action, Key, WindowEvent},
     std::{
         path::PathBuf,
         sync::Arc,
@@ -22,7 +15,7 @@ use {
                 raii, Device, FrameStatus, FramesInFlight, PresentImageStatus,
                 Swapchain,
             },
-            Recompiler,
+            FullscreenQuad, Recompiler,
         },
         trace,
     },
@@ -35,30 +28,46 @@ struct Args {
     pub fragment_shader_path: PathBuf,
 }
 
-struct Example {
-    device: Arc<Device>,
+// This can be accepted in the fragment shader with code like:
+//
+//   struct FrameData {
+//       float2 mouse_pos;
+//       float2 screen_size;
+//       float dt;
+//       float time;
+//   };
+//
+//   [[vk_binding(0, 0)]]
+//   ConstantBuffer<FrameData> frame;
+//
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
+#[repr(packed)]
+pub struct FrameData {
+    pub mouse_pos: [f32; 2],
+    pub screen_size: [f32; 2],
+    pub dt: f32,
+    pub time: f32,
+}
+
+struct LiveReload {
     start_time: Instant,
     last_frame: Instant,
+    fragment_shader_compiler: Recompiler,
+    fullscreen_toggle: FullscreenToggle,
 
+    device: Arc<Device>,
+
+    frames_in_flight: FramesInFlight,
     swapchain: Arc<Swapchain>,
     swapchain_needs_rebuild: bool,
-    frames_in_flight: FramesInFlight,
 
     render_pass: raii::RenderPass,
     framebuffers: Vec<raii::Framebuffer>,
 
-    pipeline: raii::Pipeline,
-    pipeline_layout: raii::PipelineLayout,
-    descriptor_set_layout: raii::DescriptorSetLayout,
-    _descriptor_pool: raii::DescriptorPool,
-    descriptor_sets: Vec<vk::DescriptorSet>,
-    uniform_buffer: UniformBuffer,
-
-    fragment_shader_compiler: Recompiler,
-    fullscreen_toggle: FullscreenToggle,
+    fullscreen_quad: FullscreenQuad<FrameData>,
 }
 
-impl Example {
+impl LiveReload {
     fn rebuild_swapchain(&mut self, window: &mut glfw::Window) -> Result<()> {
         unsafe {
             // wait for all pending work to finish
@@ -83,21 +92,16 @@ impl Example {
 
         log::info!("{:#?}", self.swapchain);
         self.fragment_shader_compiler.check_for_update()?;
-        let (pipeline, pipeline_layout) = pipeline::create_pipeline(
-            &self.device,
+        self.fullscreen_quad.rebuild_pipeline(
             &self.swapchain,
             &self.render_pass,
-            &self.descriptor_set_layout,
             self.fragment_shader_compiler.current_shader_bytes(),
         )?;
-        self.pipeline = pipeline;
-        self.pipeline_layout = pipeline_layout;
-
         Ok(())
     }
 }
 
-impl App for Example {
+impl App for LiveReload {
     fn new(window: &mut glfw::Window) -> Result<Self>
     where
         Self: Sized,
@@ -123,95 +127,32 @@ impl App for Example {
         let frames_in_flight = FramesInFlight::new(device.clone(), 3)?;
 
         let render_pass = create_renderpass(&device, &swapchain)?;
-        let descriptor_set_layout = create_descriptor_set_layout(&device)?;
         let framebuffers =
             create_framebuffers(&device, &render_pass, &swapchain)?;
-        let (pipeline, pipeline_layout) = pipeline::create_pipeline(
-            &device,
+
+        let fullscreen_quad = FullscreenQuad::new(
+            device.clone(),
+            fragment_shader_compiler.current_shader_bytes(),
+            &frames_in_flight,
             &swapchain,
             &render_pass,
-            &descriptor_set_layout,
-            fragment_shader_compiler.current_shader_bytes(),
         )?;
-
-        let descriptor_pool =
-            create_descriptor_pool(&device, frames_in_flight.frame_count())?;
-        let layouts = (0..frames_in_flight.frame_count())
-            .map(|_| descriptor_set_layout.raw)
-            .collect::<Vec<vk::DescriptorSetLayout>>();
-        let descriptor_sets = unsafe {
-            let allocate_info = vk::DescriptorSetAllocateInfo {
-                descriptor_pool: descriptor_pool.raw,
-                descriptor_set_count: frames_in_flight.frame_count() as u32,
-                p_set_layouts: layouts.as_ptr(),
-                ..Default::default()
-            };
-            device.allocate_descriptor_sets(&allocate_info)?
-        };
-        let mut uniform_buffer = UniformBuffer::allocate::<FrameData>(
-            &device,
-            frames_in_flight.frame_count(),
-        )?;
-        for index in 0..frames_in_flight.frame_count() {
-            unsafe {
-                uniform_buffer.write_indexed(
-                    index,
-                    FrameData {
-                        mouse_pos: [0.0, 0.0],
-                        screen_size: [1.0, 1.0],
-                        time: 0.0,
-                        dt: 0.0,
-                    },
-                )?;
-            }
-        }
-        unsafe {
-            let buffer_infos = (0..frames_in_flight.frame_count())
-                .map(|index| vk::DescriptorBufferInfo {
-                    buffer: uniform_buffer.buffer.raw,
-                    offset: uniform_buffer.offset_for_index(index),
-                    range: std::mem::size_of::<FrameData>() as u64,
-                })
-                .collect::<Vec<_>>();
-            let writes = buffer_infos
-                .iter()
-                .enumerate()
-                .map(|(index, buffer_info)| vk::WriteDescriptorSet {
-                    dst_set: descriptor_sets[index],
-                    dst_binding: 0,
-                    dst_array_element: 0,
-                    descriptor_count: 1,
-                    descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
-                    p_image_info: std::ptr::null(),
-                    p_buffer_info: buffer_info,
-                    p_texel_buffer_view: std::ptr::null(),
-                    ..Default::default()
-                })
-                .collect::<Vec<_>>();
-            device.update_descriptor_sets(&writes, &[]);
-        };
 
         Ok(Self {
-            device,
             start_time: Instant::now(),
             last_frame: Instant::now(),
             fragment_shader_compiler,
+            fullscreen_toggle: FullscreenToggle::new(window),
 
+            device,
+
+            frames_in_flight,
             swapchain,
             swapchain_needs_rebuild: false,
-            frames_in_flight,
 
             render_pass,
             framebuffers,
-
-            pipeline,
-            pipeline_layout,
-            descriptor_set_layout,
-            _descriptor_pool: descriptor_pool,
-            descriptor_sets,
-            uniform_buffer,
-
-            fullscreen_toggle: FullscreenToggle::new(window),
+            fullscreen_quad,
         })
     }
 
@@ -243,15 +184,11 @@ impl App for Example {
             self.frames_in_flight
                 .wait_for_all_frames_to_complete()
                 .with_context(trace!("Error while waiting for frames"))?;
-            let (pipeline, pipeline_layout) = pipeline::create_pipeline(
-                &self.device,
+            self.fullscreen_quad.rebuild_pipeline(
                 &self.swapchain,
                 &self.render_pass,
-                &self.descriptor_set_layout,
                 self.fragment_shader_compiler.current_shader_bytes(),
             )?;
-            self.pipeline = pipeline;
-            self.pipeline_layout = pipeline_layout;
         }
 
         let frame = match self.frames_in_flight.start_frame(&self.swapchain)? {
@@ -262,8 +199,7 @@ impl App for Example {
             }
         };
 
-        // write frame data
-        {
+        let frame_data = {
             let now = Instant::now();
             let dt = (now - self.last_frame).as_secs_f32();
             self.last_frame = now;
@@ -273,22 +209,17 @@ impl App for Example {
 
             let (x, y) = (x_64 as f32, y_64 as f32);
             let (w, h) = (w_i32 as f32, h_i32 as f32);
-            let a = w / h;
 
-            let frame_data = FrameData {
+            FrameData {
                 mouse_pos: [
-                    sts::map(x, 0.0..w, -a..a),
+                    sts::map(x, 0.0..w, -1.0..1.0),
                     sts::map(y, 0.0..h, 1.0..-1.0),
                 ],
                 screen_size: [w, h],
                 time: (now - self.start_time).as_secs_f32(),
                 dt,
-            };
-            unsafe {
-                self.uniform_buffer
-                    .write_indexed(frame.frame_index(), frame_data)?;
             }
-        }
+        };
 
         unsafe {
             let clear_value = vk::ClearValue {
@@ -314,22 +245,7 @@ impl App for Example {
                 vk::SubpassContents::INLINE,
             );
 
-            self.device.cmd_bind_pipeline(
-                frame.command_buffer(),
-                vk::PipelineBindPoint::GRAPHICS,
-                self.pipeline.raw,
-            );
-
-            self.device.cmd_bind_descriptor_sets(
-                frame.command_buffer(),
-                vk::PipelineBindPoint::GRAPHICS,
-                self.pipeline_layout.raw,
-                0,
-                &[self.descriptor_sets[frame.frame_index()]],
-                &[],
-            );
-
-            self.device.cmd_draw(frame.command_buffer(), 6, 1, 0, 0);
+            self.fullscreen_quad.draw(&frame, frame_data)?;
 
             self.device.cmd_end_render_pass(frame.command_buffer());
         }
@@ -427,5 +343,5 @@ fn create_framebuffers(
 }
 
 pub fn main() {
-    app_main::<Example>();
+    app_main::<LiveReload>();
 }

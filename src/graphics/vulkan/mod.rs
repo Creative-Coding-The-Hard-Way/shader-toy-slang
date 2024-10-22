@@ -5,6 +5,6 @@ mod swapchain;
 
 pub use self::{
     device::{Device, Instance},
-    frames_in_flight::{FrameStatus, FramesInFlight},
+    frames_in_flight::{Frame, FrameStatus, FramesInFlight},
     swapchain::{AcquireImageStatus, PresentImageStatus, Swapchain},
 };

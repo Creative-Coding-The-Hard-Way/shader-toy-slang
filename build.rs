@@ -6,7 +6,7 @@ use {
 
 /// Globs all of the .slang shader files in the examples directory.
 fn get_shader_file_paths() -> Result<Vec<String>> {
-    let shaders = glob("examples/**/*.slang")?;
+    let shaders = glob("src/**/*.slang")?;
     let mut file_names = vec![];
     for file in shaders {
         let file_name = file?.to_str().unwrap().to_string();
