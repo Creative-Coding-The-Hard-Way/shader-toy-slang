@@ -8,21 +8,32 @@ struct FrameData {
 [[vk_binding(0, 0)]]
 ConstantBuffer<FrameData> frame;
 
+float3 palette(float t)
+{
+    let a = float3(0.328, 0.408, 0.488);
+    let b = float3(0.150, 0.227, 0.227);
+    let c = float3(1.330, 1.208, 1.568);
+    let d = float3(-0.303, -0.103, 0.197);
+    return a + b*cos( 6.283185*(c*t+d) );
+}
+
 [shader("fragment")]
-float4 main(float2 frag_pos: SmoothOutput) : SV_Target {
-    let pi = 3.1415;
-    let t = frame.time;
-    var color = float4(0.0, 0.0, 0.0, 1.0);
-    let pos = frag_pos * frame.screen_size.y;
+float4 main(float2 uv: SmoothOutput) : SV_Target {
+    let t = frame.time ;
+    var color = float3(1.0, 2.0, 0.8);
 
-    let h = 0
-        + sin(frag_pos.x * pi * 1.0 + t*2.00) * 100
-        + sin(frag_pos.x * pi * 0.5 + t*3.00) * 50
-        + sin(frag_pos.x * pi * 0.2 + t*0.50) * frame.screen_size.y * 0.75;
+    float2 uv0 = uv;
 
-    let d = abs(pos.y - h);
+    for (float i = 0; i < 3; i++) {
+        uv = fract(uv * 2.0) - 0.5;
 
-    color.xyz += float3(0.0, pow(1/d, 2.0), pow(10/d, 1.8));
+        float d = length(uv);
+        d = sin(d * 8 + t) / 8;
+        d = abs(d);
 
-    return color;
+        color *= (0.05/d) * palette(d*5 + t*0.25);
+    }
+
+
+    return float4(color, 1.0);
 }

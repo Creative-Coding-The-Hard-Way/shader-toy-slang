@@ -3,12 +3,15 @@
 //! This module defines the traits and functions required for managing the
 //! lifecycle of a GLFW application with a single Vulkan-enabled window.
 
+mod fullscreen_toggle;
 mod logging;
 use {
     crate::trace,
     anyhow::{Context, Result},
     glfw::fail_on_errors,
 };
+
+pub use self::fullscreen_toggle::FullscreenToggle;
 
 /// Implementations of this trait can be run with app_main to manage a GLFW
 /// window.

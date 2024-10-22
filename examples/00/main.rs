@@ -6,7 +6,7 @@ use {
     ash::vk,
     buffer::UniformBuffer,
     clap::Parser,
-    glfw::{Action, Key, WindowEvent},
+    glfw::{Action, Key, WindowEvent, WindowMode},
     pipeline::{
         create_descriptor_pool, create_descriptor_set_layout, FrameData,
     },
@@ -16,7 +16,7 @@ use {
         time::{Duration, Instant},
     },
     sts::{
-        app::{app_main, App},
+        app::{app_main, App, FullscreenToggle},
         graphics::{
             vulkan::{
                 raii, Device, FrameStatus, FramesInFlight, PresentImageStatus,
@@ -55,6 +55,7 @@ struct Example {
     uniform_buffer: UniformBuffer,
 
     fragment_shader_compiler: Recompiler,
+    fullscreen_toggle: FullscreenToggle,
 }
 
 impl Example {
@@ -209,6 +210,8 @@ impl App for Example {
             _descriptor_pool: descriptor_pool,
             descriptor_sets,
             uniform_buffer,
+
+            fullscreen_toggle: FullscreenToggle::new(window),
         })
     }
 
@@ -217,8 +220,14 @@ impl App for Example {
         window: &mut glfw::Window,
         event: glfw::WindowEvent,
     ) -> Result<()> {
-        if let WindowEvent::Key(Key::Escape, _, Action::Release, _) = event {
-            window.set_should_close(true);
+        match event {
+            WindowEvent::Key(Key::Escape, _, Action::Release, _) => {
+                window.set_should_close(true);
+            }
+            WindowEvent::Key(Key::Space, _, Action::Release, _) => {
+                self.fullscreen_toggle.toggle_fullscreen(window)?;
+            }
+            _ => (),
         }
         Ok(())
     }
