@@ -1,3 +1,4 @@
 /target
 /logs
 *.spv
+.ipynb_checkpoints/
