@@ -8,6 +8,15 @@ any time the source is modified and compiles successfully.
 
 > cargo run --example live_reload -- <path-to-slang-src>
 
+For example:
+
+> cargo run --example live_reload -- ./examples/live_reload/shaders/noise.frag.slang
+
+Optionally, include the lib directory to trigger a recompile any time any of
+those files changes:
+
+> cargo run --example live_reload -- ./examples/live_reload/shaders/noise.frag.slang ./examples/live_reload/shaders/lib/
+
 ## Keybinds
 
 - Esc: exit the application

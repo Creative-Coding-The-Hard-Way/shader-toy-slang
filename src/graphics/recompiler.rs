@@ -13,7 +13,7 @@ use {
         DebounceEventResult,
     },
     std::{
-        path::Path,
+        path::{Path, PathBuf},
         sync::mpsc::{sync_channel, Receiver, SyncSender, TryRecvError},
         thread::JoinHandle,
         time::Duration,
@@ -34,7 +34,10 @@ pub struct Recompiler {
 impl Recompiler {
     /// Creates a new recompiler that attempts to compile the given shader
     /// source. Returns an error if the initial compilation fails.
-    pub fn new(shader_source_path: &Path) -> Result<Self> {
+    pub fn new(
+        shader_source_path: &Path,
+        additional_watch_dir: &Option<PathBuf>,
+    ) -> Result<Self> {
         let shader_source_path_str = shader_source_path
             .to_str()
             .with_context(trace!("File path isn't a valid utf8 string!"))?
@@ -49,6 +52,7 @@ impl Recompiler {
 
         let compile_thread_join_handle = spawn_compiler_thread(
             shader_source_path,
+            additional_watch_dir,
             source_sender,
             shutdown_receiver,
         )
@@ -103,9 +107,11 @@ impl Drop for Recompiler {
 
 fn spawn_compiler_thread(
     shader_source_path: &Path,
+    additional_watch_dir: &Option<PathBuf>,
     source_sender: SyncSender<Vec<u8>>,
     shutdown_receiver: Receiver<()>,
 ) -> Result<JoinHandle<()>> {
+    let owned_additional_watch_path = additional_watch_dir.clone();
     let owned_shader_source_path = shader_source_path.to_owned();
     let shader_source_path_str = owned_shader_source_path.display().to_string();
     let compile_thread_join_handle = std::thread::spawn(move || {
@@ -123,6 +129,13 @@ fn spawn_compiler_thread(
             .watcher()
             .watch(&owned_shader_source_path, RecursiveMode::NonRecursive)
             .unwrap();
+
+        if let Some(dir) = &owned_additional_watch_path {
+            debouncer
+                .watcher()
+                .watch(dir, RecursiveMode::Recursive)
+                .unwrap();
+        }
 
         // block until shutdown
         shutdown_receiver.recv().unwrap();

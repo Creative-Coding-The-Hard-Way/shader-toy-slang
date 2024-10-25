@@ -1,19 +1,10 @@
-struct FrameData {
-    float2 mouse_pos;
-    float2 screen_size;
-    float dt;
-    float time;
-};
-
-[[vk_binding(0, 0)]]
-ConstantBuffer<FrameData> frame;
+module noise;
 
 /// Computes a consistent 'hash' of the provided numbers.
-float hash(float i, float j) {
+public float hash(float2 ij) {
     static const float pi = radians(180);
-    let u = 12.334897 * fract(29 * i / pi);
-    let v = 184.239 * fract(37 * j / pi);
-    return fract(u*v*(u+v) + 3*u - 8*v);
+    let x = 51397.7915953 * sin(dot(ij, float2(12.95137, 134.15997)));
+    return fract(x);
 }
 
 /// Computes bilinear interpolation at point p.
@@ -52,50 +43,37 @@ float bicubic(float2 p, float4 u) {
     return u0 + 3*R*x2 - 2*R*x3 + 3*y*y*A - 2*y*y*y*A;
 }
 
-float noise(float2 p) {
-    let i = trunc(p.x);
-    let j = trunc(p.y);
+public float noise(float2 p) {
+    int2 ij = floor(p);
+    int2 off = int2(0, 1);
     return bicubic(
         fract(p),
         float4(
-            hash(i+0,j+0),
-            hash(i+0,j+1),
-            hash(i+1,j+0),
-            hash(i+1,j+1)
+            hash(ij + off.xx),
+            hash(ij + off.xy),
+            hash(ij + off.yx),
+            hash(ij + off.yy)
         )
     );
 }
 
-float fbm(float2 p) {
+public float fbm(float2 p) {
     static const float2x2 ROTATE = float2x2(
         3.0/5.0, -4.0/5.0,
         4.0/5.0, 3.0/5.0
     );
-
-    // Seems to address weird artifacting with negative numbers
-    p = abs(p);
+    static const float SCALE = sqrt(2);
 
     var total = 0.0;
     var amplitude = 0.5;
 
     [unroll]
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 4; i++) {
         total += amplitude*noise(p);
 
-        p = 2.1244 * mul(p, ROTATE);
+        p = SCALE * mul(p, ROTATE);
         amplitude *= 0.5;
     }
 
     return total;
-}
-
-[shader("fragment")]
-float4 main(
-    float2 pos: SmoothOutput_pos,
-    float2 uv: SmoothOutput_uv
-) : SV_Target {
-    uv.x *= (frame.screen_size.x / frame.screen_size.y);
-    // let color = float3(hash(uv.x, uv.y));
-    let color = float3(fbm(uv*10 + frame.time));
-    return float4(color, 1.0);
 }

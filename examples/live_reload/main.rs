@@ -26,6 +26,10 @@ use {
 struct Args {
     /// The path to the shader to watch.
     pub fragment_shader_path: PathBuf,
+
+    /// An additional directory to watch for edits. Any edit will trigger the
+    /// fragment shader to recompile.
+    pub additional_watch_dir: Option<PathBuf>,
 }
 
 // This can be accepted in the fragment shader with code like:
@@ -114,10 +118,13 @@ impl App for LiveReload {
         let device = Device::new(window)?;
         log::debug!("Created device: {:#?}", device);
 
-        let fragment_shader_compiler =
-            Recompiler::new(&cli_args.fragment_shader_path).with_context(
-                trace!("Unable to start the fragment shader compiler!"),
-            )?;
+        let fragment_shader_compiler = Recompiler::new(
+            &cli_args.fragment_shader_path,
+            &cli_args.additional_watch_dir,
+        )
+        .with_context(trace!(
+            "Unable to start the fragment shader compiler!"
+        ))?;
 
         let (w, h) = window.get_framebuffer_size();
         let swapchain =
