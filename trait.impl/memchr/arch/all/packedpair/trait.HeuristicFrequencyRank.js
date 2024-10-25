@@ -1,9 +1,3 @@
-(function() {
-    var implementors = Object.fromEntries([["memchr",[]]]);
-    if (window.register_implementors) {
-        window.register_implementors(implementors);
-    } else {
-        window.pending_implementors = implementors;
-    }
-})()
-//{"start":57,"fragment_lengths":[13]}
+(function() {var implementors = {
+"memchr":[]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
