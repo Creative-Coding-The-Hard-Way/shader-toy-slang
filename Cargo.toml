@@ -17,8 +17,9 @@ anyhow = "*"
 regex = "*"
 flexi_logger = {version = "*", features = ["async"]}
 indoc = "*"
-clap = { version = "*", features = ["derive"]}
+clap = { version = "*", features = ["derive", "wrap_help"]}
 notify-debouncer-full = "*"
+argfile = "*"
 
 [dependencies.glfw]
 version = "*"

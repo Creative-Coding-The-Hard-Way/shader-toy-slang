@@ -1,4 +1,4 @@
-import lib.value_noise;
+import "../include/value_noise";
 
 struct FrameData {
     float2 mouse_pos;

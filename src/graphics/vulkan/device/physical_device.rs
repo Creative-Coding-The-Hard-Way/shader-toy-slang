@@ -20,7 +20,7 @@ pub fn pick_suitable_device(
             .with_context(trace!("Unable to enumerate physical devices!"))?
     };
 
-    log::info!("Searching for suitable physical device...");
+    log::trace!("Searching for suitable physical device...");
 
     let mut preferred_device = None;
 
@@ -30,7 +30,7 @@ pub fn pick_suitable_device(
         };
         let name = properties.device_name_as_c_str().unwrap_or_default();
 
-        log::info!("Check device {:?}", name);
+        log::trace!("Check device {:?}", name);
         log::trace!("Device properties: {:#?}", properties);
 
         let has_features = has_required_features(instance, physical_device);
@@ -39,7 +39,7 @@ pub fn pick_suitable_device(
         let has_surface_formats =
             has_required_surface_formats(surface_khr, physical_device)?;
 
-        log::info!(
+        log::trace!(
             indoc::indoc! {"
                 Device: {:?}
                  - has_required_features: {}

@@ -36,7 +36,7 @@ impl Recompiler {
     /// source. Returns an error if the initial compilation fails.
     pub fn new(
         shader_source_path: &Path,
-        additional_watch_dir: &Option<PathBuf>,
+        additional_watch_paths: &[PathBuf],
     ) -> Result<Self> {
         let shader_source_path_str = shader_source_path
             .to_str()
@@ -52,7 +52,7 @@ impl Recompiler {
 
         let compile_thread_join_handle = spawn_compiler_thread(
             shader_source_path,
-            additional_watch_dir,
+            additional_watch_paths,
             source_sender,
             shutdown_receiver,
         )
@@ -107,13 +107,13 @@ impl Drop for Recompiler {
 
 fn spawn_compiler_thread(
     shader_source_path: &Path,
-    additional_watch_dir: &Option<PathBuf>,
+    additional_watch_paths: &[PathBuf],
     source_sender: SyncSender<Vec<u8>>,
     shutdown_receiver: Receiver<()>,
 ) -> Result<JoinHandle<()>> {
-    let owned_additional_watch_path = additional_watch_dir.clone();
-    let owned_shader_source_path = shader_source_path.to_owned();
-    let shader_source_path_str = owned_shader_source_path.display().to_string();
+    let additional_watch_paths = additional_watch_paths.to_vec();
+    let shader_source_path = shader_source_path.to_owned();
+    let shader_source_path_str = shader_source_path.display().to_string();
     let compile_thread_join_handle = std::thread::spawn(move || {
         let mut debouncer =
             new_debouncer(Duration::from_millis(250), None, move |result| {
@@ -127,13 +127,13 @@ fn spawn_compiler_thread(
 
         debouncer
             .watcher()
-            .watch(&owned_shader_source_path, RecursiveMode::NonRecursive)
+            .watch(&shader_source_path, RecursiveMode::NonRecursive)
             .unwrap();
 
-        if let Some(dir) = &owned_additional_watch_path {
+        for additional_path in additional_watch_paths {
             debouncer
                 .watcher()
-                .watch(dir, RecursiveMode::Recursive)
+                .watch(&additional_path, RecursiveMode::Recursive)
                 .unwrap();
         }
 

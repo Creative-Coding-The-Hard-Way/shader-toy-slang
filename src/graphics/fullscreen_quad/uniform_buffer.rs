@@ -55,7 +55,7 @@ where
                 / properties.limits.min_uniform_buffer_offset_alignment;
             (count + 1) * properties.limits.min_uniform_buffer_offset_alignment
         };
-        log::info!("Unit size: {}", aligned_unit_size);
+        log::trace!("Unit size: {}", aligned_unit_size);
 
         // compute the total length of the buffer based on the aligned unit size
         // round up to the closest megabyte

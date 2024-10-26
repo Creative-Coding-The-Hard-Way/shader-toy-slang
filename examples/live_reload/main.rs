@@ -1,3 +1,6 @@
+//! Run with the command:
+//!   cargo run --example live_reload -- <args>
+
 use {
     anyhow::{Context, Result},
     ash::vk,
@@ -24,12 +27,14 @@ use {
 #[derive(Parser, Debug, Eq, PartialEq)]
 #[command(version, about, long_about=None)]
 struct Args {
-    /// The path to the shader to watch.
-    pub fragment_shader_path: PathBuf,
+    /// The fragment shader source path.
+    #[arg(short, long)]
+    pub frag_shader: PathBuf,
 
-    /// An additional directory to watch for edits. Any edit will trigger the
-    /// fragment shader to recompile.
-    pub additional_watch_dir: Option<PathBuf>,
+    /// Additional files/directories to watch. Any change to the file (or
+    /// files, if a directory) will trigger a shader rebuild.
+    #[arg(short, long)]
+    pub additional_watch_dir: Vec<PathBuf>,
 }
 
 // This can be accepted in the fragment shader with code like:
@@ -71,65 +76,28 @@ struct LiveReload {
     fullscreen_quad: FullscreenQuad<FrameData>,
 }
 
-impl LiveReload {
-    fn rebuild_swapchain(&mut self, window: &mut glfw::Window) -> Result<()> {
-        unsafe {
-            // wait for all pending work to finish
-            self.device.device_wait_idle()?;
-        }
-
-        self.framebuffers.clear();
-
-        let (w, h) = window.get_framebuffer_size();
-        self.swapchain = Swapchain::new(
-            self.device.clone(),
-            (w as u32, h as u32),
-            Some(self.swapchain.raw.raw),
-        )?;
-
-        self.render_pass = create_renderpass(&self.device, &self.swapchain)?;
-        self.framebuffers = create_framebuffers(
-            &self.device,
-            &self.render_pass,
-            &self.swapchain,
-        )?;
-
-        log::info!("{:#?}", self.swapchain);
-        self.fragment_shader_compiler.check_for_update()?;
-        self.fullscreen_quad.rebuild_pipeline(
-            &self.swapchain,
-            &self.render_pass,
-            self.fragment_shader_compiler.current_shader_bytes(),
-        )?;
-        Ok(())
-    }
-}
-
 impl App for LiveReload {
-    fn new(window: &mut glfw::Window) -> Result<Self>
+    type Args = Args;
+
+    fn new(window: &mut glfw::Window, args: Args) -> Result<Self>
     where
         Self: Sized,
     {
-        let cli_args = Args::try_parse()
-            .with_context(trace!("Unable to parse cli args!"))?;
-
         window.set_all_polling(true);
 
         let device = Device::new(window)?;
-        log::debug!("Created device: {:#?}", device);
+        log::trace!("Created device: {:#?}", device);
 
-        let fragment_shader_compiler = Recompiler::new(
-            &cli_args.fragment_shader_path,
-            &cli_args.additional_watch_dir,
-        )
-        .with_context(trace!(
-            "Unable to start the fragment shader compiler!"
-        ))?;
+        let fragment_shader_compiler =
+            Recompiler::new(&args.frag_shader, &args.additional_watch_dir)
+                .with_context(trace!(
+                    "Unable to start the fragment shader compiler!"
+                ))?;
 
         let (w, h) = window.get_framebuffer_size();
         let swapchain =
             Swapchain::new(device.clone(), (w as u32, h as u32), None)?;
-        log::debug!("Created swapchain: {:#?}", swapchain);
+        log::trace!("Created swapchain: {:#?}", swapchain);
 
         let frames_in_flight = FramesInFlight::new(device.clone(), 3)?;
 
@@ -265,6 +233,40 @@ impl App for LiveReload {
             self.swapchain_needs_rebuild = true;
         }
 
+        Ok(())
+    }
+}
+
+impl LiveReload {
+    fn rebuild_swapchain(&mut self, window: &mut glfw::Window) -> Result<()> {
+        unsafe {
+            // wait for all pending work to finish
+            self.device.device_wait_idle()?;
+        }
+
+        self.framebuffers.clear();
+
+        let (w, h) = window.get_framebuffer_size();
+        self.swapchain = Swapchain::new(
+            self.device.clone(),
+            (w as u32, h as u32),
+            Some(self.swapchain.raw.raw),
+        )?;
+
+        self.render_pass = create_renderpass(&self.device, &self.swapchain)?;
+        self.framebuffers = create_framebuffers(
+            &self.device,
+            &self.render_pass,
+            &self.swapchain,
+        )?;
+
+        log::trace!("{:#?}", self.swapchain);
+        self.fragment_shader_compiler.check_for_update()?;
+        self.fullscreen_quad.rebuild_pipeline(
+            &self.swapchain,
+            &self.render_pass,
+            self.fragment_shader_compiler.current_shader_bytes(),
+        )?;
         Ok(())
     }
 }

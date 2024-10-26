@@ -8,6 +8,7 @@ mod logging;
 use {
     crate::trace,
     anyhow::{Context, Result},
+    clap::Parser,
     glfw::fail_on_errors,
 };
 
@@ -16,11 +17,13 @@ pub use self::fullscreen_toggle::FullscreenToggle;
 /// Implementations of this trait can be run with app_main to manage a GLFW
 /// window.
 pub trait App {
+    type Args: Sized + Parser;
+
     /// Creates a new instance of the application.
     /// The application is allowed to modify the window based on its own
     /// requirements. This includes modifying the polling state, fullscreen
     /// status, size, etc...
-    fn new(window: &mut glfw::Window) -> Result<Self>
+    fn new(window: &mut glfw::Window, args: Self::Args) -> Result<Self>
     where
         Self: Sized;
 
@@ -81,6 +84,10 @@ where
 {
     logging::setup();
 
+    let args = argfile::expand_args(argfile::parse_fromfile, argfile::PREFIX)
+        .with_context(trace!("Error while expanding argfiles!"))?;
+    let args = A::Args::parse_from(args);
+
     let mut glfw = glfw::init(fail_on_errors!())
         .with_context(trace!("Unable to initalize GLFW!"))?;
     glfw.window_hint(glfw::WindowHint::ClientApi(glfw::ClientApiHint::NoApi));
@@ -95,7 +102,7 @@ where
         )
         .with_context(trace!("Unable to create window!"))?;
 
-    let mut app = A::new(&mut window)
+    let mut app = A::new(&mut window, args)
         .with_context(trace!("Error while initializing the app!"))?;
 
     while !window.should_close() {

@@ -1,4 +1,4 @@
-# Live Reload
+# Shader-Toy-Slang
 
 A Vulkan demo that presents a fullscreen quad every frame. The fragment shader
 source is provided as a command line argument and will be dynamically reloaded
