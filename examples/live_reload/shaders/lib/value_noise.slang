@@ -4,16 +4,13 @@ import interpolation;
 
 /// Computes a consistent hash of the provided numbers.
 ///
-/// The main idea with this 'hash' is to abuse the apparent randomness observed
-/// by large-valued floating point numbers when multiplied by a reasonably
-/// varied output of the sin function.
+/// This hash seems fairly well-behaved for integer values in ranges 0-1000 or
+/// so. It produces decent looking value noise.
 ///
 public float value_noise_hash(float2 ij) {
-    static const float pi = radians(180);
-
-    // these constants are arbitrary. Tune until the results look good to you.
-    let x = 51397.7915953 * sin(dot(ij, float2(12.95137, 134.15997)));
-    return fract(x);
+    static const float2 DIR = 33.890/sqrt(2);
+    let v = 55.9871 * fract((ij+DIR) * DIR);
+    return fract(v.x - v.y + v.x*v.y*(ij.x + ij.y));
 }
 
 /// Computes Value Noise at the point P.
@@ -25,9 +22,9 @@ public float value_noise_hash(float2 ij) {
 /// so there are no sharp transitions between neighboring values.
 ///
 [Differentiable]
-public float noise(float2 p) {
-    int2 ij = no_diff floor(p);
-    int2 off = int2(0, 1);
+public float vnoise(float2 p) {
+    let ij = no_diff int2(floor(p));
+    let off = no_diff int2(0, 1);
     return interpolate_bicubic(
         no_diff fract(p),
         float4(

@@ -27,9 +27,9 @@ public float fbm(float2 p) {
 
     [unroll]
     for (int i = 0; i < 8; i++) {
-        total += amplitude*noise(p);
+        total += amplitude*vnoise(p);
 
-        p = SCALE * mul(p, ROTATE);
+        p = SCALE * mul(p + float2(5.0, 7.0), ROTATE);
         amplitude *= 0.5;
     }
 
@@ -50,7 +50,7 @@ float4 main(
     let sq_d = dot(dir, dir);
 
     let result = fwd_diff(fbm)(DifferentialPair<float2>(
-        float2(pos * 20.0),
+        float2(pos * 10.0),
         dir / d,
     ));
 
