@@ -50,7 +50,7 @@ struct Args {
 //   ConstantBuffer<FrameData> frame;
 //
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
-#[repr(packed)]
+#[repr(C, packed)]
 pub struct FrameData {
     pub mouse_pos: [f32; 2],
     pub screen_size: [f32; 2],
