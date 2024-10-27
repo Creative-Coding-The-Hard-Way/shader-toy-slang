@@ -3,7 +3,10 @@ mod logical_device;
 mod physical_device;
 
 use {
-    crate::{graphics::vulkan::raii, trace},
+    crate::{
+        graphics::vulkan::{raii, Allocator},
+        trace,
+    },
     anyhow::{Context, Result},
     ash::vk::{self},
     std::sync::Arc,
@@ -23,6 +26,9 @@ pub struct Device {
 
     /// The graphics queue supports GRAPHICS and presentation operations.
     pub graphics_queue: vk::Queue,
+
+    /// The device memory allocator.
+    pub allocator: Allocator,
 }
 
 impl Device {
@@ -54,6 +60,11 @@ impl Device {
             logical_device.get_device_queue(graphics_queue_family_index, 0)
         };
 
+        let allocator = Allocator::new(logical_device.clone(), physical_device)
+            .with_context(trace!(
+                "Error while creating device memory allocator!"
+            ))?;
+
         Ok(Arc::new(Self {
             instance,
             surface_khr,
@@ -61,6 +72,7 @@ impl Device {
             logical_device,
             graphics_queue_family_index,
             graphics_queue,
+            allocator,
         }))
     }
 }

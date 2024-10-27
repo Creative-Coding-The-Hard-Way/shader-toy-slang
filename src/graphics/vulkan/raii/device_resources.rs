@@ -58,6 +58,14 @@ macro_rules! resource {
 }
 
 resource!(
+    Image,
+    vk::Image,
+    vk::ImageCreateInfo,
+    create_image,
+    destroy_image
+);
+
+resource!(
     Fence,
     vk::Fence,
     vk::FenceCreateInfo,

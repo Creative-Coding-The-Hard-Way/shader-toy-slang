@@ -5,8 +5,7 @@ struct FrameData {
     float time;
 };
 
-[[vk_binding(0, 0)]]
-ConstantBuffer<FrameData> frame;
+[vk_binding(0, 0)] ConstantBuffer<FrameData> frame;
 
 [shader("fragment")]
 float4 main(
