@@ -126,53 +126,12 @@
 <a href="#126" id="126">126</a>
 <a href="#127" id="127">127</a>
 <a href="#128" id="128">128</a>
-<a href="#129" id="129">129</a>
-<a href="#130" id="130">130</a>
-<a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
-<a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
-<a href="#157" id="157">157</a>
-<a href="#158" id="158">158</a>
-<a href="#159" id="159">159</a>
-<a href="#160" id="160">160</a>
-<a href="#161" id="161">161</a>
-<a href="#162" id="162">162</a>
-<a href="#163" id="163">163</a>
-<a href="#164" id="164">164</a>
-<a href="#165" id="165">165</a>
-<a href="#166" id="166">166</a>
-<a href="#167" id="167">167</a>
-<a href="#168" id="168">168</a>
-<a href="#169" id="169">169</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">crate</span>::{
         graphics::vulkan::{raii, Device},
         trace,
     },
-    anyhow::{bail, Context, <span class="prelude-ty">Result</span>},
+    anyhow::{bail, <span class="prelude-ty">Result</span>},
     ash::vk,
     std::marker::PhantomData,
 };
@@ -232,54 +191,17 @@
             (aligned_unit_size * count <span class="kw">as </span>u64).max(<span class="number">1024 </span>* <span class="number">1024</span>);
 
         <span class="comment">// create the buffer
-        </span><span class="kw">let </span>buffer_create_info = vk::BufferCreateInfo {
-            size: buffer_size_in_bytes,
-            usage: vk::BufferUsageFlags::UNIFORM_BUFFER,
-            sharing_mode: vk::SharingMode::EXCLUSIVE,
-            queue_family_index_count: <span class="number">1</span>,
-            p_queue_family_indices: <span class="kw-2">&amp;</span>device.graphics_queue_family_index,
-            ..Default::default()
-        };
-        <span class="kw">let </span>buffer = raii::Buffer::new(
-            device.logical_device.clone(),
-            <span class="kw-2">&amp;</span>buffer_create_info,
-        )<span class="question-mark">?</span>;
-
-        <span class="comment">// allocate the backing device memory
-        </span><span class="kw">let </span>requirements =
-            <span class="kw">unsafe </span>{ device.get_buffer_memory_requirements(buffer.raw) };
-
-        <span class="kw">let </span>memory_properties = <span class="kw">unsafe </span>{
-            device
-                .instance
-                .ash
-                .get_physical_device_memory_properties(device.physical_device)
-        };
-        <span class="kw">let </span>(memory_type_index, <span class="kw">_</span>) = memory_properties
-            .memory_types
-            .iter()
-            .enumerate()
-            .find(|(index, memory_type)| {
-                <span class="kw">let </span>type_bits = <span class="number">1 </span>&lt;&lt; index;
-                <span class="kw">let </span>is_supported_type =
-                    type_bits &amp; requirements.memory_type_bits != <span class="number">0</span>;
-                <span class="kw">let </span>is_visible_and_coherent =
-                    memory_type.property_flags.contains(
-                        vk::MemoryPropertyFlags::HOST_VISIBLE
-                            | vk::MemoryPropertyFlags::HOST_COHERENT,
-                    );
-                is_supported_type &amp;&amp; is_visible_and_coherent
-            })
-            .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to find compatible memory type!"</span>))<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>allocate_info = vk::MemoryAllocateInfo {
-            allocation_size: requirements.size,
-            memory_type_index: memory_type_index <span class="kw">as </span>u32,
-            ..Default::default()
-        };
-        <span class="kw">let </span>memory = raii::DeviceMemory::new(
-            device.logical_device.clone(),
-            <span class="kw-2">&amp;</span>allocate_info,
+        </span><span class="kw">let </span>(buffer, memory) = device.allocator.allocate_buffer(
+            <span class="kw-2">&amp;</span>vk::BufferCreateInfo {
+                size: buffer_size_in_bytes,
+                usage: vk::BufferUsageFlags::UNIFORM_BUFFER,
+                sharing_mode: vk::SharingMode::EXCLUSIVE,
+                queue_family_index_count: <span class="number">1</span>,
+                p_queue_family_indices: <span class="kw-2">&amp;</span>device.graphics_queue_family_index,
+                ..Default::default()
+            },
+            vk::MemoryPropertyFlags::HOST_VISIBLE
+                | vk::MemoryPropertyFlags::HOST_COHERENT,
         )<span class="question-mark">?</span>;
 
         <span class="kw">let </span>mapped_ptr = <span class="kw">unsafe </span>{
@@ -291,17 +213,13 @@
             )<span class="question-mark">?
         </span>};
 
-        <span class="kw">unsafe </span>{
-            device.bind_buffer_memory(buffer.raw, memory.raw, <span class="number">0</span>)<span class="question-mark">?</span>;
-        };
-
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             buffer,
             count,
             aligned_unit_size: aligned_unit_size <span class="kw">as </span>usize,
             _memory: memory,
             mapped_ptr,
-            _phantom_data: PhantomData::default(),
+            _phantom_data: PhantomData,
         })
     }
 

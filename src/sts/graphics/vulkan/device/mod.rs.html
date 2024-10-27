@@ -88,12 +88,27 @@
 <a href="#88" id="88">88</a>
 <a href="#89" id="89">89</a>
 <a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>instance;
 <span class="kw">mod </span>logical_device;
 <span class="kw">mod </span>physical_device;
 
 <span class="kw">use </span>{
-    <span class="kw">crate</span>::{graphics::vulkan::raii, trace},
+    <span class="kw">crate</span>::{
+        graphics::vulkan::{raii, Allocator},
+        trace,
+    },
     anyhow::{Context, <span class="prelude-ty">Result</span>},
     ash::vk::{<span class="self">self</span>},
     std::sync::Arc,
@@ -113,6 +128,9 @@
 
     <span class="doccomment">/// The graphics queue supports GRAPHICS and presentation operations.
     </span><span class="kw">pub </span>graphics_queue: vk::Queue,
+
+    <span class="doccomment">/// The device memory allocator.
+    </span><span class="kw">pub </span>allocator: Allocator,
 }
 
 <span class="kw">impl </span>Device {
@@ -144,6 +162,11 @@
             logical_device.get_device_queue(graphics_queue_family_index, <span class="number">0</span>)
         };
 
+        <span class="kw">let </span>allocator = Allocator::new(logical_device.clone(), physical_device)
+            .with_context(<span class="macro">trace!</span>(
+                <span class="string">"Error while creating device memory allocator!"
+            </span>))<span class="question-mark">?</span>;
+
         <span class="prelude-val">Ok</span>(Arc::new(<span class="self">Self </span>{
             instance,
             surface_khr,
@@ -151,6 +174,7 @@
             logical_device,
             graphics_queue_family_index,
             graphics_queue,
+            allocator,
         }))
     }
 }
