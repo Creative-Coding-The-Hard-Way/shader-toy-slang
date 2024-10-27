@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rustix-0.37.27/src/backend/linux_raw/io/errno.rs`."><title>errno.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rustix-0.38.37/src/backend/linux_raw/io/errno.rs`."><title>errno.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -522,6 +522,34 @@
 <a href="#522" id="522">522</a>
 <a href="#523" id="523">523</a>
 <a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! The `rustix` `Errno` type.
 //!
 //! This type holds an OS error code, which conceptually corresponds to an
@@ -534,16 +562,37 @@
 </span><span class="attr">#![allow(unsafe_code)]
 #![cfg_attr(not(rustc_attrs), allow(unused_unsafe))]
 
-</span><span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::c;
+</span><span class="kw">use </span><span class="kw">crate</span>::backend::c;
 <span class="kw">use </span><span class="kw">crate</span>::backend::fd::RawFd;
 <span class="kw">use </span><span class="kw">crate</span>::backend::reg::{RetNumber, RetReg};
 <span class="kw">use </span><span class="kw">crate</span>::io;
 <span class="kw">use </span>linux_raw_sys::errno;
 
-<span class="doccomment">/// The error type for `rustix` APIs.
+<span class="doccomment">/// `errno`—An error code.
 ///
-/// This is similar to `std::io::Error`, but only holds an OS error code,
-/// and no extra error value.
+/// The error type for `rustix` APIs. This is similar to [`std::io::Error`],
+/// but only holds an OS error code, and no extra error value.
+///
+/// # References
+///  - [POSIX]
+///  - [Linux]
+///  - [Winsock]
+///  - [FreeBSD]
+///  - [NetBSD]
+///  - [OpenBSD]
+///  - [DragonFly BSD]
+///  - [illumos]
+///  - [glibc]
+///
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/errno.html
+/// [Linux]: https://man7.org/linux/man-pages/man3/errno.3.html
+/// [Winsock]: https://learn.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
+/// [FreeBSD]: https://man.freebsd.org/cgi/man.cgi?errno
+/// [NetBSD]: https://man.netbsd.org/errno.2
+/// [OpenBSD]: https://man.openbsd.org/errno.2
+/// [DragonFly BSD]: https://man.dragonflybsd.org/?command=errno&amp;section=2
+/// [illumos]: https://illumos.org/man/3C/errno
+/// [glibc]: https://www.gnu.org/software/libc/manual/html_node/Error-Codes.html
 </span><span class="attr">#[repr(transparent)]
 #[doc(alias = <span class="string">"errno"</span>)]
 #[derive(Eq, PartialEq, Hash, Copy, Clone)]
@@ -562,7 +611,7 @@
     #[inline]
     </span><span class="kw">pub fn </span>from_io_error(io_err: <span class="kw-2">&amp;</span>std::io::Error) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
         io_err.raw_os_error().and_then(|raw| {
-            <span class="comment">// `std::io::Error` could theoretically have arbitrary "OS error"
+            <span class="comment">// `std::io::Error` could theoretically have arbitrary OS error
             // values, so check that they're in Linux's range.
             </span><span class="kw">if </span>(<span class="number">1</span>..<span class="number">4096</span>).contains(<span class="kw-2">&amp;</span>raw) {
                 <span class="prelude-val">Some</span>(<span class="self">Self</span>::from_errno(raw <span class="kw">as </span>u32))
@@ -591,7 +640,7 @@
         </span><span class="kw">let </span>encoded = raw.wrapping_neg() <span class="kw">as </span>u16;
 
         <span class="comment">// TODO: Use Range::contains, once that's `const`.
-        </span><span class="macro">const_assert!</span>(encoded &gt;= <span class="number">0xf001</span>);
+        </span><span class="macro">assert!</span>(encoded &gt;= <span class="number">0xf001</span>);
 
         <span class="comment">// SAFETY: Linux syscalls return negated error values in the range
         // `-4095..0`, which we just asserted.
@@ -738,7 +787,7 @@
 /// # Safety
 ///
 /// This must only be used with syscalls which do not return on success.
-</span><span class="attr">#[cfg(feature = <span class="string">"runtime"</span>)]
+</span><span class="attr">#[cfg(any(feature = <span class="string">"event"</span>, feature = <span class="string">"runtime"</span>, feature = <span class="string">"system"</span>))]
 #[inline]
 </span><span class="kw">pub</span>(<span class="kw">in </span><span class="kw">crate</span>::backend) <span class="kw">unsafe fn </span>try_decode_error&lt;Num: RetNumber&gt;(raw: RetReg&lt;Num&gt;) -&gt; io::Errno {
     <span class="macro">debug_assert!</span>(raw.is_in_range(-<span class="number">4095</span>..<span class="number">0</span>));
@@ -761,6 +810,13 @@
 }
 
 <span class="doccomment">/// Return the contained `c_int` value.
+</span><span class="attr">#[cfg(not(debug_assertions))]
+#[inline]
+</span><span class="kw">pub</span>(<span class="kw">in </span><span class="kw">crate</span>::backend) <span class="kw">fn </span>decode_c_int_infallible&lt;Num: RetNumber&gt;(raw: RetReg&lt;Num&gt;) -&gt; c::c_int {
+    raw.decode_c_int()
+}
+
+<span class="doccomment">/// Return the contained `c_uint` value.
 </span><span class="attr">#[cfg(not(debug_assertions))]
 #[inline]
 </span><span class="kw">pub</span>(<span class="kw">in </span><span class="kw">crate</span>::backend) <span class="kw">fn </span>decode_c_uint_infallible&lt;Num: RetNumber&gt;(raw: RetReg&lt;Num&gt;) -&gt; c::c_uint {

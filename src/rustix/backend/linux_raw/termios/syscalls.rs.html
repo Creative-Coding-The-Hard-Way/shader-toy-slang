@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rustix-0.37.27/src/backend/linux_raw/termios/syscalls.rs`."><title>syscalls.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rustix-0.38.37/src/backend/linux_raw/termios/syscalls.rs`."><title>syscalls.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -300,189 +300,382 @@
 <a href="#300" id="300">300</a>
 <a href="#301" id="301">301</a>
 <a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! linux_raw syscalls supporting `rustix::termios`.
 //!
 //! # Safety
 //!
 //! See the `rustix::backend` module documentation for details.
-</span><span class="attr">#![allow(unsafe_code)]
-#![allow(clippy::undocumented_unsafe_blocks)]
+</span><span class="attr">#![allow(unsafe_code, clippy::undocumented_unsafe_blocks)]
 
-</span><span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::conv::{by_ref, c_uint, ret};
+</span><span class="kw">use </span><span class="kw">crate</span>::backend::c;
+<span class="kw">use </span><span class="kw">crate</span>::backend::conv::{by_ref, c_uint, ret};
 <span class="kw">use </span><span class="kw">crate</span>::fd::BorrowedFd;
 <span class="kw">use </span><span class="kw">crate</span>::io;
-<span class="kw">use </span><span class="kw">crate</span>::process::{Pid, RawNonZeroPid};
+<span class="kw">use </span><span class="kw">crate</span>::pid::Pid;
+<span class="attr">#[cfg(all(feature = <span class="string">"alloc"</span>, feature = <span class="string">"procfs"</span>))]
+</span><span class="kw">use </span><span class="kw">crate</span>::procfs;
 <span class="kw">use </span><span class="kw">crate</span>::termios::{
-    Action, OptionalActions, QueueSelector, Termios, Winsize, BRKINT, CBAUD, CS8, CSIZE, ECHO,
-    ECHONL, ICANON, ICRNL, IEXTEN, IGNBRK, IGNCR, INLCR, ISIG, ISTRIP, IXON, OPOST, PARENB, PARMRK,
-    VMIN, VTIME,
+    speed, Action, ControlModes, InputModes, LocalModes, OptionalActions, OutputModes,
+    QueueSelector, SpecialCodeIndex, Termios, Winsize,
 };
-<span class="attr">#[cfg(feature = <span class="string">"procfs"</span>)]
+<span class="attr">#[cfg(all(feature = <span class="string">"alloc"</span>, feature = <span class="string">"procfs"</span>))]
 </span><span class="kw">use crate</span>::{ffi::CStr, fs::FileType, path::DecInt};
 <span class="kw">use </span>core::mem::MaybeUninit;
-<span class="kw">use </span>linux_raw_sys::general::__kernel_pid_t;
-<span class="kw">use </span>linux_raw_sys::ioctl::{
-    TCFLSH, TCGETS, TCSBRK, TCSETS, TCXONC, TIOCGPGRP, TIOCGSID, TIOCGWINSZ, TIOCSPGRP, TIOCSWINSZ,
-};
 
 <span class="attr">#[inline]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcgetwinsize(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;) -&gt; io::Result&lt;Winsize&gt; {
     <span class="kw">unsafe </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;Winsize&gt;::uninit();
-        ret(<span class="macro">syscall!</span>(__NR_ioctl, fd, c_uint(TIOCGWINSZ), <span class="kw-2">&amp;mut </span>result))<span class="question-mark">?</span>;
+        ret(<span class="macro">syscall!</span>(__NR_ioctl, fd, c_uint(c::TIOCGWINSZ), <span class="kw-2">&amp;mut </span>result))<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(result.assume_init())
     }
 }
 
 <span class="attr">#[inline]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcgetattr(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;) -&gt; io::Result&lt;Termios&gt; {
-    <span class="kw">unsafe </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;Termios&gt;::uninit();
-        ret(<span class="macro">syscall!</span>(__NR_ioctl, fd, c_uint(TCGETS), <span class="kw-2">&amp;mut </span>result))<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(result.assume_init())
+    <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;Termios&gt;::uninit();
+
+    <span class="comment">// SAFETY: This invokes the `TCGETS2` ioctl, which initializes the full
+    // `Termios` structure.
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">match </span>ret(<span class="macro">syscall!</span>(__NR_ioctl, fd, c_uint(c::TCGETS2), <span class="kw-2">&amp;mut </span>result)) {
+            <span class="prelude-val">Ok</span>(()) =&gt; <span class="prelude-val">Ok</span>(result.assume_init()),
+
+            <span class="comment">// A `NOTTY` or `ACCESS` might mean the OS doesn't support
+            // `TCGETS2`, for example a seccomp environment or WSL that only
+            // knows about `TCGETS`. Fall back to the old `TCGETS`.
+            </span><span class="attr">#[cfg(not(any(target_arch = <span class="string">"powerpc"</span>, target_arch = <span class="string">"powerpc64"</span>)))]
+            </span><span class="prelude-val">Err</span>(io::Errno::NOTTY) | <span class="prelude-val">Err</span>(io::Errno::ACCESS) =&gt; tcgetattr_fallback(fd),
+
+            <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(err),
+        }
     }
 }
 
-<span class="attr">#[inline]
-#[cfg(any(
-    target_arch = <span class="string">"x86"</span>,
-    target_arch = <span class="string">"x86_64"</span>,
-    target_arch = <span class="string">"x32"</span>,
-    target_arch = <span class="string">"riscv64"</span>,
-    target_arch = <span class="string">"aarch64"</span>,
-    target_arch = <span class="string">"arm"</span>,
-    target_arch = <span class="string">"mips"</span>,
-    target_arch = <span class="string">"mips64"</span>,
-))]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcgetattr2(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;) -&gt; io::Result&lt;<span class="kw">crate</span>::termios::Termios2&gt; {
-    <span class="kw">unsafe </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;<span class="kw">crate</span>::termios::Termios2&gt;::uninit();
-        ret(<span class="macro">syscall!</span>(
-            __NR_ioctl,
-            fd,
-            c_uint(linux_raw_sys::ioctl::TCGETS2),
-            <span class="kw-2">&amp;mut </span>result
-        ))<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(result.assume_init())
+<span class="doccomment">/// Implement `tcgetattr` using the old `TCGETS` ioctl.
+</span><span class="attr">#[cfg(not(any(target_arch = <span class="string">"powerpc"</span>, target_arch = <span class="string">"powerpc64"</span>)))]
+#[cold]
+</span><span class="kw">fn </span>tcgetattr_fallback(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;) -&gt; io::Result&lt;Termios&gt; {
+    <span class="kw">use </span>core::ptr::{addr_of, addr_of_mut};
+
+    <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;Termios&gt;::uninit();
+
+    <span class="comment">// SAFETY: This invokes the `TCGETS` ioctl which initializes the `Termios`
+    // structure except for the `input_speed` and `output_speed` fields, which
+    // we manually initialize before forming a reference to the full `Termios`.
+    </span><span class="kw">unsafe </span>{
+        <span class="comment">// Do the old `TCGETS` call.
+        </span>ret(<span class="macro">syscall!</span>(__NR_ioctl, fd, c_uint(c::TCGETS), <span class="kw-2">&amp;mut </span>result))<span class="question-mark">?</span>;
+
+        <span class="comment">// Read the `control_modes` field without forming a reference to the
+        // `Termios` because it isn't fully initialized yet.
+        </span><span class="kw">let </span>ptr = result.as_mut_ptr();
+        <span class="kw">let </span>control_modes = <span class="macro">addr_of!</span>((<span class="kw-2">*</span>ptr).control_modes).read();
+
+        <span class="comment">// Infer the output speed and set `output_speed`.
+        </span><span class="kw">let </span>encoded_out = control_modes.bits() &amp; c::CBAUD;
+        <span class="kw">let </span>output_speed = <span class="kw">match </span>speed::decode(encoded_out) {
+            <span class="prelude-val">Some</span>(output_speed) =&gt; output_speed,
+            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(io::Errno::RANGE),
+        };
+        <span class="macro">addr_of_mut!</span>((<span class="kw-2">*</span>ptr).output_speed).write(output_speed);
+
+        <span class="comment">// Infer the input speed and set `input_speed`. `B0` is a special-case
+        // that means the input speed is the same as the output speed.
+        </span><span class="kw">let </span>encoded_in = (control_modes.bits() &amp; c::CIBAUD) &gt;&gt; c::IBSHIFT;
+        <span class="kw">let </span>input_speed = <span class="kw">if </span>encoded_in == c::B0 {
+            output_speed
+        } <span class="kw">else </span>{
+            <span class="kw">match </span>speed::decode(encoded_in) {
+                <span class="prelude-val">Some</span>(input_speed) =&gt; input_speed,
+                <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(io::Errno::RANGE),
+            }
+        };
+        <span class="macro">addr_of_mut!</span>((<span class="kw-2">*</span>ptr).input_speed).write(input_speed);
+
+        <span class="comment">// Now all the fields are set.
+        </span><span class="prelude-val">Ok</span>(result.assume_init())
     }
 }
 
 <span class="attr">#[inline]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcgetpgrp(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;) -&gt; io::Result&lt;Pid&gt; {
     <span class="kw">unsafe </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;__kernel_pid_t&gt;::uninit();
-        ret(<span class="macro">syscall!</span>(__NR_ioctl, fd, c_uint(TIOCGPGRP), <span class="kw-2">&amp;mut </span>result))<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;c::pid_t&gt;::uninit();
+        ret(<span class="macro">syscall!</span>(__NR_ioctl, fd, c_uint(c::TIOCGPGRP), <span class="kw-2">&amp;mut </span>result))<span class="question-mark">?</span>;
         <span class="kw">let </span>pid = result.assume_init();
-        <span class="macro">debug_assert!</span>(pid &gt; <span class="number">0</span>);
-        <span class="prelude-val">Ok</span>(Pid::from_raw_nonzero(RawNonZeroPid::new_unchecked(
-            pid <span class="kw">as </span>u32,
-        )))
+
+        <span class="comment">// This doesn't appear to be documented, but it appears `tcsetpgrp` can
+        // succeed and set the pid to 0 if we pass it a pseudo-terminal device
+        // fd. For now, fail with `OPNOTSUPP`.
+        </span><span class="kw">if </span>pid == <span class="number">0 </span>{
+            <span class="kw">return </span><span class="prelude-val">Err</span>(io::Errno::OPNOTSUPP);
+        }
+
+        <span class="prelude-val">Ok</span>(Pid::from_raw_unchecked(pid))
     }
 }
 
 <span class="attr">#[inline]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcsetattr(
-    fd: BorrowedFd,
+    fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;,
     optional_actions: OptionalActions,
     termios: <span class="kw-2">&amp;</span>Termios,
 ) -&gt; io::Result&lt;()&gt; {
-    <span class="comment">// Translate from `optional_actions` into an ioctl request code. On MIPS,
-    // `optional_actions` already has `TCGETS` added to it.
-    </span><span class="kw">let </span>request = <span class="kw">if </span><span class="macro">cfg!</span>(any(target_arch = <span class="string">"mips"</span>, target_arch = <span class="string">"mips64"</span>)) {
+    <span class="comment">// Translate from `optional_actions` into a `TCSETS2` ioctl request code.
+    // On MIPS, `optional_actions` has `TCSETS` added to it.
+    </span><span class="kw">let </span>request = c::TCSETS2
+        + <span class="kw">if </span><span class="macro">cfg!</span>(any(
+            target_arch = <span class="string">"mips"</span>,
+            target_arch = <span class="string">"mips32r6"</span>,
+            target_arch = <span class="string">"mips64"</span>,
+            target_arch = <span class="string">"mips64r6"
+        </span>)) {
+            optional_actions <span class="kw">as </span>u32 - c::TCSETS
+        } <span class="kw">else </span>{
+            optional_actions <span class="kw">as </span>u32
+        };
+
+    <span class="comment">// SAFETY: This invokes the `TCSETS2` ioctl.
+    </span><span class="kw">unsafe </span>{
+        <span class="kw">match </span>ret(<span class="macro">syscall_readonly!</span>(
+            __NR_ioctl,
+            fd,
+            c_uint(request),
+            by_ref(termios)
+        )) {
+            <span class="prelude-val">Ok</span>(()) =&gt; <span class="prelude-val">Ok</span>(()),
+
+            <span class="comment">// Similar to `tcgetattr_fallback`, `NOTTY` or `ACCESS` might mean
+            // the OS doesn't support `TCSETS2`. Fall back to the old `TCSETS`.
+            </span><span class="attr">#[cfg(not(any(target_arch = <span class="string">"powerpc"</span>, target_arch = <span class="string">"powerpc64"</span>)))]
+            </span><span class="prelude-val">Err</span>(io::Errno::NOTTY) | <span class="prelude-val">Err</span>(io::Errno::ACCESS) =&gt; {
+                tcsetattr_fallback(fd, optional_actions, termios)
+            }
+
+            <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(err),
+        }
+    }
+}
+
+<span class="doccomment">/// Implement `tcsetattr` using the old `TCSETS` ioctl.
+</span><span class="attr">#[cfg(not(any(target_arch = <span class="string">"powerpc"</span>, target_arch = <span class="string">"powerpc64"</span>)))]
+#[cold]
+</span><span class="kw">fn </span>tcsetattr_fallback(
+    fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;,
+    optional_actions: OptionalActions,
+    termios: <span class="kw-2">&amp;</span>Termios,
+) -&gt; io::Result&lt;()&gt; {
+    <span class="comment">// `TCSETS` silently accepts `BOTHER` in `c_cflag` even though it doesn't
+    // read `c_ispeed`/`c_ospeed`, so detect this case and fail if needed.
+    </span><span class="kw">let </span>control_modes_bits = termios.control_modes.bits();
+    <span class="kw">let </span>encoded_out = control_modes_bits &amp; c::CBAUD;
+    <span class="kw">let </span>encoded_in = (control_modes_bits &amp; c::CIBAUD) &gt;&gt; c::IBSHIFT;
+    <span class="kw">if </span>encoded_out == c::BOTHER || encoded_in == c::BOTHER {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(io::Errno::RANGE);
+    }
+
+    <span class="comment">// Translate from `optional_actions` into a `TCSETS` ioctl request code. On
+    // MIPS, `optional_actions` already has `TCSETS` added to it.
+    </span><span class="kw">let </span>request = <span class="kw">if </span><span class="macro">cfg!</span>(any(
+        target_arch = <span class="string">"mips"</span>,
+        target_arch = <span class="string">"mips32r6"</span>,
+        target_arch = <span class="string">"mips64"</span>,
+        target_arch = <span class="string">"mips64r6"
+    </span>)) {
         optional_actions <span class="kw">as </span>u32
     } <span class="kw">else </span>{
-        TCSETS + optional_actions <span class="kw">as </span>u32
+        optional_actions <span class="kw">as </span>u32 + c::TCSETS
     };
-    <span class="kw">unsafe </span>{
+
+    <span class="comment">// SAFETY: This invokes the `TCSETS` ioctl.
+    </span><span class="kw">unsafe </span>{
         ret(<span class="macro">syscall_readonly!</span>(
             __NR_ioctl,
             fd,
-            c_uint(request <span class="kw">as </span>u32),
+            c_uint(request),
             by_ref(termios)
         ))
     }
 }
 
 <span class="attr">#[inline]
-#[cfg(any(
-    target_arch = <span class="string">"x86"</span>,
-    target_arch = <span class="string">"x86_64"</span>,
-    target_arch = <span class="string">"x32"</span>,
-    target_arch = <span class="string">"riscv64"</span>,
-    target_arch = <span class="string">"aarch64"</span>,
-    target_arch = <span class="string">"arm"</span>,
-    target_arch = <span class="string">"mips"</span>,
-    target_arch = <span class="string">"mips64"</span>,
-))]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcsetattr2(
-    fd: BorrowedFd,
-    optional_actions: OptionalActions,
-    termios: <span class="kw-2">&amp;</span><span class="kw">crate</span>::termios::Termios2,
-) -&gt; io::Result&lt;()&gt; {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcsendbreak(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;) -&gt; io::Result&lt;()&gt; {
     <span class="kw">unsafe </span>{
         ret(<span class="macro">syscall_readonly!</span>(
             __NR_ioctl,
             fd,
-            c_uint(linux_raw_sys::ioctl::TCSETS2 + optional_actions <span class="kw">as </span>u32),
-            by_ref(termios)
+            c_uint(c::TCSBRK),
+            c_uint(<span class="number">0</span>)
         ))
     }
 }
 
 <span class="attr">#[inline]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcsendbreak(fd: BorrowedFd) -&gt; io::Result&lt;()&gt; {
-    <span class="kw">unsafe </span>{ ret(<span class="macro">syscall_readonly!</span>(__NR_ioctl, fd, c_uint(TCSBRK), c_uint(<span class="number">0</span>))) }
-}
-
-<span class="attr">#[inline]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcdrain(fd: BorrowedFd) -&gt; io::Result&lt;()&gt; {
-    <span class="kw">unsafe </span>{ ret(<span class="macro">syscall_readonly!</span>(__NR_ioctl, fd, c_uint(TCSBRK), c_uint(<span class="number">1</span>))) }
-}
-
-<span class="attr">#[inline]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcflush(fd: BorrowedFd, queue_selector: QueueSelector) -&gt; io::Result&lt;()&gt; {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcdrain(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;) -&gt; io::Result&lt;()&gt; {
     <span class="kw">unsafe </span>{
         ret(<span class="macro">syscall_readonly!</span>(
             __NR_ioctl,
             fd,
-            c_uint(TCFLSH),
+            c_uint(c::TCSBRK),
+            c_uint(<span class="number">1</span>)
+        ))
+    }
+}
+
+<span class="attr">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcflush(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, queue_selector: QueueSelector) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">unsafe </span>{
+        ret(<span class="macro">syscall_readonly!</span>(
+            __NR_ioctl,
+            fd,
+            c_uint(c::TCFLSH),
             c_uint(queue_selector <span class="kw">as </span>u32)
         ))
     }
 }
 
 <span class="attr">#[inline]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcflow(fd: BorrowedFd, action: Action) -&gt; io::Result&lt;()&gt; {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcflow(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, action: Action) -&gt; io::Result&lt;()&gt; {
     <span class="kw">unsafe </span>{
         ret(<span class="macro">syscall_readonly!</span>(
             __NR_ioctl,
             fd,
-            c_uint(TCXONC),
+            c_uint(c::TCXONC),
             c_uint(action <span class="kw">as </span>u32)
         ))
     }
 }
 
 <span class="attr">#[inline]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcgetsid(fd: BorrowedFd) -&gt; io::Result&lt;Pid&gt; {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcgetsid(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;) -&gt; io::Result&lt;Pid&gt; {
     <span class="kw">unsafe </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;__kernel_pid_t&gt;::uninit();
-        ret(<span class="macro">syscall!</span>(__NR_ioctl, fd, c_uint(TIOCGSID), <span class="kw-2">&amp;mut </span>result))<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>result = MaybeUninit::&lt;c::pid_t&gt;::uninit();
+        ret(<span class="macro">syscall!</span>(__NR_ioctl, fd, c_uint(c::TIOCGSID), <span class="kw-2">&amp;mut </span>result))<span class="question-mark">?</span>;
         <span class="kw">let </span>pid = result.assume_init();
-        <span class="macro">debug_assert!</span>(pid &gt; <span class="number">0</span>);
-        <span class="prelude-val">Ok</span>(Pid::from_raw_nonzero(RawNonZeroPid::new_unchecked(
-            pid <span class="kw">as </span>u32,
-        )))
+        <span class="prelude-val">Ok</span>(Pid::from_raw_unchecked(pid))
     }
 }
 
 <span class="attr">#[inline]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcsetwinsize(fd: BorrowedFd, winsize: Winsize) -&gt; io::Result&lt;()&gt; {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcsetwinsize(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, winsize: Winsize) -&gt; io::Result&lt;()&gt; {
     <span class="kw">unsafe </span>{
-        ret(<span class="macro">syscall!</span>(
+        ret(<span class="macro">syscall_readonly!</span>(
             __NR_ioctl,
             fd,
-            c_uint(TIOCSWINSZ),
+            c_uint(c::TIOCSWINSZ),
             by_ref(<span class="kw-2">&amp;</span>winsize)
         ))
     }
@@ -490,21 +683,65 @@
 
 <span class="attr">#[inline]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>tcsetpgrp(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, pid: Pid) -&gt; io::Result&lt;()&gt; {
-    <span class="kw">unsafe </span>{ ret(<span class="macro">syscall!</span>(__NR_ioctl, fd, c_uint(TIOCSPGRP), pid)) }
+    <span class="kw">let </span>raw_pid: c::c_int = pid.as_raw_nonzero().get();
+    <span class="kw">unsafe </span>{
+        ret(<span class="macro">syscall_readonly!</span>(
+            __NR_ioctl,
+            fd,
+            c_uint(c::TIOCSPGRP),
+            by_ref(<span class="kw-2">&amp;</span>raw_pid)
+        ))
+    }
 }
 
-<span class="attr">#[inline]
-#[must_use]
-#[allow(clippy::missing_const_for_fn)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>cfgetospeed(termios: <span class="kw-2">&amp;</span>Termios) -&gt; u32 {
-    termios.c_cflag &amp; CBAUD
+<span class="doccomment">/// A wrapper around a conceptual `cfsetspeed` which handles an arbitrary
+/// integer speed value.
+</span><span class="attr">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_speed(termios: <span class="kw-2">&amp;mut </span>Termios, arbitrary_speed: u32) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">let </span>encoded_speed = speed::encode(arbitrary_speed).unwrap_or(c::BOTHER);
+
+    <span class="macro">debug_assert_eq!</span>(encoded_speed &amp; !c::CBAUD, <span class="number">0</span>);
+
+    termios.control_modes -= ControlModes::from_bits_retain(c::CBAUD | c::CIBAUD);
+    termios.control_modes |=
+        ControlModes::from_bits_retain(encoded_speed | (encoded_speed &lt;&lt; c::IBSHIFT));
+
+    termios.input_speed = arbitrary_speed;
+    termios.output_speed = arbitrary_speed;
+
+    <span class="prelude-val">Ok</span>(())
 }
 
-<span class="attr">#[inline]
-#[must_use]
-#[allow(clippy::missing_const_for_fn)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>cfgetispeed(termios: <span class="kw-2">&amp;</span>Termios) -&gt; u32 {
-    termios.c_cflag &amp; CBAUD
+<span class="doccomment">/// A wrapper around a conceptual `cfsetospeed` which handles an arbitrary
+/// integer speed value.
+</span><span class="attr">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_output_speed(termios: <span class="kw-2">&amp;mut </span>Termios, arbitrary_speed: u32) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">let </span>encoded_speed = speed::encode(arbitrary_speed).unwrap_or(c::BOTHER);
+
+    <span class="macro">debug_assert_eq!</span>(encoded_speed &amp; !c::CBAUD, <span class="number">0</span>);
+
+    termios.control_modes -= ControlModes::from_bits_retain(c::CBAUD);
+    termios.control_modes |= ControlModes::from_bits_retain(encoded_speed);
+
+    termios.output_speed = arbitrary_speed;
+
+    <span class="prelude-val">Ok</span>(())
+}
+
+<span class="doccomment">/// A wrapper around a conceptual `cfsetispeed` which handles an arbitrary
+/// integer speed value.
+</span><span class="attr">#[inline]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_input_speed(termios: <span class="kw-2">&amp;mut </span>Termios, arbitrary_speed: u32) -&gt; io::Result&lt;()&gt; {
+    <span class="kw">let </span>encoded_speed = speed::encode(arbitrary_speed).unwrap_or(c::BOTHER);
+
+    <span class="macro">debug_assert_eq!</span>(encoded_speed &amp; !c::CBAUD, <span class="number">0</span>);
+
+    termios.control_modes -= ControlModes::from_bits_retain(c::CIBAUD);
+    termios.control_modes |= ControlModes::from_bits_retain(encoded_speed &lt;&lt; c::IBSHIFT);
+
+    termios.input_speed = arbitrary_speed;
+
+    <span class="prelude-val">Ok</span>(())
 }
 
 <span class="attr">#[inline]
@@ -512,48 +749,26 @@
     <span class="comment">// From the Linux [`cfmakeraw` manual page]:
     //
     // [`cfmakeraw` manual page]: https://man7.org/linux/man-pages/man3/cfmakeraw.3.html
-    </span>termios.c_iflag &amp;= !(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
-    termios.c_oflag &amp;= !OPOST;
-    termios.c_lflag &amp;= !(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
-    termios.c_cflag &amp;= !(CSIZE | PARENB);
-    termios.c_cflag |= CS8;
+    </span>termios.input_modes -= InputModes::IGNBRK
+        | InputModes::BRKINT
+        | InputModes::PARMRK
+        | InputModes::ISTRIP
+        | InputModes::INLCR
+        | InputModes::IGNCR
+        | InputModes::ICRNL
+        | InputModes::IXON;
+    termios.output_modes -= OutputModes::OPOST;
+    termios.local_modes -= LocalModes::ECHO
+        | LocalModes::ECHONL
+        | LocalModes::ICANON
+        | LocalModes::ISIG
+        | LocalModes::IEXTEN;
+    termios.control_modes -= ControlModes::CSIZE | ControlModes::PARENB;
+    termios.control_modes |= ControlModes::CS8;
 
     <span class="comment">// Musl and glibc also do these:
-    </span>termios.c_cc[VMIN] = <span class="number">1</span>;
-    termios.c_cc[VTIME] = <span class="number">0</span>;
-}
-
-<span class="attr">#[inline]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>cfsetospeed(termios: <span class="kw-2">&amp;mut </span>Termios, speed: u32) -&gt; io::Result&lt;()&gt; {
-    <span class="kw">if </span>(speed &amp; !CBAUD) != <span class="number">0 </span>{
-        <span class="kw">return </span><span class="prelude-val">Err</span>(io::Errno::INVAL);
-    }
-    termios.c_cflag &amp;= !CBAUD;
-    termios.c_cflag |= speed;
-    <span class="prelude-val">Ok</span>(())
-}
-
-<span class="attr">#[inline]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>cfsetispeed(termios: <span class="kw-2">&amp;mut </span>Termios, speed: u32) -&gt; io::Result&lt;()&gt; {
-    <span class="kw">if </span>speed == <span class="number">0 </span>{
-        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
-    }
-    <span class="kw">if </span>(speed &amp; !CBAUD) != <span class="number">0 </span>{
-        <span class="kw">return </span><span class="prelude-val">Err</span>(io::Errno::INVAL);
-    }
-    termios.c_cflag &amp;= !CBAUD;
-    termios.c_cflag |= speed;
-    <span class="prelude-val">Ok</span>(())
-}
-
-<span class="attr">#[inline]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>cfsetspeed(termios: <span class="kw-2">&amp;mut </span>Termios, speed: u32) -&gt; io::Result&lt;()&gt; {
-    <span class="kw">if </span>(speed &amp; !CBAUD) != <span class="number">0 </span>{
-        <span class="kw">return </span><span class="prelude-val">Err</span>(io::Errno::INVAL);
-    }
-    termios.c_cflag &amp;= !CBAUD;
-    termios.c_cflag |= speed;
-    <span class="prelude-val">Ok</span>(())
+    </span>termios.special_codes[SpecialCodeIndex::VMIN] = <span class="number">1</span>;
+    termios.special_codes[SpecialCodeIndex::VTIME] = <span class="number">0</span>;
 }
 
 <span class="attr">#[inline]
@@ -565,9 +780,9 @@
     </span>tcgetwinsize(fd).is_ok()
 }
 
-<span class="attr">#[cfg(feature = <span class="string">"procfs"</span>)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ttyname(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, buf: <span class="kw-2">&amp;mut </span>[u8]) -&gt; io::Result&lt;usize&gt; {
-    <span class="kw">let </span>fd_stat = <span class="kw">super</span>::<span class="kw">super</span>::fs::syscalls::fstat(fd)<span class="question-mark">?</span>;
+<span class="attr">#[cfg(all(feature = <span class="string">"alloc"</span>, feature = <span class="string">"procfs"</span>))]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>ttyname(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, buf: <span class="kw-2">&amp;mut </span>[MaybeUninit&lt;u8&gt;]) -&gt; io::Result&lt;usize&gt; {
+    <span class="kw">let </span>fd_stat = <span class="kw">crate</span>::backend::fs::syscalls::fstat(fd)<span class="question-mark">?</span>;
 
     <span class="comment">// Quick check: if `fd` isn't a character device, it's not a tty.
     </span><span class="kw">if </span>FileType::from_raw_mode(fd_stat.st_mode) != FileType::CharacterDevice {
@@ -577,12 +792,15 @@
     <span class="comment">// Check that `fd` is really a tty.
     </span>tcgetwinsize(fd)<span class="question-mark">?</span>;
 
-    <span class="comment">// Get a fd to '/proc/self/fd'.
-    </span><span class="kw">let </span>proc_self_fd = io::proc_self_fd()<span class="question-mark">?</span>;
+    <span class="comment">// Get a fd to "/proc/self/fd".
+    </span><span class="kw">let </span>proc_self_fd = procfs::proc_self_fd()<span class="question-mark">?</span>;
 
-    <span class="comment">// Gather the ttyname by reading the 'fd' file inside 'proc_self_fd'.
-    </span><span class="kw">let </span>r =
-        <span class="kw">super</span>::<span class="kw">super</span>::fs::syscalls::readlinkat(proc_self_fd, DecInt::from_fd(fd).as_c_str(), buf)<span class="question-mark">?</span>;
+    <span class="comment">// Gather the ttyname by reading the "fd" file inside `proc_self_fd`.
+    </span><span class="kw">let </span>r = <span class="kw">crate</span>::backend::fs::syscalls::readlinkat(
+        proc_self_fd,
+        DecInt::from_fd(fd).as_c_str(),
+        buf,
+    )<span class="question-mark">?</span>;
 
     <span class="comment">// If the number of bytes is equal to the buffer length, truncation may
     // have occurred. This check also ensures that we have enough space for
@@ -590,14 +808,20 @@
     </span><span class="kw">if </span>r == buf.len() {
         <span class="kw">return </span><span class="prelude-val">Err</span>(io::Errno::RANGE);
     }
-    buf[r] = <span class="string">b'\0'</span>;
+
+    <span class="comment">// `readlinkat` returns the number of bytes placed in the buffer.
+    // NUL-terminate the string at that offset.
+    </span>buf[r].write(<span class="string">b'\0'</span>);
 
     <span class="comment">// Check that the path we read refers to the same file as `fd`.
-    </span><span class="kw">let </span>path = CStr::from_bytes_with_nul(<span class="kw-2">&amp;</span>buf[..=r]).unwrap();
+    </span>{
+        <span class="comment">// SAFETY: We just wrote the NUL byte above
+        </span><span class="kw">let </span>path = <span class="kw">unsafe </span>{ CStr::from_ptr(buf.as_ptr().cast()) };
 
-    <span class="kw">let </span>path_stat = <span class="kw">super</span>::<span class="kw">super</span>::fs::syscalls::stat(path)<span class="question-mark">?</span>;
-    <span class="kw">if </span>path_stat.st_dev != fd_stat.st_dev || path_stat.st_ino != fd_stat.st_ino {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(io::Errno::NODEV);
+        <span class="kw">let </span>path_stat = <span class="kw">crate</span>::backend::fs::syscalls::stat(path)<span class="question-mark">?</span>;
+        <span class="kw">if </span>path_stat.st_dev != fd_stat.st_dev || path_stat.st_ino != fd_stat.st_ino {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(io::Errno::NODEV);
+        }
     }
 
     <span class="prelude-val">Ok</span>(r)

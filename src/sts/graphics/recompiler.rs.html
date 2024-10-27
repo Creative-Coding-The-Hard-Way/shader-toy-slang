@@ -225,7 +225,7 @@
     /// source. Returns an error if the initial compilation fails.
     </span><span class="kw">pub fn </span>new(
         shader_source_path: <span class="kw-2">&amp;</span>Path,
-        additional_watch_dir: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
+        additional_watch_paths: <span class="kw-2">&amp;</span>[PathBuf],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>shader_source_path_str = shader_source_path
             .to_str()
@@ -241,7 +241,7 @@
 
         <span class="kw">let </span>compile_thread_join_handle = spawn_compiler_thread(
             shader_source_path,
-            additional_watch_dir,
+            additional_watch_paths,
             source_sender,
             shutdown_receiver,
         )
@@ -296,13 +296,13 @@
 
 <span class="kw">fn </span>spawn_compiler_thread(
     shader_source_path: <span class="kw-2">&amp;</span>Path,
-    additional_watch_dir: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
+    additional_watch_paths: <span class="kw-2">&amp;</span>[PathBuf],
     source_sender: SyncSender&lt;Vec&lt;u8&gt;&gt;,
     shutdown_receiver: Receiver&lt;()&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;JoinHandle&lt;()&gt;&gt; {
-    <span class="kw">let </span>owned_additional_watch_path = additional_watch_dir.clone();
-    <span class="kw">let </span>owned_shader_source_path = shader_source_path.to_owned();
-    <span class="kw">let </span>shader_source_path_str = owned_shader_source_path.display().to_string();
+    <span class="kw">let </span>additional_watch_paths = additional_watch_paths.to_vec();
+    <span class="kw">let </span>shader_source_path = shader_source_path.to_owned();
+    <span class="kw">let </span>shader_source_path_str = shader_source_path.display().to_string();
     <span class="kw">let </span>compile_thread_join_handle = std::thread::spawn(<span class="kw">move </span>|| {
         <span class="kw">let </span><span class="kw-2">mut </span>debouncer =
             new_debouncer(Duration::from_millis(<span class="number">250</span>), <span class="prelude-val">None</span>, <span class="kw">move </span>|result| {
@@ -316,13 +316,13 @@
 
         debouncer
             .watcher()
-            .watch(<span class="kw-2">&amp;</span>owned_shader_source_path, RecursiveMode::NonRecursive)
+            .watch(<span class="kw-2">&amp;</span>shader_source_path, RecursiveMode::NonRecursive)
             .unwrap();
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(dir) = <span class="kw-2">&amp;</span>owned_additional_watch_path {
+        <span class="kw">for </span>additional_path <span class="kw">in </span>additional_watch_paths {
             debouncer
                 .watcher()
-                .watch(dir, RecursiveMode::Recursive)
+                .watch(<span class="kw-2">&amp;</span>additional_path, RecursiveMode::Recursive)
                 .unwrap();
         }
 

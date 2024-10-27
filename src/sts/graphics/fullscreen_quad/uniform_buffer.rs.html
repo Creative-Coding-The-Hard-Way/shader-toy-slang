@@ -224,7 +224,7 @@
                 / properties.limits.min_uniform_buffer_offset_alignment;
             (count + <span class="number">1</span>) * properties.limits.min_uniform_buffer_offset_alignment
         };
-        <span class="macro">log::info!</span>(<span class="string">"Unit size: {}"</span>, aligned_unit_size);
+        <span class="macro">log::trace!</span>(<span class="string">"Unit size: {}"</span>, aligned_unit_size);
 
         <span class="comment">// compute the total length of the buffer based on the aligned unit size
         // round up to the closest megabyte

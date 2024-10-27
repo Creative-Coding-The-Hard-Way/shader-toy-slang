@@ -169,7 +169,7 @@
             .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to enumerate physical devices!"</span>))<span class="question-mark">?
     </span>};
 
-    <span class="macro">log::info!</span>(<span class="string">"Searching for suitable physical device..."</span>);
+    <span class="macro">log::trace!</span>(<span class="string">"Searching for suitable physical device..."</span>);
 
     <span class="kw">let </span><span class="kw-2">mut </span>preferred_device = <span class="prelude-val">None</span>;
 
@@ -179,7 +179,7 @@
         };
         <span class="kw">let </span>name = properties.device_name_as_c_str().unwrap_or_default();
 
-        <span class="macro">log::info!</span>(<span class="string">"Check device {:?}"</span>, name);
+        <span class="macro">log::trace!</span>(<span class="string">"Check device {:?}"</span>, name);
         <span class="macro">log::trace!</span>(<span class="string">"Device properties: {:#?}"</span>, properties);
 
         <span class="kw">let </span>has_features = has_required_features(instance, physical_device);
@@ -188,7 +188,7 @@
         <span class="kw">let </span>has_surface_formats =
             has_required_surface_formats(surface_khr, physical_device)<span class="question-mark">?</span>;
 
-        <span class="macro">log::info!</span>(
+        <span class="macro">log::trace!</span>(
             <span class="macro">indoc::indoc!</span> {<span class="string">"
                 Device: {:?}
                  - has_required_features: {}

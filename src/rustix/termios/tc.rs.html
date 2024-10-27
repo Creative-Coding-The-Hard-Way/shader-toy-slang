@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rustix-0.37.27/src/termios/tc.rs`."><title>tc.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rustix-0.38.37/src/termios/tc.rs`."><title>tc.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -218,132 +218,37 @@
 <a href="#218" id="218">218</a>
 <a href="#219" id="219">219</a>
 <a href="#220" id="220">220</a>
-<a href="#221" id="221">221</a>
-<a href="#222" id="222">222</a>
-<a href="#223" id="223">223</a>
-<a href="#224" id="224">224</a>
-<a href="#225" id="225">225</a>
-<a href="#226" id="226">226</a>
-<a href="#227" id="227">227</a>
-<a href="#228" id="228">228</a>
-<a href="#229" id="229">229</a>
-<a href="#230" id="230">230</a>
-<a href="#231" id="231">231</a>
-<a href="#232" id="232">232</a>
-<a href="#233" id="233">233</a>
-<a href="#234" id="234">234</a>
-<a href="#235" id="235">235</a>
-<a href="#236" id="236">236</a>
-<a href="#237" id="237">237</a>
-<a href="#238" id="238">238</a>
-<a href="#239" id="239">239</a>
-<a href="#240" id="240">240</a>
-<a href="#241" id="241">241</a>
-<a href="#242" id="242">242</a>
-<a href="#243" id="243">243</a>
-<a href="#244" id="244">244</a>
-<a href="#245" id="245">245</a>
-<a href="#246" id="246">246</a>
-<a href="#247" id="247">247</a>
-<a href="#248" id="248">248</a>
-<a href="#249" id="249">249</a>
-<a href="#250" id="250">250</a>
-<a href="#251" id="251">251</a>
-<a href="#252" id="252">252</a>
-<a href="#253" id="253">253</a>
-<a href="#254" id="254">254</a>
-<a href="#255" id="255">255</a>
-<a href="#256" id="256">256</a>
-<a href="#257" id="257">257</a>
-<a href="#258" id="258">258</a>
-<a href="#259" id="259">259</a>
-<a href="#260" id="260">260</a>
-<a href="#261" id="261">261</a>
-<a href="#262" id="262">262</a>
-<a href="#263" id="263">263</a>
-<a href="#264" id="264">264</a>
-<a href="#265" id="265">265</a>
-<a href="#266" id="266">266</a>
-<a href="#267" id="267">267</a>
-<a href="#268" id="268">268</a>
-<a href="#269" id="269">269</a>
-<a href="#270" id="270">270</a>
-<a href="#271" id="271">271</a>
-<a href="#272" id="272">272</a>
-<a href="#273" id="273">273</a>
-<a href="#274" id="274">274</a>
-<a href="#275" id="275">275</a>
-<a href="#276" id="276">276</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::fd::AsFd;
-<span class="kw">use </span><span class="kw">crate</span>::process::Pid;
+<span class="attr">#[cfg(not(target_os = <span class="string">"espidf"</span>))]
+</span><span class="kw">use </span><span class="kw">crate</span>::termios::{Action, OptionalActions, QueueSelector, Termios, Winsize};
 <span class="kw">use crate</span>::{backend, io};
 
-<span class="attr">#[cfg(all(
-    linux_kernel,
-    any(
-        target_arch = <span class="string">"x86"</span>,
-        target_arch = <span class="string">"x86_64"</span>,
-        target_arch = <span class="string">"x32"</span>,
-        target_arch = <span class="string">"riscv64"</span>,
-        target_arch = <span class="string">"aarch64"</span>,
-        target_arch = <span class="string">"arm"</span>,
-        target_arch = <span class="string">"mips"</span>,
-        target_arch = <span class="string">"mips64"</span>,
-    )
-))]
-</span><span class="kw">pub use </span>backend::termios::types::Termios2;
-<span class="kw">pub use </span>backend::termios::types::{
-    Action, OptionalActions, QueueSelector, Speed, Tcflag, Termios, Winsize,
-};
+<span class="kw">pub use </span><span class="kw">crate</span>::pid::Pid;
 
 <span class="doccomment">/// `tcgetattr(fd)`—Get terminal attributes.
 ///
-/// Also known as the `TCGETS` operation with `ioctl`.
+/// Also known as the `TCGETS` (or `TCGETS2` on Linux) operation with `ioctl`.
+///
+/// On Linux, this uses `TCGETS2`. If that fails in a way that indicates that
+/// the host doesn't support it, this falls back to the old `TCGETS`, manually
+/// initializes the fields that `TCGETS` doesn't initialize, and fails with
+/// `io::Errno::RANGE` if the input or output speeds cannot be supported.
 ///
 /// # References
 ///  - [POSIX `tcgetattr`]
 ///  - [Linux `ioctl_tty`]
 ///  - [Linux `termios`]
 ///
-/// [POSIX `tcgetattr`]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/tcgetattr.html
+/// [POSIX `tcgetattr`]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/tcgetattr.html
 /// [Linux `ioctl_tty`]: https://man7.org/linux/man-pages/man4/tty_ioctl.4.html
 /// [Linux `termios`]: https://man7.org/linux/man-pages/man3/termios.3.html
-</span><span class="attr">#[cfg(not(any(windows, target_os = <span class="string">"wasi"</span>)))]
+</span><span class="attr">#[cfg(not(any(windows, target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"wasi"</span>)))]
 #[inline]
 #[doc(alias = <span class="string">"TCGETS"</span>)]
+#[doc(alias = <span class="string">"TCGETS2"</span>)]
+#[doc(alias = <span class="string">"tcgetattr2"</span>)]
 </span><span class="kw">pub fn </span>tcgetattr&lt;Fd: AsFd&gt;(fd: Fd) -&gt; io::Result&lt;Termios&gt; {
     backend::termios::syscalls::tcgetattr(fd.as_fd())
-}
-
-<span class="doccomment">/// `tcgetattr2(fd)`—Get terminal attributes.
-///
-/// Also known as the `TCGETS2` operation with `ioctl`.
-///
-/// # References
-///  - [POSIX `tcgetattr`]
-///  - [Linux `ioctl_tty`]
-///  - [Linux `termios`]
-///
-/// [POSIX `tcgetattr`]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/tcgetattr.html
-/// [Linux `ioctl_tty`]: https://man7.org/linux/man-pages/man4/tty_ioctl.4.html
-/// [Linux `termios`]: https://man7.org/linux/man-pages/man3/termios.3.html
-</span><span class="attr">#[inline]
-#[doc(alias = <span class="string">"TCGETS2"</span>)]
-#[cfg(all(
-    linux_kernel,
-    any(
-        target_arch = <span class="string">"x86"</span>,
-        target_arch = <span class="string">"x86_64"</span>,
-        target_arch = <span class="string">"x32"</span>,
-        target_arch = <span class="string">"riscv64"</span>,
-        target_arch = <span class="string">"aarch64"</span>,
-        target_arch = <span class="string">"arm"</span>,
-        target_arch = <span class="string">"mips"</span>,
-        target_arch = <span class="string">"mips64"</span>,
-    )
-))]
-</span><span class="kw">pub fn </span>tcgetattr2&lt;Fd: AsFd&gt;(fd: Fd) -&gt; io::Result&lt;Termios2&gt; {
-    backend::termios::syscalls::tcgetattr2(fd.as_fd())
 }
 
 <span class="doccomment">/// `tcgetwinsize(fd)`—Get the current terminal window size.
@@ -354,7 +259,7 @@
 ///  - [Linux]
 ///
 /// [Linux]: https://man7.org/linux/man-pages/man4/tty_ioctl.4.html
-</span><span class="attr">#[cfg(not(any(windows, target_os = <span class="string">"wasi"</span>)))]
+</span><span class="attr">#[cfg(not(any(windows, target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"wasi"</span>)))]
 #[inline]
 #[doc(alias = <span class="string">"TIOCGWINSZ"</span>)]
 </span><span class="kw">pub fn </span>tcgetwinsize&lt;Fd: AsFd&gt;(fd: Fd) -&gt; io::Result&lt;Winsize&gt; {
@@ -365,11 +270,16 @@
 ///
 /// Also known as the `TIOCGPGRP` operation with `ioctl`.
 ///
+/// On Linux, if `fd` is a pseudo-terminal, the underlying system call here can
+/// return a pid of 0, which rustix's `Pid` type doesn't support. So rustix
+/// instead handles this case by failing with [`io::Errno::OPNOTSUPP`] if the
+/// pid is 0.
+///
 /// # References
 ///  - [POSIX]
 ///  - [Linux]
 ///
-/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/tcgetpgrp.html
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/tcgetpgrp.html
 /// [Linux]: https://man7.org/linux/man-pages/man3/tcgetpgrp.3.html
 </span><span class="attr">#[cfg(not(any(windows, target_os = <span class="string">"wasi"</span>)))]
 #[inline]
@@ -386,7 +296,7 @@
 ///  - [POSIX]
 ///  - [Linux]
 ///
-/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/tcsetpgrp.html
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/tcsetpgrp.html
 /// [Linux]: https://man7.org/linux/man-pages/man3/tcsetpgrp.3.html
 </span><span class="attr">#[cfg(not(any(windows, target_os = <span class="string">"wasi"</span>)))]
 #[inline]
@@ -397,18 +307,25 @@
 
 <span class="doccomment">/// `tcsetattr(fd)`—Set terminal attributes.
 ///
-/// Also known as the `TCSETS` operation with `ioctl`.
+/// Also known as the `TCSETS` (or `TCSETS2` on Linux) operation with `ioctl`.
+///
+/// On Linux, this uses `TCSETS2`. If that fails in a way that indicates that
+/// the host doesn't support it, this falls back to the old `TCSETS`, and fails
+/// with `io::Errno::RANGE` if the input or output speeds cannot be supported.
 ///
 /// # References
 ///  - [POSIX `tcsetattr`]
 ///  - [Linux `ioctl_tty`]
 ///  - [Linux `termios`]
 ///
-/// [POSIX `tcsetattr`]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/tcsetattr.html
+/// [POSIX `tcsetattr`]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/tcsetattr.html
 /// [Linux `ioctl_tty`]: https://man7.org/linux/man-pages/man4/tty_ioctl.4.html
 /// [Linux `termios`]: https://man7.org/linux/man-pages/man3/termios.3.html
-</span><span class="attr">#[inline]
+</span><span class="attr">#[cfg(not(target_os = <span class="string">"espidf"</span>))]
+#[inline]
 #[doc(alias = <span class="string">"TCSETS"</span>)]
+#[doc(alias = <span class="string">"TCSETS2"</span>)]
+#[doc(alias = <span class="string">"tcsetattr2"</span>)]
 </span><span class="kw">pub fn </span>tcsetattr&lt;Fd: AsFd&gt;(
     fd: Fd,
     optional_actions: OptionalActions,
@@ -417,55 +334,22 @@
     backend::termios::syscalls::tcsetattr(fd.as_fd(), optional_actions, termios)
 }
 
-<span class="doccomment">/// `tcsetattr2(fd)`—Set terminal attributes.
-///
-/// Also known as the `TCSETS2` operation with `ioctl`.
-///
-/// # References
-///  - [POSIX `tcsetattr`]
-///  - [Linux `ioctl_tty`]
-///  - [Linux `termios`]
-///
-/// [POSIX `tcsetattr`]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/tcsetattr.html
-/// [Linux `ioctl_tty`]: https://man7.org/linux/man-pages/man4/tty_ioctl.4.html
-/// [Linux `termios`]: https://man7.org/linux/man-pages/man3/termios.3.html
-</span><span class="attr">#[inline]
-#[doc(alias = <span class="string">"TCSETS2"</span>)]
-#[cfg(all(
-    linux_kernel,
-    any(
-        target_arch = <span class="string">"x86"</span>,
-        target_arch = <span class="string">"x86_64"</span>,
-        target_arch = <span class="string">"x32"</span>,
-        target_arch = <span class="string">"riscv64"</span>,
-        target_arch = <span class="string">"aarch64"</span>,
-        target_arch = <span class="string">"arm"</span>,
-        target_arch = <span class="string">"mips"</span>,
-        target_arch = <span class="string">"mips64"</span>,
-    )
-))]
-</span><span class="kw">pub fn </span>tcsetattr2&lt;Fd: AsFd&gt;(
-    fd: Fd,
-    optional_actions: OptionalActions,
-    termios: <span class="kw-2">&amp;</span>Termios2,
-) -&gt; io::Result&lt;()&gt; {
-    backend::termios::syscalls::tcsetattr2(fd.as_fd(), optional_actions, termios)
-}
-
 <span class="doccomment">/// `tcsendbreak(fd, 0)`—Transmit zero-valued bits.
 ///
-/// Also known as the `TCSBRK` operation with `ioctl`, with a duration of 0.
+/// This transmits zero-valued bits for at least 0.25 seconds.
 ///
-/// This function always uses an effective duration parameter of zero. For the
-/// equivalent of a `tcsendbreak` with a non-zero duration parameter, use
-/// `tcdrain`.
+/// This function does not have a `duration` parameter, and always uses the
+/// implementation-defined value, which transmits for at least 0.25 seconds.
+///
+/// Also known as the `TCSBRK` operation with `ioctl`, with a duration
+/// parameter of 0.
 ///
 /// # References
 ///  - [POSIX `tcsendbreak`]
 ///  - [Linux `ioctl_tty`]
 ///  - [Linux `termios`]
 ///
-/// [POSIX `tcsendbreak`]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/tcsendbreak.html
+/// [POSIX `tcsendbreak`]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/tcsendbreak.html
 /// [Linux `ioctl_tty`]: https://man7.org/linux/man-pages/man4/tty_ioctl.4.html
 /// [Linux `termios`]: https://man7.org/linux/man-pages/man3/termios.3.html
 </span><span class="attr">#[inline]
@@ -481,10 +365,11 @@
 ///  - [Linux `ioctl_tty`]
 ///  - [Linux `termios`]
 ///
-/// [POSIX `tcsetattr`]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/tcdrain.html
+/// [POSIX `tcsetattr`]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/tcdrain.html
 /// [Linux `ioctl_tty`]: https://man7.org/linux/man-pages/man4/tty_ioctl.4.html
 /// [Linux `termios`]: https://man7.org/linux/man-pages/man3/termios.3.html
-</span><span class="attr">#[inline]
+</span><span class="attr">#[cfg(not(target_os = <span class="string">"espidf"</span>))]
+#[inline]
 </span><span class="kw">pub fn </span>tcdrain&lt;Fd: AsFd&gt;(fd: Fd) -&gt; io::Result&lt;()&gt; {
     backend::termios::syscalls::tcdrain(fd.as_fd())
 }
@@ -497,10 +382,11 @@
 ///  - [Linux `ioctl_tty`]
 ///  - [Linux `termios`]
 ///
-/// [POSIX `tcflush`]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/tcflush.html
+/// [POSIX `tcflush`]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/tcflush.html
 /// [Linux `ioctl_tty`]: https://man7.org/linux/man-pages/man4/tty_ioctl.4.html
 /// [Linux `termios`]: https://man7.org/linux/man-pages/man3/termios.3.html
-</span><span class="attr">#[inline]
+</span><span class="attr">#[cfg(not(target_os = <span class="string">"espidf"</span>))]
+#[inline]
 #[doc(alias = <span class="string">"TCFLSH"</span>)]
 </span><span class="kw">pub fn </span>tcflush&lt;Fd: AsFd&gt;(fd: Fd, queue_selector: QueueSelector) -&gt; io::Result&lt;()&gt; {
     backend::termios::syscalls::tcflush(fd.as_fd(), queue_selector)
@@ -513,10 +399,11 @@
 ///  - [Linux `ioctl_tty`]
 ///  - [Linux `termios`]
 ///
-/// [POSIX `tcflow`]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/tcflow.html
+/// [POSIX `tcflow`]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/tcflow.html
 /// [Linux `ioctl_tty`]: https://man7.org/linux/man-pages/man4/tty_ioctl.4.html
 /// [Linux `termios`]: https://man7.org/linux/man-pages/man3/termios.3.html
-</span><span class="attr">#[inline]
+</span><span class="attr">#[cfg(not(target_os = <span class="string">"espidf"</span>))]
+#[inline]
 #[doc(alias = <span class="string">"TCXONC"</span>)]
 </span><span class="kw">pub fn </span>tcflow&lt;Fd: AsFd&gt;(fd: Fd, action: Action) -&gt; io::Result&lt;()&gt; {
     backend::termios::syscalls::tcflow(fd.as_fd(), action)
@@ -529,7 +416,7 @@
 ///  - [POSIX]
 ///  - [Linux]
 ///
-/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/tcgetsid.html
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/tcgetsid.html
 /// [Linux]: https://man7.org/linux/man-pages/man3/tcgetsid.3.html
 </span><span class="attr">#[inline]
 #[doc(alias = <span class="string">"TIOCGSID"</span>)]
@@ -545,7 +432,8 @@
 ///  - [Linux]
 ///
 /// [Linux]: https://man7.org/linux/man-pages/man4/tty_ioctl.4.html
-</span><span class="attr">#[inline]
+</span><span class="attr">#[cfg(not(target_os = <span class="string">"espidf"</span>))]
+#[inline]
 #[doc(alias = <span class="string">"TIOCSWINSZ"</span>)]
 </span><span class="kw">pub fn </span>tcsetwinsize&lt;Fd: AsFd&gt;(fd: Fd, winsize: Winsize) -&gt; io::Result&lt;()&gt; {
     backend::termios::syscalls::tcsetwinsize(fd.as_fd(), winsize)
