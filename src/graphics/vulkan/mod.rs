@@ -5,7 +5,7 @@ pub mod raii;
 mod swapchain;
 
 pub use self::{
-    allocator::Allocator,
+    allocator::{block::Block, owned_block::OwnedBlock, Allocator},
     device::{Device, Instance},
     frames_in_flight::{Frame, FrameStatus, FramesInFlight},
     swapchain::{AcquireImageStatus, PresentImageStatus, Swapchain},

@@ -1,6 +1,6 @@
 use {
     crate::{
-        graphics::vulkan::{raii, Device},
+        graphics::vulkan::{raii, Device, OwnedBlock},
         trace,
     },
     anyhow::{bail, Result},
@@ -28,10 +28,9 @@ use {
 #[derive(Debug)]
 pub struct UniformBuffer<FrameDataT: Sized + Copy + Default> {
     pub buffer: raii::Buffer,
-    pub _memory: raii::DeviceMemory,
+    pub block: OwnedBlock,
     aligned_unit_size: usize,
     count: usize,
-    mapped_ptr: *mut std::ffi::c_void,
     _phantom_data: PhantomData<FrameDataT>,
 }
 
@@ -63,7 +62,8 @@ where
             (aligned_unit_size * count as u64).max(1024 * 1024);
 
         // create the buffer
-        let (buffer, memory) = device.allocator.allocate_buffer(
+        let (buffer, block) = OwnedBlock::allocate_buffer(
+            device.allocator.clone(),
             &vk::BufferCreateInfo {
                 size: buffer_size_in_bytes,
                 usage: vk::BufferUsageFlags::UNIFORM_BUFFER,
@@ -76,21 +76,11 @@ where
                 | vk::MemoryPropertyFlags::HOST_COHERENT,
         )?;
 
-        let mapped_ptr = unsafe {
-            device.map_memory(
-                memory.raw,
-                0,
-                vk::WHOLE_SIZE,
-                vk::MemoryMapFlags::empty(),
-            )?
-        };
-
         Ok(Self {
             buffer,
+            block,
             count,
             aligned_unit_size: aligned_unit_size as usize,
-            _memory: memory,
-            mapped_ptr,
             _phantom_data: PhantomData,
         })
     }
@@ -119,7 +109,7 @@ where
 
         let offset = self.offset_for_index(index) as isize;
         std::ptr::write_volatile(
-            self.mapped_ptr.byte_offset(offset) as *mut FrameDataT,
+            self.block.mapped_ptr().byte_offset(offset) as *mut FrameDataT,
             data,
         );
 

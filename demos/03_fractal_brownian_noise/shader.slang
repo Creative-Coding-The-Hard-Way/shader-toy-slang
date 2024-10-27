@@ -50,7 +50,7 @@ float4 main(
     let sq_d = dot(dir, dir);
 
     let result = fwd_diff(fbm)(DifferentialPair<float2>(
-        float2(pos * 10.0),
+        float2(pos * 15.0),
         dir / d,
     ));
 

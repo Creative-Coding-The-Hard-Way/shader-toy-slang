@@ -1,5 +1,11 @@
+pub mod block;
+pub mod owned_block;
+
 use {
-    crate::{graphics::vulkan::raii, trace},
+    crate::{
+        graphics::vulkan::{raii, Block},
+        trace,
+    },
     anyhow::{Context, Result},
     ash::vk,
     std::sync::Arc,
@@ -35,102 +41,12 @@ impl Allocator {
         })
     }
 
-    /// Creates an image and allocates memory to back it.
-    ///
-    /// The image is bound to the memory prior to return, so the caller can use
-    /// it right away.
-    pub fn allocate_image(
-        &self,
-        image_create_info: &vk::ImageCreateInfo,
-        flags: vk::MemoryPropertyFlags,
-    ) -> Result<(raii::Image, raii::DeviceMemory)> {
-        let image =
-            raii::Image::new(self.logical_device.clone(), image_create_info)
-                .with_context(trace!("Unable to create image!"))?;
-
-        let requirements = {
-            let mut dedicated = vk::MemoryDedicatedRequirements::default();
-            let requirements = unsafe {
-                let mut out = vk::MemoryRequirements2::default()
-                    .push_next(&mut dedicated);
-
-                self.logical_device.get_image_memory_requirements2(
-                    &vk::ImageMemoryRequirementsInfo2 {
-                        image: image.raw,
-                        ..Default::default()
-                    },
-                    &mut out,
-                );
-
-                out.memory_requirements
-            };
-            requirements
-        };
-
-        let memory = self
-            .allocate_memory(&requirements, flags)
-            .with_context(trace!("Unable to allocate memory for image!"))?;
-
-        unsafe {
-            self.logical_device
-                .bind_image_memory(image.raw, memory.raw, 0)
-                .with_context(trace!("Unable to bind image memory!"))?;
-        };
-
-        Ok((image, memory))
-    }
-
-    /// Creates a buffer and allocates memory to back it.
-    ///
-    /// The buffer is bound to the memory prior to return, so the caller can use
-    /// it right away.
-    pub fn allocate_buffer(
-        &self,
-        buffer_create_info: &vk::BufferCreateInfo,
-        flags: vk::MemoryPropertyFlags,
-    ) -> Result<(raii::Buffer, raii::DeviceMemory)> {
-        let buffer =
-            raii::Buffer::new(self.logical_device.clone(), buffer_create_info)
-                .with_context(trace!("Unable to create buffer!"))?;
-
-        let requirements = {
-            let mut dedicated = vk::MemoryDedicatedRequirements::default();
-            let requirements = unsafe {
-                let mut out = vk::MemoryRequirements2::default()
-                    .push_next(&mut dedicated);
-
-                self.logical_device.get_buffer_memory_requirements2(
-                    &vk::BufferMemoryRequirementsInfo2 {
-                        buffer: buffer.raw,
-                        ..Default::default()
-                    },
-                    &mut out,
-                );
-
-                out.memory_requirements
-            };
-            requirements
-        };
-
-        let memory = self
-            .allocate_memory(&requirements, flags)
-            .with_context(trace!("Unable to allocate memory for buffer!"))?;
-
-        unsafe {
-            self.logical_device
-                .bind_buffer_memory(buffer.raw, memory.raw, 0)
-                .with_context(trace!("Unable to bind buffer to memory!"))?;
-        };
-
-        Ok((buffer, memory))
-    }
-
     /// Allocates device memory according to the given requirements.
     pub fn allocate_memory(
         &self,
         requirements: &vk::MemoryRequirements,
         flags: vk::MemoryPropertyFlags,
-    ) -> Result<raii::DeviceMemory> {
+    ) -> Result<Block> {
         let (memory_type_index, _) = self
             .memory_properties
             .memory_types
@@ -151,6 +67,39 @@ impl Allocator {
             memory_type_index: memory_type_index as u32,
             ..Default::default()
         };
-        raii::DeviceMemory::new(self.logical_device.clone(), &allocate_info)
+        let memory = unsafe {
+            self.logical_device
+                .allocate_memory(&allocate_info, None)
+                .with_context(trace!("Unable to allocate device memory!"))?
+        };
+        let mapped_ptr =
+            if flags.contains(vk::MemoryPropertyFlags::HOST_VISIBLE) {
+                unsafe {
+                    self.logical_device
+                        .map_memory(
+                            memory,
+                            0,
+                            vk::WHOLE_SIZE,
+                            vk::MemoryMapFlags::empty(),
+                        )
+                        .with_context(trace!("Unable to map memory!"))?
+                }
+            } else {
+                std::ptr::null_mut()
+            };
+        Ok(Block::new(0, requirements.size, memory, mapped_ptr))
+    }
+
+    /// Free the allocated block.
+    pub fn free(&self, block: &Block) {
+        unsafe {
+            self.logical_device.free_memory(block.memory(), None);
+        }
+    }
+}
+
+impl std::fmt::Debug for Allocator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Allocator").finish_non_exhaustive()
     }
 }

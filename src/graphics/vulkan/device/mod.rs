@@ -28,7 +28,7 @@ pub struct Device {
     pub graphics_queue: vk::Queue,
 
     /// The device memory allocator.
-    pub allocator: Allocator,
+    pub allocator: Arc<Allocator>,
 }
 
 impl Device {
@@ -72,7 +72,7 @@ impl Device {
             logical_device,
             graphics_queue_family_index,
             graphics_queue,
-            allocator,
+            allocator: Arc::new(allocator),
         }))
     }
 }
