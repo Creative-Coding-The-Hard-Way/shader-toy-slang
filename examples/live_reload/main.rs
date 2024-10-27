@@ -84,6 +84,12 @@ impl App for LiveReload {
         Self: Sized,
     {
         window.set_all_polling(true);
+        window.set_title(
+            args.frag_shader
+                .parent()
+                .and_then(|a| a.to_str())
+                .unwrap_or("shader-toy-slang"),
+        );
 
         let device = Device::new(window)?;
         log::trace!("Created device: {:#?}", device);

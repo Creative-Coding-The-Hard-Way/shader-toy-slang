@@ -95,8 +95,8 @@ where
 
     let (mut window, events) = glfw
         .create_window(
-            1024,
-            768,
+            640,
+            480,
             "Shader Toy - Slang",
             glfw::WindowMode::Windowed,
         )

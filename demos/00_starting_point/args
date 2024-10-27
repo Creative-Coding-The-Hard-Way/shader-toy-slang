@@ -1,0 +1,2 @@
+--frag-shader=demos/00_starting_point/shader.slang
+--additional-watch-dir=demos/include/
