@@ -1,0 +1,2 @@
+--frag-shader=demos/02_sphere_tracing/shader.slang
+--additional-watch-dir=demos/include/
