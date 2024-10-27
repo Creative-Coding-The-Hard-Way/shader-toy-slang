@@ -13,6 +13,13 @@ pub struct Block {
     mapped_ptr: *mut std::ffi::c_void,
 }
 
+/// Blocks are not Send by default because they include the mapped_ptr.
+///
+/// It is safe to send the mapped ptr between threads, but the application is
+/// responsible for synchronizing access to the underlying buffer via the
+/// pointer.
+unsafe impl Send for Block {}
+
 impl Block {
     /// Creates a new block.
     pub(super) fn new(

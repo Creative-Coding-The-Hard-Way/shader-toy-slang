@@ -1,15 +1,89 @@
+mod allocation_requirements;
 pub mod block;
+mod dedicated_allocator;
 pub mod owned_block;
 
 use {
+    self::allocation_requirements::AllocationRequirements,
     crate::{
         graphics::vulkan::{raii, Block},
         trace,
     },
-    anyhow::{Context, Result},
+    anyhow::{bail, Context, Result},
     ash::vk,
-    std::sync::Arc,
+    std::{
+        sync::{
+            mpsc::{Sender, SyncSender},
+            Arc,
+        },
+        thread::JoinHandle,
+    },
 };
+
+trait ManagedAllocator {
+    fn allocate_memory(
+        &mut self,
+        requirements: AllocationRequirements,
+    ) -> Result<Block>;
+
+    fn free_memory(&mut self, block: &Block);
+}
+
+struct SystemAllocator {
+    logical_device: Arc<raii::Device>,
+}
+
+impl ManagedAllocator for SystemAllocator {
+    fn allocate_memory(
+        &mut self,
+        requirements: AllocationRequirements,
+    ) -> Result<Block> {
+        // Allocate the underlying memory
+        let memory = unsafe {
+            self.logical_device
+                .allocate_memory(&requirements.as_vk_allocate_info(), None)
+                .with_context(trace!("Unable to allocate device memory!"))?
+        };
+
+        // Map the device memory if possible
+        let mapped_ptr = if requirements
+            .flags
+            .contains(vk::MemoryPropertyFlags::HOST_VISIBLE)
+        {
+            unsafe {
+                self.logical_device
+                    .map_memory(
+                        memory,
+                        0,
+                        vk::WHOLE_SIZE,
+                        vk::MemoryMapFlags::empty(),
+                    )
+                    .with_context(trace!("Unable to map memory!"))?
+            }
+        } else {
+            std::ptr::null_mut()
+        };
+
+        Ok(Block::new(
+            0,
+            requirements.allocation_size,
+            memory,
+            mapped_ptr,
+        ))
+    }
+
+    fn free_memory(&mut self, block: &Block) {
+        unsafe {
+            self.logical_device.free_memory(block.memory(), None);
+        }
+    }
+}
+
+enum Request {
+    Allocate(AllocationRequirements, SyncSender<Result<Block>>),
+    Free(Block),
+    ShutDown,
+}
 
 /// A Vulkan device memory allocator.
 ///
@@ -19,9 +93,9 @@ use {
 /// device, the ash library instance, and the Vulkan logical device all outlive
 /// the Allocator.
 pub struct Allocator {
-    // Non-owning copies of Vulkan resources.
     logical_device: Arc<raii::Device>,
-
+    client: Sender<Request>,
+    allocation_thread: Option<JoinHandle<()>>,
     memory_properties: vk::PhysicalDeviceMemoryProperties,
 }
 
@@ -35,8 +109,48 @@ impl Allocator {
                 .instance
                 .get_physical_device_memory_properties(physical_device)
         };
+
+        let logical_device_clone = logical_device.clone();
+        let (sender, receiver) = std::sync::mpsc::channel::<Request>();
+        let handle = std::thread::spawn(move || {
+            let mut allocator = SystemAllocator {
+                logical_device: logical_device_clone,
+            };
+            'main: loop {
+                let allocation_request = if let Ok(request) = receiver.recv() {
+                    request
+                } else {
+                    log::warn!("Memory allocation client hung up!");
+                    break 'main;
+                };
+
+                match allocation_request {
+                    Request::Allocate(requirements, response) => {
+                        let result = allocator.allocate_memory(requirements);
+                        if let Err(error) = response.send(result) {
+                            log::error!(
+                                "Unable to send block to requester! {}",
+                                error
+                            );
+                            break 'main;
+                        }
+                    }
+                    Request::Free(block) => {
+                        allocator.free_memory(&block);
+                    }
+                    Request::ShutDown => {
+                        log::trace!("Shutdown requested");
+                        break 'main;
+                    }
+                }
+            }
+            log::trace!("Device memory allocator shut down.");
+        });
+
         Ok(Self {
             logical_device,
+            client: sender,
+            allocation_thread: Some(handle),
             memory_properties,
         })
     }
@@ -47,53 +161,33 @@ impl Allocator {
         requirements: &vk::MemoryRequirements,
         flags: vk::MemoryPropertyFlags,
     ) -> Result<Block> {
-        let (memory_type_index, _) = self
-            .memory_properties
-            .memory_types
-            .iter()
-            .enumerate()
-            .find(|(index, memory_type)| {
-                let type_bits = 1 << index;
-                let is_supported_type =
-                    type_bits & requirements.memory_type_bits != 0;
-                let is_visible_and_coherent =
-                    memory_type.property_flags.contains(flags);
-                is_supported_type && is_visible_and_coherent
-            })
-            .with_context(trace!("Unable to find compatible memory type!"))?;
+        let requirements = AllocationRequirements::new(
+            &self.memory_properties,
+            requirements,
+            flags,
+        )?;
 
-        let allocate_info = vk::MemoryAllocateInfo {
-            allocation_size: requirements.size,
-            memory_type_index: memory_type_index as u32,
-            ..Default::default()
-        };
-        let memory = unsafe {
-            self.logical_device
-                .allocate_memory(&allocate_info, None)
-                .with_context(trace!("Unable to allocate device memory!"))?
-        };
-        let mapped_ptr =
-            if flags.contains(vk::MemoryPropertyFlags::HOST_VISIBLE) {
-                unsafe {
-                    self.logical_device
-                        .map_memory(
-                            memory,
-                            0,
-                            vk::WHOLE_SIZE,
-                            vk::MemoryMapFlags::empty(),
-                        )
-                        .with_context(trace!("Unable to map memory!"))?
-                }
-            } else {
-                std::ptr::null_mut()
-            };
-        Ok(Block::new(0, requirements.size, memory, mapped_ptr))
+        // Send the memory allocation request to the allocator thread
+        let (response_sender, response) =
+            std::sync::mpsc::sync_channel::<Result<Block>>(1);
+        if self
+            .client
+            .send(Request::Allocate(requirements, response_sender))
+            .is_err()
+        {
+            bail!(trace!("Unable to send allocation request!")());
+        }
+
+        // wait for the response
+        response
+            .recv()
+            .with_context(trace!("Error while receiving response!"))?
     }
 
     /// Free the allocated block.
     pub fn free(&self, block: &Block) {
-        unsafe {
-            self.logical_device.free_memory(block.memory(), None);
+        if self.client.send(Request::Free(*block)).is_err() {
+            log::error!("Error while attempting to free memory: {:#?}", block);
         }
     }
 }
@@ -101,5 +195,18 @@ impl Allocator {
 impl std::fmt::Debug for Allocator {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Allocator").finish_non_exhaustive()
+    }
+}
+
+impl Drop for Allocator {
+    fn drop(&mut self) {
+        if self.client.send(Request::ShutDown).is_err() {
+            log::error!("Error while sending shutdown request!");
+        }
+        let allocator_thread_result =
+            self.allocation_thread.take().unwrap().join();
+        if let Err(error) = allocator_thread_result {
+            log::error!("Error in allocator thread!\n\n{:?}", error);
+        }
     }
 }

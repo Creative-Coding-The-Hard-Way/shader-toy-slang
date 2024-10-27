@@ -8,7 +8,7 @@ use {
     std::sync::Arc,
 };
 
-/// RAII wrapper for Block allocations.
+/// A block allocation that frees itself when dropped.
 #[derive(Debug)]
 pub struct OwnedBlock {
     block: Block,
