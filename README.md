@@ -1,28 +1,30 @@
 # Shader-Toy-Slang
 
-A Vulkan demo that presents a fullscreen quad every frame. The fragment shader
-source is provided as a command line argument and will be dynamically reloaded
-any time the source is modified and compiles successfully.
+The library + example in this binary exist because I wanted to experiment with
+[shader-slang](https://github.com/shader-slang/slang) which is now included in
+the Vulkan SDK (see the [1.3.296.0 release notes](https://vulkan.lunarg.com/doc/sdk/1.3.296.0/windows/release_notes.html)).
 
-## Usage
+## Demos
 
-> cargo run --example live_reload -- <path-to-slang-src>
+Working shader demos are placed in the [demos](./demos/) directory.
 
-For example:
+## Live Reload
 
-> cargo run --example live_reload -- ./examples/live_reload/shaders/noise.frag.slang
+The Live Reload demo provides a convenient way to experiment with shader-slang
+in realtime.
 
-Optionally, include the lib directory to trigger a recompile any time any of
-those files changes:
+### Usage
 
-> cargo run --example live_reload -- ./examples/live_reload/shaders/noise.frag.slang ./examples/live_reload/shaders/lib/
+```
+cargo run --example live_reload -- --help
+```
 
-## Keybinds
+### Keybinds
 
 - Esc: exit the application
 - Space: toggle fullscreen
 
-## Uniform Data
+### Uniform Data
 
 The fragment shader has access to per-frame uniform data. It can be accessed
 by adding the following to the top of the fragment shader definition:
@@ -39,7 +41,7 @@ struct FrameData {
 ConstantBuffer<FrameData> frame;
 ```
 
-## Per-Fragment Data
+### Per-Fragment Data
 
 The Vertex shader emits the position and uv as varying float2s for access within
 the fragment shader:
@@ -56,7 +58,7 @@ screen, and (1, 1) is the top right).
 `uv` is in the range [0, 1] and represents "UV" coordinates where (0, 0) is the
 bottom left of the screen and (1, 1) is the top right of the screen.
 
-## Starting Point
+### Starting Point
 
 This is a bare-minimum fragment shader that turns the entire screen blue.
 
