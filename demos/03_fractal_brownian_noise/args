@@ -1,2 +1,2 @@
---frag-shader=./demos/01_fractal_brownian_noise/shader.slang
---additional-watch-dir=./demos/include/
+--frag-shader=demos/03_fractal_brownian_noise/shader.slang
+--additional-watch-dir=demos/include/

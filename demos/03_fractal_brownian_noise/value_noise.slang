@@ -1,6 +1,6 @@
 module value_noise;
 
-import interpolation;
+import "../include/interpolation";
 
 /// Computes a consistent hash of the provided numbers.
 ///
