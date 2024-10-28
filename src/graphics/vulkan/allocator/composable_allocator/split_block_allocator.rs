@@ -29,20 +29,24 @@ impl SplitBlock {
             total: block,
         })
     }
+
+    pub fn contains(&self, block: &Block) -> bool {
+        block.is_subregion_of(&self.total)
+    }
 }
 
 /// This allocator suballocates regions of a block by splitting it in two.
 ///
 /// New blocks are provided by the composed allocator.
 pub struct SplitBlockAllocator<A: ComposableAllocator> {
-    blocks: Vec<SplitBlock>,
+    split_blocks: Vec<SplitBlock>,
     allocator: A,
 }
 
 impl<A: ComposableAllocator> SplitBlockAllocator<A> {
     pub fn new(allocator: A) -> Self {
         Self {
-            blocks: Vec::new(),
+            split_blocks: Vec::new(),
             allocator,
         }
     }
@@ -50,7 +54,7 @@ impl<A: ComposableAllocator> SplitBlockAllocator<A> {
 
 impl<A: ComposableAllocator> ComposableAllocator for SplitBlockAllocator<A> {
     fn owns(&self, block: &Block) -> bool {
-        self.blocks.iter().any(|split| split.total == *block)
+        self.split_blocks.iter().any(|split| split.contains(block))
     }
 
     fn allocate_memory(
@@ -58,19 +62,19 @@ impl<A: ComposableAllocator> ComposableAllocator for SplitBlockAllocator<A> {
         requirements: AllocationRequirements,
     ) -> Result<Block> {
         let block = self.allocator.allocate_memory(requirements)?;
-        self.blocks.push(SplitBlock::new(block)?);
+        self.split_blocks.push(SplitBlock::new(block)?);
         Ok(block)
     }
 
     fn free_memory(&mut self, block: &Block) {
         let result = self
-            .blocks
+            .split_blocks
             .iter()
             .enumerate()
-            .find(|(_, owned_block)| owned_block.total.eq(block));
+            .find(|(_, split)| split.contains(block));
 
         if let Some((index, _)) = result {
-            self.blocks.swap_remove(index);
+            self.split_blocks.swap_remove(index);
             self.allocator.free_memory(block);
         }
     }
