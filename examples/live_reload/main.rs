@@ -15,8 +15,8 @@ use {
         app::{app_main, App, FullscreenToggle},
         graphics::{
             vulkan::{
-                raii, Device, FrameStatus, FramesInFlight, PresentImageStatus,
-                Swapchain,
+                raii, Device, FrameStatus, FramesInFlight, OwnedBlock,
+                PresentImageStatus, Swapchain,
             },
             FullscreenQuad, Recompiler,
         },
@@ -118,6 +118,22 @@ impl App for LiveReload {
             &swapchain,
             &render_pass,
         )?;
+
+        let mut blocks = vec![];
+        for _ in 0..10 {
+            blocks.push(OwnedBlock::allocate_buffer(
+                device.allocator.clone(),
+                &vk::BufferCreateInfo {
+                    size: (1024.0 * 1024.0 * 8.234) as u64,
+                    usage: vk::BufferUsageFlags::TRANSFER_DST,
+                    sharing_mode: vk::SharingMode::EXCLUSIVE,
+                    queue_family_index_count: 1,
+                    p_queue_family_indices: &device.graphics_queue_family_index,
+                    ..Default::default()
+                },
+                vk::MemoryPropertyFlags::DEVICE_LOCAL,
+            )?);
+        }
 
         Ok(Self {
             start_time: Instant::now(),

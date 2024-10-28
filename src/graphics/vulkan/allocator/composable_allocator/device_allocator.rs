@@ -56,6 +56,7 @@ impl ComposableAllocator for DeviceAllocator {
             requirements.allocation_size,
             memory,
             mapped_ptr,
+            requirements.memory_type_index,
         ))
     }
 

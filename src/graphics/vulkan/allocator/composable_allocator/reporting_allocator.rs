@@ -9,11 +9,15 @@ use {
 
 pub trait LabelledAllocatorBuilder {
     /// Replace self with an allocator that reports metrics at exit.
-    fn label(self, label: impl Into<String>) -> ReportingAllocator<Self>
+    fn description(
+        self,
+        label: impl Into<String>,
+        description: impl Into<String>,
+    ) -> ReportingAllocator<Self>
     where
         Self: Sized + ComposableAllocator,
     {
-        ReportingAllocator::new(label, self)
+        ReportingAllocator::with_description(label, description, self)
     }
 }
 impl<T> LabelledAllocatorBuilder for T where T: ComposableAllocator {}
@@ -45,21 +49,44 @@ impl std::fmt::Debug for Metrics {
 pub struct ReportingAllocator<A: ComposableAllocator> {
     allocator: A,
     label: String,
+    description: String,
     metrics: Metrics,
 }
 
 impl<A: ComposableAllocator> Drop for ReportingAllocator<A> {
     fn drop(&mut self) {
-        log::debug!("{} Report\n\n{:#?}", self.label, self.metrics)
+        log::debug!(
+            indoc::indoc! {
+                "
+                {}
+                {}
+
+                Report:
+                {:#?}
+                "
+            },
+            self.label,
+            self.description,
+            self.metrics
+        )
     }
 }
 
 impl<A: ComposableAllocator> ReportingAllocator<A> {
     /// Creates a new reporting allocator with the given label.
     pub fn new(label: impl Into<String>, allocator: A) -> Self {
+        Self::with_description(label, "A memory allocator.", allocator)
+    }
+
+    pub fn with_description(
+        label: impl Into<String>,
+        description: impl Into<String>,
+        allocator: A,
+    ) -> Self {
         Self {
             allocator,
             label: label.into(),
+            description: description.into(),
             metrics: Metrics::default(),
         }
     }

@@ -3,6 +3,7 @@ mod device_allocator;
 mod fallback_allocator;
 mod reporting_allocator;
 mod round_up_allocator;
+mod type_index_allocator;
 
 use {
     self::{
@@ -10,29 +11,44 @@ use {
         fallback_allocator::FallbackAllocator,
         reporting_allocator::LabelledAllocatorBuilder,
         round_up_allocator::RoundUpAllocator,
+        type_index_allocator::TypeIndexAllocator,
     },
     crate::graphics::vulkan::{allocator::AllocationRequirements, raii, Block},
     anyhow::Result,
+    ash::vk,
     dedicated_allocator::DedicatedAllocator,
     std::{cell::RefCell, rc::Rc, sync::Arc},
 };
 
 pub fn create_system_allocator(
     logical_device: Arc<raii::Device>,
+    memory_properties: vk::PhysicalDeviceMemoryProperties,
 ) -> impl ComposableAllocator {
     let device_allocator = DeviceAllocator::new(logical_device.clone())
-        .label("DeviceAllocator")
+        .description("DeviceAllocator", "The raw Vulkan device allocator.")
         .shared();
 
     RoundUpAllocator::new(
         1024 * 1024,
         FallbackAllocator::new(
-            DedicatedAllocator::new(device_allocator.clone())
-                .label("Dedicated"),
-            device_allocator,
+            DedicatedAllocator::new(device_allocator.clone()),
+            TypeIndexAllocator::new(move |index| {
+                let index_alloc = device_allocator.clone();
+                index_alloc.description(
+                    format!("Memory Type {} Allocator", index,),
+                    format!(
+                        "{:?}",
+                        memory_properties.memory_types[index as usize]
+                            .property_flags
+                    ),
+                )
+            }),
         ),
     )
-    .label("SystemAllocator")
+    .description(
+        "ApplicationAllocator",
+        "The top level allocator exposed to the application.",
+    )
 }
 
 /// Composable Allocators are externally synchronized and can have mutable

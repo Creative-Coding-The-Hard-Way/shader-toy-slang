@@ -61,8 +61,10 @@ impl Allocator {
                 .instance
                 .get_physical_device_memory_properties(physical_device)
         };
-        let (handle, client) =
-            Self::spawn_allocator_thread(logical_device.clone());
+        let (handle, client) = Self::spawn_allocator_thread(
+            logical_device.clone(),
+            memory_properties,
+        );
         Ok(Self {
             logical_device,
             client,
@@ -113,11 +115,14 @@ impl Allocator {
     /// client.
     fn spawn_allocator_thread(
         logical_device: Arc<raii::Device>,
+        memory_properties: vk::PhysicalDeviceMemoryProperties,
     ) -> (JoinHandle<()>, Sender<Request>) {
         let (sender, receiver) = std::sync::mpsc::channel::<Request>();
         let handle = std::thread::spawn(move || {
-            let mut allocator =
-                composable_allocator::create_system_allocator(logical_device);
+            let mut allocator = composable_allocator::create_system_allocator(
+                logical_device,
+                memory_properties,
+            );
             'main: loop {
                 let allocation_request = if let Ok(request) = receiver.recv() {
                     request

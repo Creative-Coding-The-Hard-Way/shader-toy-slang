@@ -11,6 +11,7 @@ pub struct Block {
     size: u64,
     memory: vk::DeviceMemory,
     mapped_ptr: *mut std::ffi::c_void,
+    memory_type_index: u32,
 }
 
 /// Blocks are not Send by default because they include the mapped_ptr.
@@ -27,12 +28,14 @@ impl Block {
         size: u64,
         memory: vk::DeviceMemory,
         mapped_ptr: *mut std::ffi::c_void,
+        memory_type_index: u32,
     ) -> Self {
         Self {
             offset,
             size,
             memory,
             mapped_ptr,
+            memory_type_index,
         }
     }
 
@@ -66,6 +69,7 @@ impl Block {
             size,
             memory: self.memory,
             mapped_ptr,
+            memory_type_index: self.memory_type_index,
         })
     }
 
@@ -96,6 +100,11 @@ impl Block {
     pub fn mapped_ptr(&self) -> *mut std::ffi::c_void {
         self.mapped_ptr
     }
+
+    /// Returns the memory type index for the Block's device memory.
+    pub fn memory_type_index(&self) -> u32 {
+        self.memory_type_index
+    }
 }
 
 impl std::fmt::Debug for Block {
@@ -120,7 +129,8 @@ mod test {
             offset: 2,
             size: 100,
             memory: vk::DeviceMemory::null(),
-            mapped_ptr: std::ptr::null_mut()
+            mapped_ptr: std::ptr::null_mut(),
+            memory_type_index: 0
         }
         .subregion(100, 0)
         .is_err());
@@ -130,7 +140,8 @@ mod test {
             offset: 2,
             size: 100,
             memory: vk::DeviceMemory::null(),
-            mapped_ptr: std::ptr::null_mut()
+            mapped_ptr: std::ptr::null_mut(),
+            memory_type_index: 0
         }
         .subregion(50, 50)
         .is_err());
@@ -143,6 +154,7 @@ mod test {
             size: 100,
             memory: vk::DeviceMemory::null(),
             mapped_ptr: std::ptr::null_mut(),
+            memory_type_index: 0,
         };
         let sub = block.subregion(3, 80)?;
         assert!(sub.offset == 8);
@@ -159,6 +171,7 @@ mod test {
             size: 100,
             memory: vk::DeviceMemory::null(),
             mapped_ptr: buffer.as_ptr() as *mut c_void,
+            memory_type_index: 0,
         };
         let sub = block.subregion(3, 80)?;
         let ptr_offset =
