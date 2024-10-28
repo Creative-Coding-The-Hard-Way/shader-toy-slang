@@ -25,7 +25,7 @@ pub fn create_swapchain(
     };
     log::trace!("Device capabilities:\n{:#?}", capabilities);
 
-    let format = select_image_format(&device)?;
+    let format = select_image_format(device)?;
     let extent = select_image_extent(&capabilities, framebuffer_size);
     let queue_families = [device.graphics_queue_family_index];
     let create_info = vk::SwapchainCreateInfoKHR {
@@ -41,7 +41,7 @@ pub fn create_swapchain(
         p_queue_family_indices: queue_families.as_ptr(),
         pre_transform: capabilities.current_transform,
         composite_alpha: vk::CompositeAlphaFlagsKHR::OPAQUE,
-        present_mode: select_present_mode(&device)?,
+        present_mode: select_present_mode(device)?,
         clipped: vk::TRUE,
         old_swapchain: previous_swapchain.unwrap_or(vk::SwapchainKHR::null()),
         ..Default::default()

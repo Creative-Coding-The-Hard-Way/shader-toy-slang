@@ -73,11 +73,9 @@ impl<A: ComposableAllocator> Drop for ReportingAllocator<A> {
 }
 
 impl<A: ComposableAllocator> ReportingAllocator<A> {
-    /// Creates a new reporting allocator with the given label.
-    pub fn new(label: impl Into<String>, allocator: A) -> Self {
-        Self::with_description(label, "A memory allocator.", allocator)
-    }
-
+    /// Creates a new reporting allocator.
+    ///
+    /// The provided label and description appear in the report when dropped.
     pub fn with_description(
         label: impl Into<String>,
         description: impl Into<String>,
