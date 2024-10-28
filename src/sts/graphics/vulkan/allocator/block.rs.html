@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/graphics/vulkan/allocator/block.rs`."><title>block.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="sts" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/graphics/vulkan/allocator/block.rs`."><title>block.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="sts" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -189,21 +189,8 @@
 <a href="#189" id="189">189</a>
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
-<a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
-    <span class="kw">crate</span>::trace,
+    <span class="kw">crate</span>::{graphics::vulkan::allocator::HumanizedSize, trace},
     anyhow::{bail, <span class="prelude-ty">Result</span>},
     ash::vk,
 };
@@ -215,6 +202,7 @@
     size: u64,
     memory: vk::DeviceMemory,
     mapped_ptr: <span class="kw-2">*mut </span>std::ffi::c_void,
+    memory_type_index: u32,
 }
 
 <span class="doccomment">/// Blocks are not Send by default because they include the mapped_ptr.
@@ -231,12 +219,14 @@
         size: u64,
         memory: vk::DeviceMemory,
         mapped_ptr: <span class="kw-2">*mut </span>std::ffi::c_void,
+        memory_type_index: u32,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             offset,
             size,
             memory,
             mapped_ptr,
+            memory_type_index,
         }
     }
 
@@ -254,7 +244,7 @@
             <span class="macro">bail!</span>(<span class="macro">trace!</span>(
                 <span class="string">"Subregion at {} with size {:?} is out of bounds! {:#?}"</span>,
                 offset,
-                PrettyBytes(size),
+                HumanizedSize(size),
                 <span class="self">self</span>,
             )());
         }
@@ -270,6 +260,7 @@
             size,
             memory: <span class="self">self</span>.memory,
             mapped_ptr,
+            memory_type_index: <span class="self">self</span>.memory_type_index,
         })
     }
 
@@ -300,31 +291,10 @@
     </span><span class="kw">pub fn </span>mapped_ptr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">*mut </span>std::ffi::c_void {
         <span class="self">self</span>.mapped_ptr
     }
-}
 
-<span class="doccomment">/// Used to pretty-print the size of a block.
-</span><span class="kw">struct </span>PrettyBytes(u64);
-
-<span class="kw">impl </span>std::fmt::Debug <span class="kw">for </span>PrettyBytes {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
-        <span class="kw">let </span>size = <span class="self">self</span>.<span class="number">0</span>;
-        f.write_fmt(<span class="macro">format_args!</span>(<span class="string">"{}"</span>, size))<span class="question-mark">?</span>;
-        <span class="kw">let </span>power = (size <span class="kw">as </span>f64).log(<span class="number">1024.0</span>).floor() <span class="kw">as </span>i32;
-        <span class="kw">let </span>div = <span class="number">1024.0_f64</span>.powi(power);
-        <span class="kw">let </span>human_size = size <span class="kw">as </span>f64 / div;
-        <span class="kw">match </span>power {
-            <span class="number">1 </span>=&gt; {
-                f.write_fmt(<span class="macro">format_args!</span>(<span class="string">" ({:.2} kb)"</span>, human_size))<span class="question-mark">?</span>;
-            }
-            <span class="number">2 </span>=&gt; {
-                f.write_fmt(<span class="macro">format_args!</span>(<span class="string">" ({:.2} mb)"</span>, human_size))<span class="question-mark">?</span>;
-            }
-            <span class="number">3 </span>=&gt; {
-                f.write_fmt(<span class="macro">format_args!</span>(<span class="string">" ({:.2} gb)"</span>, human_size))<span class="question-mark">?</span>;
-            }
-            <span class="kw">_ </span>=&gt; {}
-        }
-        <span class="prelude-val">Ok</span>(())
+    <span class="doccomment">/// Returns the memory type index for the Block's device memory.
+    </span><span class="kw">pub fn </span>memory_type_index(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
+        <span class="self">self</span>.memory_type_index
     }
 }
 
@@ -332,7 +302,7 @@
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
         f.debug_struct(<span class="string">"Block"</span>)
             .field(<span class="string">"offset"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.offset)
-            .field(<span class="string">"size"</span>, <span class="kw-2">&amp;</span>PrettyBytes(<span class="self">self</span>.size))
+            .field(<span class="string">"size"</span>, <span class="kw-2">&amp;</span>HumanizedSize(<span class="self">self</span>.size))
             .field(<span class="string">"memory"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.memory)
             .field(<span class="string">"mapped_ptr"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.mapped_ptr)
             .finish()
@@ -350,8 +320,9 @@
             offset: <span class="number">2</span>,
             size: <span class="number">100</span>,
             memory: vk::DeviceMemory::null(),
-            mapped_ptr: std::ptr::null_mut()
-        }
+            mapped_ptr: std::ptr::null_mut(),
+            memory_type_index: <span class="number">0
+        </span>}
         .subregion(<span class="number">100</span>, <span class="number">0</span>)
         .is_err());
 
@@ -360,8 +331,9 @@
             offset: <span class="number">2</span>,
             size: <span class="number">100</span>,
             memory: vk::DeviceMemory::null(),
-            mapped_ptr: std::ptr::null_mut()
-        }
+            mapped_ptr: std::ptr::null_mut(),
+            memory_type_index: <span class="number">0
+        </span>}
         .subregion(<span class="number">50</span>, <span class="number">50</span>)
         .is_err());
     }
@@ -373,6 +345,7 @@
             size: <span class="number">100</span>,
             memory: vk::DeviceMemory::null(),
             mapped_ptr: std::ptr::null_mut(),
+            memory_type_index: <span class="number">0</span>,
         };
         <span class="kw">let </span>sub = block.subregion(<span class="number">3</span>, <span class="number">80</span>)<span class="question-mark">?</span>;
         <span class="macro">assert!</span>(sub.offset == <span class="number">8</span>);
@@ -389,6 +362,7 @@
             size: <span class="number">100</span>,
             memory: vk::DeviceMemory::null(),
             mapped_ptr: buffer.as_ptr() <span class="kw">as </span><span class="kw-2">*mut </span>c_void,
+            memory_type_index: <span class="number">0</span>,
         };
         <span class="kw">let </span>sub = block.subregion(<span class="number">3</span>, <span class="number">80</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>ptr_offset =
