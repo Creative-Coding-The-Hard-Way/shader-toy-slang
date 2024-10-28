@@ -1,5 +1,5 @@
 use {
-    crate::trace,
+    crate::{graphics::vulkan::allocator::HumanizedSize, trace},
     anyhow::{bail, Result},
     ash::vk,
 };
@@ -50,7 +50,7 @@ impl Block {
             bail!(trace!(
                 "Subregion at {} with size {:?} is out of bounds! {:#?}",
                 offset,
-                PrettyBytes(size),
+                HumanizedSize(size),
                 self,
             )());
         }
@@ -98,37 +98,11 @@ impl Block {
     }
 }
 
-/// Used to pretty-print the size of a block.
-struct PrettyBytes(u64);
-
-impl std::fmt::Debug for PrettyBytes {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let size = self.0;
-        f.write_fmt(format_args!("{}", size))?;
-        let power = (size as f64).log(1024.0).floor() as i32;
-        let div = 1024.0_f64.powi(power);
-        let human_size = size as f64 / div;
-        match power {
-            1 => {
-                f.write_fmt(format_args!(" ({:.2} kb)", human_size))?;
-            }
-            2 => {
-                f.write_fmt(format_args!(" ({:.2} mb)", human_size))?;
-            }
-            3 => {
-                f.write_fmt(format_args!(" ({:.2} gb)", human_size))?;
-            }
-            _ => {}
-        }
-        Ok(())
-    }
-}
-
 impl std::fmt::Debug for Block {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Block")
             .field("offset", &self.offset)
-            .field("size", &PrettyBytes(self.size))
+            .field("size", &HumanizedSize(self.size))
             .field("memory", &self.memory)
             .field("mapped_ptr", &self.mapped_ptr)
             .finish()

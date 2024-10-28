@@ -1,12 +1,57 @@
 use {
     super::ComposableAllocator,
-    crate::graphics::vulkan::{allocator::AllocationRequirements, Block},
+    crate::graphics::vulkan::{
+        allocator::{AllocationRequirements, HumanizedSize},
+        Block,
+    },
     anyhow::Result,
 };
 
+pub trait LabelledAllocatorBuilder {
+    /// Replace self with an allocator that reports metrics at exit.
+    fn label(self, label: impl Into<String>) -> ReportingAllocator<Self>
+    where
+        Self: Sized + ComposableAllocator,
+    {
+        ReportingAllocator::new(label, self)
+    }
+}
+impl<T> LabelledAllocatorBuilder for T where T: ComposableAllocator {}
+
+#[derive(Copy, Clone, Default, PartialEq, Eq)]
+struct Metrics {
+    concurrent_allocations: u64,
+    max_concurrent_allocations: u64,
+    max_allocation_size: u64,
+}
+
+impl std::fmt::Debug for Metrics {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Metrics")
+            .field("concurrent_allocations", &self.concurrent_allocations)
+            .field(
+                "max_concurrent_allocations",
+                &self.max_concurrent_allocations,
+            )
+            .field(
+                "max_allocation_size",
+                &HumanizedSize(self.max_allocation_size),
+            )
+            .finish()
+    }
+}
+
+/// An allocator decorator that records metrics for interesting interactions.
 pub struct ReportingAllocator<A: ComposableAllocator> {
     allocator: A,
     label: String,
+    metrics: Metrics,
+}
+
+impl<A: ComposableAllocator> Drop for ReportingAllocator<A> {
+    fn drop(&mut self) {
+        log::debug!("{} Report\n\n{:#?}", self.label, self.metrics)
+    }
 }
 
 impl<A: ComposableAllocator> ReportingAllocator<A> {
@@ -15,33 +60,35 @@ impl<A: ComposableAllocator> ReportingAllocator<A> {
         Self {
             allocator,
             label: label.into(),
+            metrics: Metrics::default(),
         }
     }
 }
 
 impl<A: ComposableAllocator> ComposableAllocator for ReportingAllocator<A> {
     fn owns(&self, block: &Block) -> bool {
-        let owns = self.allocator.owns(block);
-        log::trace!("{} owns {:#?}?: {}", self.label, block, owns);
-        owns
+        self.allocator.owns(block)
     }
 
     fn allocate_memory(
         &mut self,
         requirements: AllocationRequirements,
     ) -> Result<Block> {
-        let result = self.allocator.allocate_memory(requirements);
-        log::trace!(
-            "{} allocate with requirements {:#?}:\n{:#?}",
-            self.label,
-            requirements,
-            result
-        );
-        result
+        let block = self.allocator.allocate_memory(requirements)?;
+        self.metrics.concurrent_allocations += 1;
+        self.metrics.max_concurrent_allocations = self
+            .metrics
+            .max_concurrent_allocations
+            .max(self.metrics.concurrent_allocations);
+        self.metrics.max_allocation_size = self
+            .metrics
+            .max_allocation_size
+            .max(requirements.allocation_size);
+        Ok(block)
     }
 
     fn free_memory(&mut self, block: &Block) {
-        log::trace!("{} free {:#?}", self.label, block);
+        self.metrics.concurrent_allocations -= 1;
         self.allocator.free_memory(block);
     }
 }

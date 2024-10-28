@@ -1,13 +1,14 @@
 mod allocation_requirements;
 pub mod block;
 mod composable_allocator;
-mod dedicated_allocator;
+mod humanized_size;
 pub mod owned_block;
 
 use {
     self::{
         allocation_requirements::AllocationRequirements,
         composable_allocator::ComposableAllocator,
+        humanized_size::HumanizedSize,
     },
     crate::{
         graphics::vulkan::{raii, Block},
@@ -75,11 +76,13 @@ impl Allocator {
         &self,
         requirements: &vk::MemoryRequirements,
         flags: vk::MemoryPropertyFlags,
+        dedicated: bool,
     ) -> Result<Block> {
         let requirements = AllocationRequirements::new(
             &self.memory_properties,
             requirements,
             flags,
+            dedicated,
         )?;
 
         // Send the memory allocation request to the allocator thread
@@ -114,7 +117,7 @@ impl Allocator {
         let (sender, receiver) = std::sync::mpsc::channel::<Request>();
         let handle = std::thread::spawn(move || {
             let mut allocator =
-                composable_allocator::create_allocator(logical_device);
+                composable_allocator::create_system_allocator(logical_device);
             'main: loop {
                 let allocation_request = if let Ok(request) = receiver.recv() {
                     request

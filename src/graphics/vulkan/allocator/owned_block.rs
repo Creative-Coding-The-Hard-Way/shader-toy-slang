@@ -31,7 +31,7 @@ impl OwnedBlock {
         )
         .with_context(trace!("Unable to create image!"))?;
 
-        let requirements = {
+        let (requirements, dedicated) = {
             let mut dedicated = vk::MemoryDedicatedRequirements::default();
             let requirements = unsafe {
                 let mut out = vk::MemoryRequirements2::default()
@@ -47,11 +47,15 @@ impl OwnedBlock {
 
                 out.memory_requirements
             };
-            requirements
+            (
+                requirements,
+                dedicated.prefers_dedicated_allocation == vk::TRUE
+                    || dedicated.requires_dedicated_allocation == vk::TRUE,
+            )
         };
 
         let block = allocator
-            .allocate_memory(&requirements, flags)
+            .allocate_memory(&requirements, flags, dedicated)
             .with_context(trace!("Unable to allocate memory for image!"))?;
 
         unsafe {
@@ -79,7 +83,7 @@ impl OwnedBlock {
         )
         .with_context(trace!("Unable to create buffer!"))?;
 
-        let requirements = {
+        let (requirements, dedicated) = {
             let mut dedicated = vk::MemoryDedicatedRequirements::default();
             let requirements = unsafe {
                 let mut out = vk::MemoryRequirements2::default()
@@ -95,11 +99,15 @@ impl OwnedBlock {
 
                 out.memory_requirements
             };
-            requirements
+            (
+                requirements,
+                dedicated.prefers_dedicated_allocation == vk::TRUE
+                    || dedicated.requires_dedicated_allocation == vk::TRUE,
+            )
         };
 
         let block = allocator
-            .allocate_memory(&requirements, flags)
+            .allocate_memory(&requirements, flags, dedicated)
             .with_context(trace!("Unable to allocate memory for buffer!"))?;
 
         unsafe {

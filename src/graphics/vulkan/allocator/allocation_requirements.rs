@@ -11,6 +11,7 @@ pub struct AllocationRequirements {
     pub allocation_size: u64,
     pub memory_type_index: u32,
     pub flags: vk::MemoryPropertyFlags,
+    pub should_be_dedicated: bool,
 }
 
 impl AllocationRequirements {
@@ -19,6 +20,7 @@ impl AllocationRequirements {
         properties: &vk::PhysicalDeviceMemoryProperties,
         requirements: &vk::MemoryRequirements,
         flags: vk::MemoryPropertyFlags,
+        dedicated: bool,
     ) -> Result<Self> {
         let (memory_type_index, _) = properties
             .memory_types
@@ -38,6 +40,7 @@ impl AllocationRequirements {
             allocation_size: requirements.size,
             memory_type_index: memory_type_index as u32,
             flags,
+            should_be_dedicated: dedicated,
         })
     }
 

@@ -56,10 +56,7 @@ where
         };
         log::trace!("Unit size: {}", aligned_unit_size);
 
-        // compute the total length of the buffer based on the aligned unit size
-        // round up to the closest megabyte
-        let buffer_size_in_bytes =
-            (aligned_unit_size * count as u64).max(1024 * 1024);
+        let buffer_size_in_bytes = aligned_unit_size * count as u64;
 
         // create the buffer
         let (buffer, block) = OwnedBlock::allocate_buffer(
