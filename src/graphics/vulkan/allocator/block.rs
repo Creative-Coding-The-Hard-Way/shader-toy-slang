@@ -39,6 +39,27 @@ impl Block {
         }
     }
 
+    /// Returns true when self is entirely contained by other, false otherwise.
+    ///
+    /// Note: partial overlaps are not considered 'subregions'.
+    /// A.is_subregion_of(B) will return true iff A is fully contained by B.
+    pub fn is_subregion_of(&self, other: &Block) -> bool {
+        if self.memory() != other.memory() {
+            // The blocks refer to different underlying DeviceMemory allocations
+            return false;
+        }
+
+        let start = self.offset();
+        let end = (self.offset() + self.size()) - 1;
+
+        let starts_within =
+            start >= other.offset() && start < other.offset() + other.size();
+        let ends_within =
+            end >= other.offset() && end < other.offset() + other.size();
+
+        starts_within && ends_within
+    }
+
     /// Returns a subregion of the current Block.
     ///
     /// Fails if the requested subregion is out of bounds or cannot fit within
@@ -49,7 +70,7 @@ impl Block {
     /// - offset: the offset in bytes from the beginning of the current block
     /// - size: the size of the subregion to return
     pub fn subregion(&self, offset: u64, size: u64) -> Result<Self> {
-        if offset >= self.size || offset + size >= self.size {
+        if offset >= self.size || offset + size > self.size {
             bail!(trace!(
                 "Subregion at {} with size {:?} is out of bounds! {:#?}",
                 offset,
@@ -120,7 +141,72 @@ impl std::fmt::Debug for Block {
 
 #[cfg(test)]
 mod test {
-    use {super::*, std::ffi::c_void};
+    use {super::*, std::ffi::c_void, vk::Handle};
+
+    #[test]
+    pub fn is_subregion_of_should_be_true_for_contained_blocks() -> Result<()> {
+        let block = Block::new(
+            0,
+            100,
+            vk::DeviceMemory::null(),
+            std::ptr::null_mut(),
+            0,
+        );
+        assert!(block.subregion(99, 1)?.is_subregion_of(&block));
+        assert!(block.subregion(0, 100)?.is_subregion_of(&block));
+        assert!(block.subregion(50, 50)?.is_subregion_of(&block));
+        assert!(block.subregion(2, 80)?.is_subregion_of(&block));
+        Ok(())
+    }
+
+    #[test]
+    pub fn is_subregion_of_should_be_false_for_partial_overlaps() -> Result<()>
+    {
+        let blk = Block::new(
+            50,
+            50,
+            vk::DeviceMemory::null(),
+            std::ptr::null_mut(),
+            0,
+        );
+        let end_overlap = Block { offset: 75, ..blk };
+        assert!(!end_overlap.is_subregion_of(&blk));
+
+        let start_overlap = Block { offset: 25, ..blk };
+        assert!(!start_overlap.is_subregion_of(&blk));
+        Ok(())
+    }
+
+    #[test]
+    pub fn is_subregion_of_should_be_true_for_identical_blocks() {
+        let block = Block::new(
+            0,
+            100,
+            vk::DeviceMemory::null(),
+            std::ptr::null_mut(),
+            0,
+        );
+        assert!(block.is_subregion_of(&block));
+    }
+
+    #[test]
+    pub fn is_subregion_of_should_be_false_when_device_memory_does_not_match() {
+        let a = Block::new(
+            0,
+            100,
+            vk::DeviceMemory::from_raw(1), // INVALID - do not access
+            std::ptr::null_mut(),
+            0,
+        );
+        let b = Block::new(
+            0,
+            100,
+            vk::DeviceMemory::from_raw(2), // INVALID - do not access
+            std::ptr::null_mut(),
+            0,
+        );
+        assert!(!a.is_subregion_of(&b));
+    }
 
     #[test]
     pub fn subregion_should_fail_when_offset_out_of_bounds() {
@@ -143,7 +229,7 @@ mod test {
             mapped_ptr: std::ptr::null_mut(),
             memory_type_index: 0
         }
-        .subregion(50, 50)
+        .subregion(50, 51)
         .is_err());
     }
 

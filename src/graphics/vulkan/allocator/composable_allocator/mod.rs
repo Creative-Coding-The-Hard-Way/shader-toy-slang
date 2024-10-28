@@ -3,6 +3,7 @@ mod device_allocator;
 mod fallback_allocator;
 mod reporting_allocator;
 mod round_up_allocator;
+mod split_block_allocator;
 mod type_index_allocator;
 
 use {
@@ -11,6 +12,7 @@ use {
         fallback_allocator::FallbackAllocator,
         reporting_allocator::LabelledAllocatorBuilder,
         round_up_allocator::RoundUpAllocator,
+        split_block_allocator::SplitBlockAllocator,
         type_index_allocator::TypeIndexAllocator,
     },
     crate::graphics::vulkan::{allocator::AllocationRequirements, raii, Block},
@@ -33,7 +35,8 @@ pub fn create_system_allocator(
         FallbackAllocator::new(
             DedicatedAllocator::new(device_allocator.clone()),
             TypeIndexAllocator::new(move |index| {
-                let index_alloc = device_allocator.clone();
+                let index_alloc =
+                    SplitBlockAllocator::new(device_allocator.clone());
                 index_alloc.description(
                     format!("Memory Type {} Allocator", index,),
                     format!(
