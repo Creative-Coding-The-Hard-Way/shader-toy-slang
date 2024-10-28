@@ -1,10 +1,14 @@
 mod allocation_requirements;
 pub mod block;
+mod composable_allocator;
 mod dedicated_allocator;
 pub mod owned_block;
 
 use {
-    self::allocation_requirements::AllocationRequirements,
+    self::{
+        allocation_requirements::AllocationRequirements,
+        composable_allocator::ComposableAllocator,
+    },
     crate::{
         graphics::vulkan::{raii, Block},
         trace,
@@ -20,68 +24,15 @@ use {
     },
 };
 
-trait ManagedAllocator {
-    fn allocate_memory(
-        &mut self,
-        requirements: AllocationRequirements,
-    ) -> Result<Block>;
-
-    fn free_memory(&mut self, block: &Block);
-}
-
-struct SystemAllocator {
-    logical_device: Arc<raii::Device>,
-}
-
-impl ManagedAllocator for SystemAllocator {
-    fn allocate_memory(
-        &mut self,
-        requirements: AllocationRequirements,
-    ) -> Result<Block> {
-        // Allocate the underlying memory
-        let memory = unsafe {
-            self.logical_device
-                .allocate_memory(&requirements.as_vk_allocate_info(), None)
-                .with_context(trace!("Unable to allocate device memory!"))?
-        };
-
-        // Map the device memory if possible
-        let mapped_ptr = if requirements
-            .flags
-            .contains(vk::MemoryPropertyFlags::HOST_VISIBLE)
-        {
-            unsafe {
-                self.logical_device
-                    .map_memory(
-                        memory,
-                        0,
-                        vk::WHOLE_SIZE,
-                        vk::MemoryMapFlags::empty(),
-                    )
-                    .with_context(trace!("Unable to map memory!"))?
-            }
-        } else {
-            std::ptr::null_mut()
-        };
-
-        Ok(Block::new(
-            0,
-            requirements.allocation_size,
-            memory,
-            mapped_ptr,
-        ))
-    }
-
-    fn free_memory(&mut self, block: &Block) {
-        unsafe {
-            self.logical_device.free_memory(block.memory(), None);
-        }
-    }
-}
-
+/// A request from the allocator to the central allocation thread.
 enum Request {
+    /// Request an allocation with the specified requirements.
     Allocate(AllocationRequirements, SyncSender<Result<Block>>),
+
+    /// Free a block.
     Free(Block),
+
+    /// Shutdown the allocation thread.
     ShutDown,
 }
 
@@ -109,47 +60,11 @@ impl Allocator {
                 .instance
                 .get_physical_device_memory_properties(physical_device)
         };
-
-        let logical_device_clone = logical_device.clone();
-        let (sender, receiver) = std::sync::mpsc::channel::<Request>();
-        let handle = std::thread::spawn(move || {
-            let mut allocator = SystemAllocator {
-                logical_device: logical_device_clone,
-            };
-            'main: loop {
-                let allocation_request = if let Ok(request) = receiver.recv() {
-                    request
-                } else {
-                    log::warn!("Memory allocation client hung up!");
-                    break 'main;
-                };
-
-                match allocation_request {
-                    Request::Allocate(requirements, response) => {
-                        let result = allocator.allocate_memory(requirements);
-                        if let Err(error) = response.send(result) {
-                            log::error!(
-                                "Unable to send block to requester! {}",
-                                error
-                            );
-                            break 'main;
-                        }
-                    }
-                    Request::Free(block) => {
-                        allocator.free_memory(&block);
-                    }
-                    Request::ShutDown => {
-                        log::trace!("Shutdown requested");
-                        break 'main;
-                    }
-                }
-            }
-            log::trace!("Device memory allocator shut down.");
-        });
-
+        let (handle, client) =
+            Self::spawn_allocator_thread(logical_device.clone());
         Ok(Self {
             logical_device,
-            client: sender,
+            client,
             allocation_thread: Some(handle),
             memory_properties,
         })
@@ -189,6 +104,48 @@ impl Allocator {
         if self.client.send(Request::Free(*block)).is_err() {
             log::error!("Error while attempting to free memory: {:#?}", block);
         }
+    }
+
+    /// Spawns the allocator thread and returns the join handle and request
+    /// client.
+    fn spawn_allocator_thread(
+        logical_device: Arc<raii::Device>,
+    ) -> (JoinHandle<()>, Sender<Request>) {
+        let (sender, receiver) = std::sync::mpsc::channel::<Request>();
+        let handle = std::thread::spawn(move || {
+            let mut allocator =
+                composable_allocator::create_allocator(logical_device);
+            'main: loop {
+                let allocation_request = if let Ok(request) = receiver.recv() {
+                    request
+                } else {
+                    log::warn!("Memory allocation client hung up!");
+                    break 'main;
+                };
+
+                match allocation_request {
+                    Request::Allocate(requirements, response) => {
+                        let result = allocator.allocate_memory(requirements);
+                        if let Err(error) = response.send(result) {
+                            log::error!(
+                                "Unable to send block to requester! {}",
+                                error
+                            );
+                            break 'main;
+                        }
+                    }
+                    Request::Free(block) => {
+                        allocator.free_memory(&block);
+                    }
+                    Request::ShutDown => {
+                        log::trace!("Shutdown requested");
+                        break 'main;
+                    }
+                }
+            }
+            log::trace!("Device memory allocator shut down.");
+        });
+        (handle, sender)
     }
 }
 
