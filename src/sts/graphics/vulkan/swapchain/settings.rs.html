@@ -173,7 +173,7 @@
     </span>};
     <span class="macro">log::trace!</span>(<span class="string">"Device capabilities:\n{:#?}"</span>, capabilities);
 
-    <span class="kw">let </span>format = select_image_format(<span class="kw-2">&amp;</span>device)<span class="question-mark">?</span>;
+    <span class="kw">let </span>format = select_image_format(device)<span class="question-mark">?</span>;
     <span class="kw">let </span>extent = select_image_extent(<span class="kw-2">&amp;</span>capabilities, framebuffer_size);
     <span class="kw">let </span>queue_families = [device.graphics_queue_family_index];
     <span class="kw">let </span>create_info = vk::SwapchainCreateInfoKHR {
@@ -189,7 +189,7 @@
         p_queue_family_indices: queue_families.as_ptr(),
         pre_transform: capabilities.current_transform,
         composite_alpha: vk::CompositeAlphaFlagsKHR::OPAQUE,
-        present_mode: select_present_mode(<span class="kw-2">&amp;</span>device)<span class="question-mark">?</span>,
+        present_mode: select_present_mode(device)<span class="question-mark">?</span>,
         clipped: vk::TRUE,
         old_swapchain: previous_swapchain.unwrap_or(vk::SwapchainKHR::null()),
         ..Default::default()
