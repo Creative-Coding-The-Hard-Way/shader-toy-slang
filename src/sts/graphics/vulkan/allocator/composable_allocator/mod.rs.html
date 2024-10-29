@@ -108,6 +108,40 @@
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>dedicated_allocator;
 <span class="kw">mod </span>device_allocator;
 <span class="kw">mod </span>fallback_allocator;
@@ -121,7 +155,6 @@
         device_allocator::DeviceAllocator,
         fallback_allocator::FallbackAllocator,
         reporting_allocator::LabelledAllocatorBuilder,
-        round_up_allocator::RoundUpAllocator,
         split_block_allocator::SplitBlockAllocator,
         type_index_allocator::TypeIndexAllocator,
     },
@@ -140,23 +173,58 @@
         .description(<span class="string">"DeviceAllocator"</span>, <span class="string">"The raw Vulkan device allocator."</span>)
         .shared();
 
-    RoundUpAllocator::new(
-        <span class="number">1024 </span>* <span class="number">1024</span>,
-        FallbackAllocator::new(
-            DedicatedAllocator::new(device_allocator.clone()),
-            TypeIndexAllocator::new(<span class="kw">move </span>|index| {
-                <span class="kw">let </span>index_alloc =
-                    SplitBlockAllocator::new(device_allocator.clone());
-                index_alloc.description(
-                    <span class="macro">format!</span>(<span class="string">"Memory Type {} Allocator"</span>, index,),
-                    <span class="macro">format!</span>(
-                        <span class="string">"{:?}"</span>,
-                        memory_properties.memory_types[index <span class="kw">as </span>usize]
-                            .property_flags
-                    ),
-                )
-            }),
-        ),
+    FallbackAllocator::new(
+        DedicatedAllocator::new(device_allocator.clone()),
+        TypeIndexAllocator::new(<span class="kw">move </span>|index| {
+            <span class="comment">// This is a silly implementation. By chaining split block
+            // allocators, a given allocation will continue to escalate until
+            // eventually asking the device for a big block of memory. From
+            // there, the block will be split into two parts over and over until
+            // the smallest correct block is found.
+            //
+            // This could certainly be made both *faster* (in CPU time) and
+            // more efficient in terms of allocated memory vs used memory. Not
+            // to mention fragmentation, etc...
+            //
+            // But this application doesn't care about that yet, so simply
+            // taking a big chunk and spliting it in half over and over is
+            // easy to understand and good enough for now.
+            </span><span class="attr">#[rustfmt::skip]
+            </span><span class="kw">let </span>allocator =
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, <span class="number">1024               </span>&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">2         </span>}&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">4         </span>}&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">8         </span>}&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">16        </span>}&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">32        </span>}&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">64        </span>}&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">128       </span>}&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">256       </span>}&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">512       </span>}&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">1024      </span>}&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">1024 </span>* <span class="number">2  </span>}&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">1024 </span>* <span class="number">4  </span>}&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">1024 </span>* <span class="number">8  </span>}&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">1024 </span>* <span class="number">16 </span>}&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">1024 </span>* <span class="number">32 </span>}&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">1024 </span>* <span class="number">64 </span>}&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">1024 </span>* <span class="number">128</span>}&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">1024 </span>* <span class="number">256</span>}&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">1024 </span>* <span class="number">512</span>}&gt;::new(
+                    device_allocator.clone(),
+                ))))))))))))))))))));
+
+            allocator.description(
+                <span class="macro">format!</span>(<span class="string">"IndexedAllocator:{}"</span>, index,),
+                <span class="macro">format!</span>(
+                    <span class="string">"This allocator is responsible for allocating blocks \
+                    with memory properties, {:?}, and subdividing them for \
+                    use by the application."</span>,
+                    memory_properties.memory_types[index <span class="kw">as </span>usize]
+                        .property_flags
+                ),
+            )
+        }),
     )
     .description(
         <span class="string">"ApplicationAllocator"</span>,

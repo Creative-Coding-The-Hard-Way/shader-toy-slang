@@ -43,6 +43,7 @@
 <a href="#43" id="43">43</a>
 <a href="#44" id="44">44</a>
 <a href="#45" id="45">45</a>
+<a href="#46" id="46">46</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">crate</span>::graphics::vulkan::{
         allocator::{
@@ -62,7 +63,8 @@
 }
 
 <span class="kw">impl</span>&lt;A: ComposableAllocator&gt; RoundUpAllocator&lt;A&gt; {
-    <span class="kw">pub fn </span>new(threshold: u64, allocator: A) -&gt; <span class="self">Self </span>{
+    <span class="attr">#[allow(unused)]
+    </span><span class="kw">pub fn </span>new(threshold: u64, allocator: A) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             allocator,
             threshold,
