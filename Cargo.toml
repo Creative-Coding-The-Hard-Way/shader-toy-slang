@@ -20,6 +20,7 @@ indoc = "*"
 clap = { version = "*", features = ["derive", "wrap_help"]}
 notify-debouncer-full = "*"
 argfile = "*"
+ctrlc = "*"
 
 [dependencies.glfw]
 version = "*"

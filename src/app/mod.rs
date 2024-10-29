@@ -10,6 +10,7 @@ use {
     anyhow::{Context, Result},
     clap::Parser,
     glfw::fail_on_errors,
+    std::sync::{atomic::AtomicBool, Arc},
 };
 
 pub use self::fullscreen_toggle::FullscreenToggle;
@@ -93,6 +94,16 @@ where
     glfw.window_hint(glfw::WindowHint::ClientApi(glfw::ClientApiHint::NoApi));
     glfw.window_hint(glfw::WindowHint::ScaleToMonitor(true));
 
+    let interrupted = {
+        let interrupted = Arc::new(AtomicBool::new(false));
+        let cloned = interrupted.clone();
+        ctrlc::set_handler(move || {
+            interrupted.store(true, std::sync::atomic::Ordering::SeqCst);
+        })
+        .with_context(trace!("Unable to set the ctrl-c signal handler!"))?;
+        cloned
+    };
+
     let (mut window, events) = glfw
         .create_window(
             640,
@@ -106,6 +117,10 @@ where
         .with_context(trace!("Error while initializing the app!"))?;
 
     while !window.should_close() {
+        if interrupted.load(std::sync::atomic::Ordering::Relaxed) {
+            window.set_should_close(true);
+        };
+
         glfw.poll_events();
         for (_, event) in glfw::flush_messages(&events) {
             app.handle_event(&mut window, event)?;

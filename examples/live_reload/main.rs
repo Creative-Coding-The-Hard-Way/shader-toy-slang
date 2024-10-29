@@ -15,8 +15,8 @@ use {
         app::{app_main, App, FullscreenToggle},
         graphics::{
             vulkan::{
-                raii, Device, FrameStatus, FramesInFlight, OwnedBlock,
-                PresentImageStatus, Swapchain,
+                raii, Device, FrameStatus, FramesInFlight, PresentImageStatus,
+                Swapchain,
             },
             FullscreenQuad, Recompiler,
         },
@@ -35,6 +35,10 @@ struct Args {
     /// files, if a directory) will trigger a shader rebuild.
     #[arg(short, long)]
     pub additional_watch_dir: Vec<PathBuf>,
+
+    /// An additional texture to provide to the shader.
+    #[arg(short, long)]
+    pub texture: Option<PathBuf>,
 }
 
 // This can be accepted in the fragment shader with code like:
