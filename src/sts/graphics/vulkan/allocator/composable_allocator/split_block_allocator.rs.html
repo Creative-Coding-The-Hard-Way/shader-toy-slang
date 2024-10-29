@@ -154,6 +154,10 @@
 <a href="#154" id="154">154</a>
 <a href="#155" id="155">155</a>
 <a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">super</span>::ComposableAllocator,
     <span class="kw">crate</span>::{
@@ -252,7 +256,11 @@
         <span class="kw">if </span>requirements.allocation_size &gt; BLOCK_SIZE
             || BLOCK_SIZE % requirements.alignment != <span class="number">0
         </span>{
-            <span class="comment">// Give up immediately if the block size is too small
+            <span class="comment">// Give up immediately if the block size is too small.
+            // Note: it's fine to give up if the block doesn't meet the
+            // alignment requirements. Eventually, this will reach the device
+            // allocator which is guaranteed to be maximally aligned for the
+            // platform.
             </span><span class="kw">return </span><span class="self">self</span>.allocator.allocate_memory(requirements);
         }
 
