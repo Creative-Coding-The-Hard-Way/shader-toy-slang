@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["join","scope"],"mod":["iter","prelude","slice"],"struct":["Scope","ThreadPool","ThreadPoolBuilder"]};

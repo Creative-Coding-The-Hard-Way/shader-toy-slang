@@ -1,0 +1,166 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Traits and implementations for reading bits from a stream."><title>bitstream_io::read - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bitstream_io" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../bitstream_io/index.html">bitstream_<wbr>io</a><span class="version">2.5.3</span></h2></div><h2 class="location"><a href="#">Module read</a></h2><div class="sidebar-elems"><section><ul class="block"><li><a href="#structs">Structs</a></li><li><a href="#traits">Traits</a></li></ul></section><h2><a href="../index.html">In crate bitstream_<wbr>io</a></h2></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Module <a href="../index.html">bitstream_io</a>::<wbr><a class="mod" href="#">read</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../../src/bitstream_io/read.rs.html#9-1655">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Traits and implementations for reading bits from a stream.</p>
+<h3 id="example"><a class="doc-anchor" href="#example">§</a>Example</h3>
+<p>Reading the initial STREAMINFO block from a FLAC file,
+as documented in its
+<a href="https://xiph.org/flac/format.html#stream">specification</a>.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::io::{Cursor, Read};
+<span class="kw">use </span>bitstream_io::<span class="kw-2">*</span>;
+
+<span class="attr">#[derive(Debug, PartialEq, Eq)]
+</span><span class="kw">struct </span>BlockHeader {
+    last_block: bool,  <span class="comment">// 1 bit
+    </span>block_type: u8,    <span class="comment">// 7 bits
+    </span>block_size: u32,   <span class="comment">// 24 bits
+</span>}
+
+<span class="kw">impl </span>FromBitStream <span class="kw">for </span>BlockHeader {
+    <span class="kw">type </span>Error = std::io::Error;
+
+    <span class="kw">fn </span>from_reader&lt;R: BitRead + <span class="question-mark">?</span>Sized&gt;(r: <span class="kw-2">&amp;mut </span>R) -&gt; std::io::Result&lt;<span class="self">Self</span>&gt; {
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            last_block: r.read_bit()<span class="question-mark">?</span>,
+            block_type: r.read_in::&lt;<span class="number">7</span>, <span class="kw">_</span>&gt;()<span class="question-mark">?</span>,
+            block_size: r.read_in::&lt;<span class="number">24</span>, <span class="kw">_</span>&gt;()<span class="question-mark">?</span>,
+        })
+    }
+}
+
+<span class="attr">#[derive(Debug, PartialEq, Eq)]
+</span><span class="kw">struct </span>Streaminfo {
+    minimum_block_size: u16,  <span class="comment">// 16 bits
+    </span>maximum_block_size: u16,  <span class="comment">// 16 bits
+    </span>minimum_frame_size: u32,  <span class="comment">// 24 bits
+    </span>maximum_frame_size: u32,  <span class="comment">// 24 bits
+    </span>sample_rate: u32,         <span class="comment">// 20 bits
+    </span>channels: u8,             <span class="comment">// 3 bits
+    </span>bits_per_sample: u8,      <span class="comment">// 5 bits
+    </span>total_samples: u64,       <span class="comment">// 36 bits
+    </span>md5: [u8; <span class="number">16</span>],            <span class="comment">// 16 bytes
+</span>}
+
+<span class="kw">impl </span>FromBitStream <span class="kw">for </span>Streaminfo {
+    <span class="kw">type </span>Error = std::io::Error;
+
+    <span class="kw">fn </span>from_reader&lt;R: BitRead + <span class="question-mark">?</span>Sized&gt;(r: <span class="kw-2">&amp;mut </span>R) -&gt; std::io::Result&lt;<span class="self">Self</span>&gt; {
+        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+            minimum_block_size: r.read_to()<span class="question-mark">?</span>,
+            maximum_block_size: r.read_to()<span class="question-mark">?</span>,
+            minimum_frame_size: r.read_in::&lt;<span class="number">24</span>, <span class="kw">_</span>&gt;()<span class="question-mark">?</span>,
+            maximum_frame_size: r.read_in::&lt;<span class="number">24</span>, <span class="kw">_</span>&gt;()<span class="question-mark">?</span>,
+            sample_rate:        r.read_in::&lt;<span class="number">20</span>, <span class="kw">_</span>&gt;()<span class="question-mark">?</span>,
+            channels:           r.read_in::&lt;<span class="number">3</span>, u8&gt;()<span class="question-mark">? </span>+ <span class="number">1</span>,
+            bits_per_sample:    r.read_in::&lt;<span class="number">5</span>, u8&gt;()<span class="question-mark">? </span>+ <span class="number">1</span>,
+            total_samples:      r.read_in::&lt;<span class="number">36</span>, <span class="kw">_</span>&gt;()<span class="question-mark">?</span>,
+            md5:                r.read_to()<span class="question-mark">?</span>,
+        })
+    }
+}
+
+<span class="attr">#[derive(Debug, PartialEq, Eq)]
+</span><span class="kw">struct </span>VorbisComment {
+    vendor: String,
+    comment: Vec&lt;String&gt;,
+}
+
+<span class="kw">impl </span>FromBitStream <span class="kw">for </span>VorbisComment {
+   <span class="kw">type </span>Error = Box&lt;<span class="kw">dyn </span>std::error::Error&gt;;
+
+   <span class="kw">fn </span>from_reader&lt;R: BitRead + <span class="question-mark">?</span>Sized&gt;(r: <span class="kw-2">&amp;mut </span>R) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+       <span class="kw">use </span>bitstream_io::LE;
+
+       <span class="kw">fn </span>read_entry&lt;R: BitRead + <span class="question-mark">?</span>Sized&gt;(
+           r: <span class="kw-2">&amp;mut </span>R,
+       ) -&gt; <span class="prelude-ty">Result</span>&lt;String, Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt; {
+           <span class="kw">use </span>std::convert::TryInto;
+           <span class="kw">let </span>size = r.read_as_to::&lt;LE, u32&gt;()<span class="question-mark">?</span>.try_into()<span class="question-mark">?</span>;
+           <span class="prelude-val">Ok</span>(String::from_utf8(r.read_to_vec(size)<span class="question-mark">?</span>)<span class="question-mark">?</span>)
+       }
+
+       <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
+           vendor: read_entry(r)<span class="question-mark">?</span>,
+           comment: (<span class="number">0</span>..r.read_as_to::&lt;LE, u32&gt;()<span class="question-mark">?</span>)
+               .map(|<span class="kw">_</span>| read_entry(r))
+               .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>,
+       })
+   }
+}
+
+<span class="comment">// test FLAC file data
+</span><span class="kw">let </span>flac: Vec&lt;u8&gt; = <span class="macro">vec!</span>[<span class="number">0x66</span>,<span class="number">0x4c</span>,<span class="number">0x61</span>,<span class="number">0x43</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x22</span>,
+                         <span class="number">0x10</span>,<span class="number">0x00</span>,<span class="number">0x10</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x06</span>,<span class="number">0x06</span>,<span class="number">0x00</span>,
+                         <span class="number">0x21</span>,<span class="number">0x62</span>,<span class="number">0x0a</span>,<span class="number">0xc4</span>,<span class="number">0x42</span>,<span class="number">0xf0</span>,<span class="number">0x00</span>,<span class="number">0x04</span>,
+                         <span class="number">0xa6</span>,<span class="number">0xcc</span>,<span class="number">0xfa</span>,<span class="number">0xf2</span>,<span class="number">0x69</span>,<span class="number">0x2f</span>,<span class="number">0xfd</span>,<span class="number">0xec</span>,
+                         <span class="number">0x2d</span>,<span class="number">0x5b</span>,<span class="number">0x30</span>,<span class="number">0x01</span>,<span class="number">0x76</span>,<span class="number">0xb4</span>,<span class="number">0x62</span>,<span class="number">0x88</span>,
+                         <span class="number">0x7d</span>,<span class="number">0x92</span>,<span class="number">0x04</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x7a</span>,<span class="number">0x20</span>,<span class="number">0x00</span>,
+                         <span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x72</span>,<span class="number">0x65</span>,<span class="number">0x66</span>,<span class="number">0x65</span>,<span class="number">0x72</span>,<span class="number">0x65</span>,
+                         <span class="number">0x6e</span>,<span class="number">0x63</span>,<span class="number">0x65</span>,<span class="number">0x20</span>,<span class="number">0x6c</span>,<span class="number">0x69</span>,<span class="number">0x62</span>,<span class="number">0x46</span>,
+                         <span class="number">0x4c</span>,<span class="number">0x41</span>,<span class="number">0x43</span>,<span class="number">0x20</span>,<span class="number">0x31</span>,<span class="number">0x2e</span>,<span class="number">0x31</span>,<span class="number">0x2e</span>,
+                         <span class="number">0x34</span>,<span class="number">0x20</span>,<span class="number">0x32</span>,<span class="number">0x30</span>,<span class="number">0x30</span>,<span class="number">0x37</span>,<span class="number">0x30</span>,<span class="number">0x32</span>,
+                         <span class="number">0x31</span>,<span class="number">0x33</span>,<span class="number">0x04</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x16</span>,<span class="number">0x00</span>,
+                         <span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x74</span>,<span class="number">0x69</span>,<span class="number">0x74</span>,<span class="number">0x6c</span>,<span class="number">0x65</span>,<span class="number">0x3d</span>,
+                         <span class="number">0x32</span>,<span class="number">0x63</span>,<span class="number">0x68</span>,<span class="number">0x20</span>,<span class="number">0x34</span>,<span class="number">0x34</span>,<span class="number">0x31</span>,<span class="number">0x30</span>,
+                         <span class="number">0x30</span>,<span class="number">0x20</span>,<span class="number">0x20</span>,<span class="number">0x31</span>,<span class="number">0x36</span>,<span class="number">0x62</span>,<span class="number">0x69</span>,<span class="number">0x74</span>,
+                         <span class="number">0x10</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x61</span>,<span class="number">0x6c</span>,<span class="number">0x62</span>,<span class="number">0x75</span>,
+                         <span class="number">0x6d</span>,<span class="number">0x3d</span>,<span class="number">0x54</span>,<span class="number">0x65</span>,<span class="number">0x73</span>,<span class="number">0x74</span>,<span class="number">0x20</span>,<span class="number">0x41</span>,
+                         <span class="number">0x6c</span>,<span class="number">0x62</span>,<span class="number">0x75</span>,<span class="number">0x6d</span>,<span class="number">0x0f</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,
+                         <span class="number">0x61</span>,<span class="number">0x72</span>,<span class="number">0x74</span>,<span class="number">0x69</span>,<span class="number">0x73</span>,<span class="number">0x74</span>,<span class="number">0x3d</span>,<span class="number">0x41</span>,
+                         <span class="number">0x73</span>,<span class="number">0x73</span>,<span class="number">0x6f</span>,<span class="number">0x72</span>,<span class="number">0x74</span>,<span class="number">0x65</span>,<span class="number">0x64</span>,<span class="number">0x0d</span>,
+                         <span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x00</span>,<span class="number">0x74</span>,<span class="number">0x72</span>,<span class="number">0x61</span>,<span class="number">0x63</span>,<span class="number">0x6b</span>,
+                         <span class="number">0x6e</span>,<span class="number">0x75</span>,<span class="number">0x6d</span>,<span class="number">0x62</span>,<span class="number">0x65</span>,<span class="number">0x72</span>,<span class="number">0x3d</span>,<span class="number">0x31</span>];
+
+<span class="kw">let </span><span class="kw-2">mut </span>cursor = Cursor::new(<span class="kw-2">&amp;</span>flac);
+
+<span class="kw">let </span><span class="kw-2">mut </span>reader = BitReader::endian(<span class="kw-2">&amp;mut </span>cursor, BigEndian);
+
+<span class="comment">// stream marker
+</span><span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>reader.read_to::&lt;[u8; <span class="number">4</span>]&gt;().unwrap(), <span class="string">b"fLaC"</span>);
+
+<span class="comment">// metadata block header
+</span><span class="macro">assert_eq!</span>(
+    reader.parse::&lt;BlockHeader&gt;().unwrap(),
+    BlockHeader { last_block: <span class="bool-val">false</span>, block_type: <span class="number">0</span>, block_size: <span class="number">34 </span>}
+);
+
+<span class="comment">// STREAMINFO block
+</span><span class="macro">assert_eq!</span>(
+    reader.parse::&lt;Streaminfo&gt;().unwrap(),
+    Streaminfo {
+        minimum_block_size: <span class="number">4096</span>,
+        maximum_block_size: <span class="number">4096</span>,
+        minimum_frame_size: <span class="number">1542</span>,
+        maximum_frame_size: <span class="number">8546</span>,
+        sample_rate: <span class="number">44100</span>,
+        channels: <span class="number">2</span>,
+        bits_per_sample: <span class="number">16</span>,
+        total_samples: <span class="number">304844</span>,
+        md5: <span class="kw-2">*</span><span class="string">b"\xFA\xF2\x69\x2F\xFD\xEC\x2D\x5B\x30\x01\x76\xB4\x62\x88\x7D\x92"</span>,
+    }
+);
+
+<span class="comment">// metadata block header
+</span><span class="macro">assert_eq!</span>(
+    reader.parse::&lt;BlockHeader&gt;().unwrap(),
+    BlockHeader { last_block: <span class="bool-val">false</span>, block_type: <span class="number">4</span>, block_size: <span class="number">122 </span>}
+);
+
+<span class="comment">// VORBIS_COMMENT block
+</span><span class="macro">assert_eq!</span>(
+   reader.parse::&lt;VorbisComment&gt;().unwrap(),
+   VorbisComment {
+       vendor: <span class="string">"reference libFLAC 1.1.4 20070213"</span>.to_string(),
+       comment: <span class="macro">vec!</span>[
+           <span class="string">"title=2ch 44100  16bit"</span>.to_string(),
+           <span class="string">"album=Test Album"</span>.to_string(),
+           <span class="string">"artist=Assorted"</span>.to_string(),
+           <span class="string">"tracknumber=1"</span>.to_string(),
+       ],
+   }
+);</code></pre></div>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.BitReader.html" title="struct bitstream_io::read::BitReader">BitReader</a></div><div class="desc docblock-short">For reading non-aligned bits from a stream of bytes in a given endianness.</div></li><li><div class="item-name"><a class="struct" href="struct.ByteReader.html" title="struct bitstream_io::read::ByteReader">Byte<wbr>Reader</a></div><div class="desc docblock-short">For reading aligned bytes from a stream of bytes in a given endianness.</div></li></ul><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="trait" href="trait.BitRead.html" title="trait bitstream_io::read::BitRead">BitRead</a></div><div class="desc docblock-short">A trait for anything that can read a variable number of
+potentially un-aligned values from an input stream</div></li><li><div class="item-name"><a class="trait" href="trait.ByteRead.html" title="trait bitstream_io::read::ByteRead">Byte<wbr>Read</a></div><div class="desc docblock-short">A trait for anything that can read aligned values from an input stream</div></li><li><div class="item-name"><a class="trait" href="trait.FromBitStream.html" title="trait bitstream_io::read::FromBitStream">From<wbr>BitStream</a></div><div class="desc docblock-short">Implemented by complex types that don’t require any additional context
+to parse themselves from a reader.  Analagous to <code>FromStr</code>.</div></li><li><div class="item-name"><a class="trait" href="trait.FromBitStreamWith.html" title="trait bitstream_io::read::FromBitStreamWith">From<wbr>BitStream<wbr>With</a></div><div class="desc docblock-short">Implemented by complex types that require some immutable context
+to parse themselves from a reader.</div></li><li><div class="item-name"><a class="trait" href="trait.FromByteStream.html" title="trait bitstream_io::read::FromByteStream">From<wbr>Byte<wbr>Stream</a></div><div class="desc docblock-short">Implemented by complex types that don’t require any additional context
+to parse themselves from a reader.  Analagous to <code>FromStr</code>.</div></li><li><div class="item-name"><a class="trait" href="trait.FromByteStreamWith.html" title="trait bitstream_io::read::FromByteStreamWith">From<wbr>Byte<wbr>Stream<wbr>With</a></div><div class="desc docblock-short">Implemented by complex types that require some additional context
+to parse themselves from a reader.  Analagous to <code>FromStr</code>.</div></li><li><div class="item-name"><a class="trait" href="trait.HuffmanRead.html" title="trait bitstream_io::read::HuffmanRead">Huffman<wbr>Read</a></div><div class="desc docblock-short">A trait for anything that can read Huffman codes
+of a given endianness from an input stream</div></li></ul></section></div></main></body></html>

@@ -1,0 +1,1 @@
+searchState.loadedDescShard("loop9", 0, "Previous, current, and next pixel or row\nAdd the next item, and shift others (prev is gone, prev = …\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\nLoop over 9 neighboring pixels in the …\nLoop over 9 neighboring pixels in the image described by …")
