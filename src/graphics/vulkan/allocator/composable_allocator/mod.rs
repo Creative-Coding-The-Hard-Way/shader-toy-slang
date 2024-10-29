@@ -11,7 +11,6 @@ use {
         device_allocator::DeviceAllocator,
         fallback_allocator::FallbackAllocator,
         reporting_allocator::LabelledAllocatorBuilder,
-        round_up_allocator::RoundUpAllocator,
         split_block_allocator::SplitBlockAllocator,
         type_index_allocator::TypeIndexAllocator,
     },
@@ -30,23 +29,58 @@ pub fn create_system_allocator(
         .description("DeviceAllocator", "The raw Vulkan device allocator.")
         .shared();
 
-    RoundUpAllocator::new(
-        1024 * 1024,
-        FallbackAllocator::new(
-            DedicatedAllocator::new(device_allocator.clone()),
-            TypeIndexAllocator::new(move |index| {
-                let index_alloc =
-                    SplitBlockAllocator::new(device_allocator.clone());
-                index_alloc.description(
-                    format!("Memory Type {} Allocator", index,),
-                    format!(
-                        "{:?}",
-                        memory_properties.memory_types[index as usize]
-                            .property_flags
-                    ),
-                )
-            }),
-        ),
+    FallbackAllocator::new(
+        DedicatedAllocator::new(device_allocator.clone()),
+        TypeIndexAllocator::new(move |index| {
+            // This is a silly implementation. By chaining split block
+            // allocators, a given allocation will continue to escalate until
+            // eventually asking the device for a big block of memory. From
+            // there, the block will be split into two parts over and over until
+            // the smallest correct block is found.
+            //
+            // This could certainly be made both *faster* (in CPU time) and
+            // more efficient in terms of allocated memory vs used memory. Not
+            // to mention fragmentation, etc...
+            //
+            // But this application doesn't care about that yet, so simply
+            // taking a big chunk and spliting it in half over and over is
+            // easy to understand and good enough for now.
+            #[rustfmt::skip]
+            let allocator =
+                SplitBlockAllocator::<_, 1024               >::new(
+                SplitBlockAllocator::<_, {1024 * 2         }>::new(
+                SplitBlockAllocator::<_, {1024 * 4         }>::new(
+                SplitBlockAllocator::<_, {1024 * 8         }>::new(
+                SplitBlockAllocator::<_, {1024 * 16        }>::new(
+                SplitBlockAllocator::<_, {1024 * 32        }>::new(
+                SplitBlockAllocator::<_, {1024 * 64        }>::new(
+                SplitBlockAllocator::<_, {1024 * 128       }>::new(
+                SplitBlockAllocator::<_, {1024 * 256       }>::new(
+                SplitBlockAllocator::<_, {1024 * 512       }>::new(
+                SplitBlockAllocator::<_, {1024 * 1024      }>::new(
+                SplitBlockAllocator::<_, {1024 * 1024 * 2  }>::new(
+                SplitBlockAllocator::<_, {1024 * 1024 * 4  }>::new(
+                SplitBlockAllocator::<_, {1024 * 1024 * 8  }>::new(
+                SplitBlockAllocator::<_, {1024 * 1024 * 16 }>::new(
+                SplitBlockAllocator::<_, {1024 * 1024 * 32 }>::new(
+                SplitBlockAllocator::<_, {1024 * 1024 * 64 }>::new(
+                SplitBlockAllocator::<_, {1024 * 1024 * 128}>::new(
+                SplitBlockAllocator::<_, {1024 * 1024 * 256}>::new(
+                SplitBlockAllocator::<_, {1024 * 1024 * 512}>::new(
+                    device_allocator.clone(),
+                ))))))))))))))))))));
+
+            allocator.description(
+                format!("IndexedAllocator:{}", index,),
+                format!(
+                    "This allocator is responsible for allocating blocks \
+                    with memory properties, {:?}, and subdividing them for \
+                    use by the application.",
+                    memory_properties.memory_types[index as usize]
+                        .property_flags
+                ),
+            )
+        }),
     )
     .description(
         "ApplicationAllocator",

@@ -55,7 +55,7 @@ pub struct ReportingAllocator<A: ComposableAllocator> {
 
 impl<A: ComposableAllocator> Drop for ReportingAllocator<A> {
     fn drop(&mut self) {
-        log::debug!(
+        log::trace!(
             indoc::indoc! {
                 "
                 {}
@@ -109,6 +109,26 @@ impl<A: ComposableAllocator> ComposableAllocator for ReportingAllocator<A> {
             .metrics
             .max_allocation_size
             .max(requirements.allocation_size);
+
+        // Helpful for debugging, but too noisy even for trace! logs
+        // log::info!(
+        //     indoc::indoc! {
+        //         "
+        //         {}
+        //         {}
+
+        //         Allocate Memory With Requirements:
+        //         {:#?}
+
+        //         Got Block:
+        //         {:#?}
+        //         "
+        //     },
+        //     self.label,
+        //     self.description,
+        //     requirements,
+        //     block,
+        // );
         Ok(block)
     }
 

@@ -17,6 +17,7 @@ pub struct RoundUpAllocator<A: ComposableAllocator> {
 }
 
 impl<A: ComposableAllocator> RoundUpAllocator<A> {
+    #[allow(unused)]
     pub fn new(threshold: u64, allocator: A) -> Self {
         Self {
             allocator,
