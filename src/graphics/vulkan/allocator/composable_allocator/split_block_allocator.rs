@@ -117,7 +117,7 @@ impl<A: ComposableAllocator, const BLOCK_SIZE: u64> ComposableAllocator
         // allocate a new block and split it instead
         let block_requirements = AllocationRequirements {
             alignment: BLOCK_SIZE,
-            allocation_size: BLOCK_SIZE,
+            allocation_size: BLOCK_SIZE * 2,
             ..requirements
         };
         let mut new_split_block = SplitBlock::new(

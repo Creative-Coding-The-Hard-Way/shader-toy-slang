@@ -59,7 +59,7 @@ where
         let buffer_size_in_bytes = aligned_unit_size * count as u64;
 
         // create the buffer
-        let (buffer, block) = OwnedBlock::allocate_buffer(
+        let (block, buffer) = OwnedBlock::allocate_buffer(
             device.allocator.clone(),
             &vk::BufferCreateInfo {
                 size: buffer_size_in_bytes,

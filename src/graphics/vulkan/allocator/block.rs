@@ -133,6 +133,7 @@ impl std::fmt::Debug for Block {
         f.debug_struct("Block")
             .field("offset", &self.offset)
             .field("size", &HumanizedSize(self.size))
+            .field("memory_type_index", &self.memory_type_index)
             .field("memory", &self.memory)
             .field("mapped_ptr", &self.mapped_ptr)
             .finish()

@@ -24,7 +24,7 @@ impl OwnedBlock {
         allocator: Arc<Allocator>,
         image_create_info: &vk::ImageCreateInfo,
         flags: vk::MemoryPropertyFlags,
-    ) -> Result<(raii::Image, Self)> {
+    ) -> Result<(Self, raii::Image)> {
         let image = raii::Image::new(
             allocator.logical_device.clone(),
             image_create_info,
@@ -65,7 +65,7 @@ impl OwnedBlock {
                 .with_context(trace!("Unable to bind image memory!"))?;
         };
 
-        Ok((image, Self { block, allocator }))
+        Ok((Self { block, allocator }, image))
     }
 
     /// Creates a buffer and allocates memory to back it.
@@ -76,7 +76,7 @@ impl OwnedBlock {
         allocator: Arc<Allocator>,
         buffer_create_info: &vk::BufferCreateInfo,
         flags: vk::MemoryPropertyFlags,
-    ) -> Result<(raii::Buffer, OwnedBlock)> {
+    ) -> Result<(OwnedBlock, raii::Buffer)> {
         let buffer = raii::Buffer::new(
             allocator.logical_device.clone(),
             buffer_create_info,
@@ -117,7 +117,7 @@ impl OwnedBlock {
                 .with_context(trace!("Unable to bind buffer to memory!"))?;
         };
 
-        Ok((buffer, Self { block, allocator }))
+        Ok((Self { block, allocator }, buffer))
     }
 }
 

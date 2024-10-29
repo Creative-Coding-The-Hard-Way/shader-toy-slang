@@ -1,11 +1,11 @@
 use {
-    crate::trace,
+    crate::{graphics::vulkan::allocator::HumanizedSize, trace},
     anyhow::{Context, Result},
     ash::vk,
 };
 
 /// Contains all of the information required to allocate a block of memory.
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct AllocationRequirements {
     pub alignment: u64,
     pub allocation_size: u64,
@@ -51,5 +51,17 @@ impl AllocationRequirements {
             memory_type_index: self.memory_type_index,
             ..Default::default()
         }
+    }
+}
+
+impl std::fmt::Debug for AllocationRequirements {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AllocationRequirements")
+            .field("alignment", &self.alignment)
+            .field("allocation_size", &HumanizedSize(self.allocation_size))
+            .field("memory_type_index", &self.memory_type_index)
+            .field("flags", &self.flags)
+            .field("should_be_dedicated", &self.should_be_dedicated)
+            .finish()
     }
 }

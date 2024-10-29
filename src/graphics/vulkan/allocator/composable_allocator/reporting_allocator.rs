@@ -111,24 +111,24 @@ impl<A: ComposableAllocator> ComposableAllocator for ReportingAllocator<A> {
             .max(requirements.allocation_size);
 
         // Helpful for debugging, but too noisy even for trace! logs
-        // log::info!(
-        //     indoc::indoc! {
-        //         "
-        //         {}
-        //         {}
+        log::info!(
+            indoc::indoc! {
+                "
+                {}
+                {}
 
-        //         Allocate Memory With Requirements:
-        //         {:#?}
+                Allocate Memory With Requirements:
+                {:#?}
 
-        //         Got Block:
-        //         {:#?}
-        //         "
-        //     },
-        //     self.label,
-        //     self.description,
-        //     requirements,
-        //     block,
-        // );
+                Got Block:
+                {:#?}
+                "
+            },
+            self.label,
+            self.description,
+            requirements,
+            block,
+        );
         Ok(block)
     }
 
