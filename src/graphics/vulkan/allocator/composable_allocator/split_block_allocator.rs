@@ -96,7 +96,11 @@ impl<A: ComposableAllocator, const BLOCK_SIZE: u64> ComposableAllocator
         if requirements.allocation_size > BLOCK_SIZE
             || BLOCK_SIZE % requirements.alignment != 0
         {
-            // Give up immediately if the block size is too small
+            // Give up immediately if the block size is too small.
+            // Note: it's fine to give up if the block doesn't meet the
+            // alignment requirements. Eventually, this will reach the device
+            // allocator which is guaranteed to be maximally aligned for the
+            // platform.
             return self.allocator.allocate_memory(requirements);
         }
 
