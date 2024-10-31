@@ -47,6 +47,8 @@ pub fn create_system_allocator(
             // easy to understand and good enough for now.
             #[rustfmt::skip]
             let allocator =
+                SplitBlockAllocator::<_, 256                >::new(
+                SplitBlockAllocator::<_, 512                >::new(
                 SplitBlockAllocator::<_, 1024               >::new(
                 SplitBlockAllocator::<_, {1024 * 2         }>::new(
                 SplitBlockAllocator::<_, {1024 * 4         }>::new(
@@ -68,7 +70,7 @@ pub fn create_system_allocator(
                 SplitBlockAllocator::<_, {1024 * 1024 * 256}>::new(
                 SplitBlockAllocator::<_, {1024 * 1024 * 512}>::new(
                     device_allocator.clone(),
-                ))))))))))))))))))));
+                ))))))))))))))))))))));
 
             allocator.description(
                 format!("IndexedAllocator:{}", index,),
