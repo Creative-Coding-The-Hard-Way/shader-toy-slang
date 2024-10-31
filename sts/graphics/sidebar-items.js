@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["vulkan"],"struct":["FullscreenQuad","Recompiler"]};
+window.SIDEBAR_ITEMS = {"mod":["vulkan"],"struct":["FullscreenQuad","Recompiler","Texture","TextureLoader"]};
