@@ -142,6 +142,8 @@
 <a href="#142" id="142">142</a>
 <a href="#143" id="143">143</a>
 <a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>dedicated_allocator;
 <span class="kw">mod </span>device_allocator;
 <span class="kw">mod </span>fallback_allocator;
@@ -191,6 +193,8 @@
             // easy to understand and good enough for now.
             </span><span class="attr">#[rustfmt::skip]
             </span><span class="kw">let </span>allocator =
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, <span class="number">256                </span>&gt;::new(
+                SplitBlockAllocator::&lt;<span class="kw">_</span>, <span class="number">512                </span>&gt;::new(
                 SplitBlockAllocator::&lt;<span class="kw">_</span>, <span class="number">1024               </span>&gt;::new(
                 SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">2         </span>}&gt;::new(
                 SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">4         </span>}&gt;::new(
@@ -212,7 +216,7 @@
                 SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">1024 </span>* <span class="number">256</span>}&gt;::new(
                 SplitBlockAllocator::&lt;<span class="kw">_</span>, {<span class="number">1024 </span>* <span class="number">1024 </span>* <span class="number">512</span>}&gt;::new(
                     device_allocator.clone(),
-                ))))))))))))))))))));
+                ))))))))))))))))))))));
 
             allocator.description(
                 <span class="macro">format!</span>(<span class="string">"IndexedAllocator:{}"</span>, index,),
