@@ -106,6 +106,6 @@ impl SyncCommands {
                 ))?;
         }
 
-        todo!()
+        Ok(())
     }
 }

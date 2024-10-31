@@ -6,7 +6,6 @@ use {
     ash::vk,
     clap::Parser,
     glfw::{Action, Key, WindowEvent},
-    image::ImageReader,
     std::{
         path::PathBuf,
         sync::Arc,
@@ -16,10 +15,10 @@ use {
         app::{app_main, App, FullscreenToggle},
         graphics::{
             vulkan::{
-                raii, Device, FrameStatus, FramesInFlight, OwnedBlock,
-                PresentImageStatus, Swapchain,
+                raii, Device, FrameStatus, FramesInFlight, PresentImageStatus,
+                Swapchain,
             },
-            FullscreenQuad, Recompiler,
+            FullscreenQuad, Recompiler, Texture, TextureLoader,
         },
         trace,
     },
@@ -79,6 +78,8 @@ struct LiveReload {
     framebuffers: Vec<raii::Framebuffer>,
 
     fullscreen_quad: FullscreenQuad<FrameData>,
+
+    texture: Option<Texture>,
 }
 
 impl App for LiveReload {
@@ -116,45 +117,14 @@ impl App for LiveReload {
         let framebuffers =
             create_framebuffers(&device, &render_pass, &swapchain)?;
 
-        if let Some(texture_image_path) = args.texture {
-            let image = ImageReader::open(&texture_image_path)
-                .with_context(trace!(
-                    "Unable to open image at {:?}",
-                    texture_image_path
-                ))?
-                .decode()
-                .with_context(trace!(
-                    "Unable to decode image at {:?}",
-                    texture_image_path
-                ))?
-                .to_rgba8();
-            let (width, height) = image.dimensions();
-
-            let (block, image) = OwnedBlock::allocate_image(
-                device.allocator.clone(),
-                &vk::ImageCreateInfo {
-                    image_type: vk::ImageType::TYPE_2D,
-                    format: vk::Format::R8G8B8A8_UINT,
-                    extent: vk::Extent3D {
-                        width,
-                        height,
-                        depth: 1,
-                    },
-                    mip_levels: 1,
-                    array_layers: 1,
-                    samples: vk::SampleCountFlags::TYPE_1,
-                    tiling: vk::ImageTiling::OPTIMAL,
-                    usage: vk::ImageUsageFlags::SAMPLED,
-                    sharing_mode: vk::SharingMode::EXCLUSIVE,
-                    queue_family_index_count: 1,
-                    p_queue_family_indices: &device.graphics_queue_family_index,
-                    initial_layout: vk::ImageLayout::UNDEFINED,
-                    ..Default::default()
-                },
-                vk::MemoryPropertyFlags::DEVICE_LOCAL,
-            )?;
-            log::info!("{:#?}\n\n{:#?}", image, block);
-        }
+        let texture = if let Some(texture_image_path) = args.texture {
+            let mut loader = TextureLoader::new(device.clone())?;
+            let texture = loader.load_texture(texture_image_path)?;
+            log::info!("{:#?}", texture);
+            Some(texture)
+        } else {
+            None
+        };
 
         let fullscreen_quad = FullscreenQuad::new(
             device.clone(),
@@ -179,6 +149,8 @@ impl App for LiveReload {
             render_pass,
             framebuffers,
             fullscreen_quad,
+
+            texture,
         })
     }
 
