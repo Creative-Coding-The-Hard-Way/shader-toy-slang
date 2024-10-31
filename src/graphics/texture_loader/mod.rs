@@ -1,4 +1,5 @@
 use {
+    super::vulkan::raii,
     crate::{
         graphics::vulkan::{Device, OwnedBlock, SyncCommands},
         trace,
@@ -52,7 +53,7 @@ impl TextureLoader {
             &vk::ImageCreateInfo {
                 flags: vk::ImageCreateFlags::empty(),
                 image_type: vk::ImageType::TYPE_2D,
-                format: vk::Format::R8G8B8A8_UNORM,
+                format: vk::Format::R8G8B8A8_SRGB,
                 extent: vk::Extent3D {
                     width,
                     height,
@@ -177,10 +178,31 @@ impl TextureLoader {
                 "Error while copying data to image memory!"
             ))?;
 
+        let image_view = raii::ImageView::new(
+            device.logical_device.clone(),
+            &vk::ImageViewCreateInfo {
+                flags: vk::ImageViewCreateFlags::empty(),
+                image: image.raw,
+                view_type: vk::ImageViewType::TYPE_2D,
+                format: vk::Format::R8G8B8A8_SRGB,
+                components: vk::ComponentMapping::default(),
+                subresource_range: vk::ImageSubresourceRange {
+                    aspect_mask: vk::ImageAspectFlags::COLOR,
+                    base_mip_level: 0,
+                    level_count: 1,
+                    base_array_layer: 0,
+                    layer_count: 1,
+                },
+                ..Default::default()
+            },
+        )
+        .with_context(trace!("Unable to create image view!"))?;
+
         Ok(Texture::builder()
             .path(path)
             .width(width)
             .height(height)
+            .image_view(image_view)
             .image(image)
             .block(block)
             .build())

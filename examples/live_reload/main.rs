@@ -7,6 +7,7 @@ use {
     clap::Parser,
     glfw::{Action, Key, WindowEvent},
     std::{
+        mem::swap,
         path::PathBuf,
         sync::Arc,
         time::{Duration, Instant},
@@ -78,8 +79,6 @@ struct LiveReload {
     framebuffers: Vec<raii::Framebuffer>,
 
     fullscreen_quad: FullscreenQuad<FrameData>,
-
-    texture: Option<Texture>,
 }
 
 impl App for LiveReload {
@@ -126,13 +125,16 @@ impl App for LiveReload {
             None
         };
 
-        let fullscreen_quad = FullscreenQuad::new(
-            device.clone(),
-            fragment_shader_compiler.current_shader_bytes(),
-            &frames_in_flight,
-            &swapchain,
-            &render_pass,
-        )?;
+        let fullscreen_quad = FullscreenQuad::builder()
+            .device(device.clone())
+            .fragment_shader_source(
+                fragment_shader_compiler.current_shader_bytes(),
+            )
+            .frames_in_flight(&frames_in_flight)
+            .swapchain(&swapchain)
+            .render_pass(&render_pass)
+            .maybe_texture(texture)
+            .build()?;
 
         Ok(Self {
             start_time: Instant::now(),
@@ -149,8 +151,6 @@ impl App for LiveReload {
             render_pass,
             framebuffers,
             fullscreen_quad,
-
-            texture,
         })
     }
 

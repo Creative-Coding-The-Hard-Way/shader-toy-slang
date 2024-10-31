@@ -17,6 +17,7 @@ pub struct Texture {
     path: PathBuf,
     width: u32,
     height: u32,
+    image_view: raii::ImageView,
     image: raii::Image,
     block: OwnedBlock,
 }
@@ -25,6 +26,11 @@ impl Texture {
     /// A non-owning handle for the underlying Vulkan image resource.
     pub fn image(&self) -> vk::Image {
         self.image.raw
+    }
+
+    /// A non-owning handle for the underlying Vulkan image view.
+    pub fn view(&self) -> vk::ImageView {
+        self.image_view.raw
     }
 
     /// A non-owning handle for the underlying GPU memory.

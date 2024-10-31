@@ -58,6 +58,14 @@ macro_rules! resource {
 }
 
 resource!(
+    Sampler,
+    vk::Sampler,
+    vk::SamplerCreateInfo,
+    create_sampler,
+    destroy_sampler
+);
+
+resource!(
     Image,
     vk::Image,
     vk::ImageCreateInfo,

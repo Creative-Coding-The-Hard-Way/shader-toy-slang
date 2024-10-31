@@ -1,0 +1,3 @@
+--frag-shader=demos/04_texture/shader.slang
+--additional-watch-dir=demos/include/
+--texture=demos/04_texture/temple-of-the-sun.jpg

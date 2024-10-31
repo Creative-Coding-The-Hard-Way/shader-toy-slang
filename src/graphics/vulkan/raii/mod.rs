@@ -16,7 +16,7 @@ pub use self::{
     device_resources::{
         Buffer, CommandPool, DescriptorPool, DescriptorSetLayout, DeviceMemory,
         Fence, Framebuffer, Image, ImageView, Pipeline, PipelineLayout,
-        RenderPass, Semaphore, ShaderModule,
+        RenderPass, Sampler, Semaphore, ShaderModule,
     },
     instance::Instance,
     instance_extensions::{DebugUtils, Surface},

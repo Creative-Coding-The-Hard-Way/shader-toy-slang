@@ -5,11 +5,15 @@ mod uniform_buffer;
 use {
     self::uniform_buffer::UniformBuffer,
     crate::{
-        graphics::vulkan::{raii, Device, Frame, FramesInFlight, Swapchain},
+        graphics::{
+            vulkan::{raii, Device, Frame, FramesInFlight, Swapchain},
+            Texture,
+        },
         trace,
     },
     anyhow::{Context, Result},
     ash::vk,
+    bon::bon,
     std::sync::Arc,
 };
 
@@ -24,22 +28,50 @@ pub struct FullscreenQuad<FrameDataT: Sized + Copy + Default> {
     _descriptor_pool: raii::DescriptorPool,
     descriptor_sets: Vec<vk::DescriptorSet>,
     uniform_buffer: UniformBuffer<FrameDataT>,
+    texture: Option<Texture>,
+    sampler: raii::Sampler,
     device: Arc<Device>,
 }
 
+#[bon]
 impl<FrameDataT> FullscreenQuad<FrameDataT>
 where
     FrameDataT: Sized + Copy + Default,
 {
     /// Creates a new fullscreen quad that uses the provided fragment shader
     /// source.
+    #[builder]
     pub fn new(
         device: Arc<Device>,
         fragment_shader_source: &[u8],
         frames_in_flight: &FramesInFlight,
         swapchain: &Swapchain,
         render_pass: &raii::RenderPass,
+        texture: Option<Texture>,
     ) -> Result<Self> {
+        let sampler = raii::Sampler::new(
+            device.logical_device.clone(),
+            &vk::SamplerCreateInfo {
+                mag_filter: vk::Filter::LINEAR,
+                min_filter: vk::Filter::LINEAR,
+                mipmap_mode: vk::SamplerMipmapMode::NEAREST,
+                address_mode_u: vk::SamplerAddressMode::REPEAT,
+                address_mode_v: vk::SamplerAddressMode::REPEAT,
+                address_mode_w: vk::SamplerAddressMode::REPEAT,
+                mip_lod_bias: 0.0,
+                anisotropy_enable: vk::FALSE,
+                max_anisotropy: 0.0,
+                compare_enable: vk::FALSE,
+                compare_op: vk::CompareOp::ALWAYS,
+                min_lod: 0.0,
+                max_lod: 0.0,
+                border_color: vk::BorderColor::FLOAT_OPAQUE_BLACK,
+                unnormalized_coordinates: vk::FALSE,
+                ..Default::default()
+            },
+        )
+        .with_context(trace!("Unable to create sampler!"))?;
+
         let uniform_buffer = UniformBuffer::<FrameDataT>::allocate(
             &device,
             frames_in_flight.frame_count(),
@@ -49,13 +81,15 @@ where
         ))?;
 
         let descriptor_set_layout =
-            descriptors::create_descriptor_set_layout(&device).with_context(
-                trace!("Error while creating the descriptor set layout!"),
-            )?;
+            descriptors::create_descriptor_set_layout(&device, &texture)
+                .with_context(trace!(
+                    "Error while creating the descriptor set layout!"
+                ))?;
 
         let descriptor_pool = descriptors::create_descriptor_pool(
             &device,
             frames_in_flight.frame_count(),
+            &texture,
         )
         .with_context(trace!("Error while creating the descriptor pool!"))?;
 
@@ -71,6 +105,8 @@ where
             &device,
             &descriptor_sets,
             &uniform_buffer,
+            &texture,
+            &sampler,
         );
 
         let (pipeline, pipeline_layout) = pipeline::create_pipeline(
@@ -89,6 +125,8 @@ where
             descriptor_sets,
             uniform_buffer,
             device,
+            texture,
+            sampler,
         })
     }
 
