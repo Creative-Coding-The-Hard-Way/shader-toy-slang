@@ -3,23 +3,34 @@ use {
     ash::vk,
     clap::Parser,
     glfw::{Action, Key, Window, WindowEvent},
-    std::sync::Arc,
+    std::{path::PathBuf, sync::Arc},
     sts::{
         app::{app_main, App},
-        graphics::vulkan::{
-            Device, FrameStatus, FramesInFlight, PresentImageStatus, Swapchain,
+        graphics::{
+            vulkan::{
+                raii, Device, FrameStatus, FramesInFlight, PresentImageStatus,
+                Swapchain,
+            },
+            Particles, Recompiler,
         },
         trace,
     },
 };
 
 #[derive(Parser, Debug)]
-struct Args {}
+struct Args {
+    #[arg(short, long)]
+    kernel_source: PathBuf,
+}
 
 struct LiveParticles {
     frames_in_flight: FramesInFlight,
     swapchain: Arc<Swapchain>,
     swapchain_needs_rebuild: bool,
+
+    particles: Particles,
+
+    kernel_compiler: Recompiler,
 
     device: Arc<Device>,
 }
@@ -45,10 +56,59 @@ impl App for LiveParticles {
         let frames_in_flight = FramesInFlight::new(device.clone(), 2)
             .with_context(trace!("Unable to create frames_in_flight!"))?;
 
+        let kernel_compiler = Recompiler::new(&_args.kernel_source, &[])?;
+
+        // make the compute layout
+        let layout = raii::PipelineLayout::new(
+            device.logical_device.clone(),
+            &vk::PipelineLayoutCreateInfo {
+                set_layout_count: 0,
+                p_set_layouts: std::ptr::null(),
+                push_constant_range_count: 0,
+                p_push_constant_ranges: std::ptr::null(),
+                ..Default::default()
+            },
+        )?;
+
+        // make a compute pipeline
+        let module = {
+            let shader_words = ash::util::read_spv(&mut std::io::Cursor::new(
+                kernel_compiler.current_shader_bytes(),
+            ))?;
+            raii::ShaderModule::new(
+                device.logical_device.clone(),
+                &vk::ShaderModuleCreateInfo {
+                    code_size: shader_words.len() * 4,
+                    p_code: shader_words.as_ptr(),
+                    ..Default::default()
+                },
+            )?
+        };
+        let main = std::ffi::CString::new("main").unwrap();
+        let compute = raii::Pipeline::new_compute_pipeline(
+            device.logical_device.clone(),
+            &vk::ComputePipelineCreateInfo {
+                stage: vk::PipelineShaderStageCreateInfo {
+                    stage: vk::ShaderStageFlags::COMPUTE,
+                    module: module.raw,
+                    p_name: main.as_ptr(),
+                    p_specialization_info: std::ptr::null(),
+                    ..Default::default()
+                },
+                layout: layout.raw,
+                ..Default::default()
+            },
+        )?;
+
+        let particles = Particles::new(device.clone(), &frames_in_flight)
+            .with_context(trace!("Unable to create particles!"))?;
+
         Ok(Self {
             frames_in_flight,
             swapchain,
             swapchain_needs_rebuild: false,
+            particles,
+            kernel_compiler,
             device,
         })
     }

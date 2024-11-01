@@ -200,6 +200,28 @@ impl Pipeline {
         };
         Ok(Self { device, raw })
     }
+
+    pub fn new_compute_pipeline(
+        device: Arc<raii::Device>,
+        create_info: &vk::ComputePipelineCreateInfo,
+    ) -> Result<Self> {
+        let result = unsafe {
+            device.create_compute_pipelines(
+                vk::PipelineCache::null(),
+                &[*create_info],
+                None,
+            )
+        };
+        let raw = match result {
+            Ok(pipelines) => pipelines[0],
+            Err((_, result)) => {
+                return Err(result).with_context(trace!(
+                    "Error while creating compute pipeline!"
+                ));
+            }
+        };
+        Ok(Self { device, raw })
+    }
 }
 
 impl std::fmt::Debug for Pipeline {
