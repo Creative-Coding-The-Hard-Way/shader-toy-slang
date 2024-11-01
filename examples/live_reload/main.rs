@@ -7,7 +7,6 @@ use {
     clap::Parser,
     glfw::{Action, Key, WindowEvent},
     std::{
-        mem::swap,
         path::PathBuf,
         sync::Arc,
         time::{Duration, Instant},
@@ -19,7 +18,7 @@ use {
                 raii, Device, FrameStatus, FramesInFlight, PresentImageStatus,
                 Swapchain,
             },
-            FullscreenQuad, Recompiler, Texture, TextureLoader,
+            FullscreenQuad, Recompiler, TextureLoader,
         },
         trace,
     },
@@ -39,7 +38,7 @@ struct Args {
 
     /// An additional texture to provide to the shader.
     #[arg(short, long)]
-    pub texture: Option<PathBuf>,
+    pub texture: Vec<PathBuf>,
 }
 
 // This can be accepted in the fragment shader with code like:
@@ -116,13 +115,16 @@ impl App for LiveReload {
         let framebuffers =
             create_framebuffers(&device, &render_pass, &swapchain)?;
 
-        let texture = if let Some(texture_image_path) = args.texture {
+        let textures = {
             let mut loader = TextureLoader::new(device.clone())?;
-            let texture = loader.load_texture(texture_image_path)?;
-            log::info!("{:#?}", texture);
-            Some(texture)
-        } else {
-            None
+            let mut textures = vec![];
+            for path in &args.texture {
+                let texture = loader.load_texture(path).with_context(
+                    trace!("Error while loading texture {:?}", path),
+                )?;
+                textures.push(texture);
+            }
+            textures
         };
 
         let fullscreen_quad = FullscreenQuad::builder()
@@ -133,7 +135,7 @@ impl App for LiveReload {
             .frames_in_flight(&frames_in_flight)
             .swapchain(&swapchain)
             .render_pass(&render_pass)
-            .maybe_texture(texture)
+            .textures(textures)
             .build()?;
 
         Ok(Self {

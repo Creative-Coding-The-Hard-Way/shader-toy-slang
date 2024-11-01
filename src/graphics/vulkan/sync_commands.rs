@@ -104,6 +104,9 @@ impl SyncCommands {
                 .with_context(trace!(
                     "Error while waiting for commands to finish!"
                 ))?;
+            self.device
+                .reset_fences(&[self.fence.raw])
+                .with_context(trace!("Error while resetting fences!"))?;
         }
 
         Ok(())

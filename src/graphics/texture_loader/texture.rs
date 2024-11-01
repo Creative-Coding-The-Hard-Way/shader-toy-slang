@@ -14,7 +14,7 @@ use {
 /// before allowing it to drop.
 #[derive(Debug, Builder)]
 pub struct Texture {
-    path: PathBuf,
+    _path: PathBuf,
     width: u32,
     height: u32,
     image_view: raii::ImageView,

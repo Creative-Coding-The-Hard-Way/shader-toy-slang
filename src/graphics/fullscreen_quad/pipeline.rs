@@ -14,12 +14,16 @@ pub fn create_pipeline(
     device: &Device,
     swapchain: &Swapchain,
     render_pass: &raii::RenderPass,
-    descriptor_set_layout: &raii::DescriptorSetLayout,
+    descriptor_set_layouts: &[&raii::DescriptorSetLayout],
     fragment_shader_source: &[u8],
 ) -> Result<(raii::Pipeline, raii::PipelineLayout)> {
+    let set_layouts = descriptor_set_layouts
+        .iter()
+        .map(|layout| layout.raw)
+        .collect::<Vec<_>>();
     let layout_create_info = vk::PipelineLayoutCreateInfo {
-        set_layout_count: 1,
-        p_set_layouts: &descriptor_set_layout.raw,
+        set_layout_count: set_layouts.len() as u32,
+        p_set_layouts: set_layouts.as_ptr(),
         push_constant_range_count: 0,
         p_push_constant_ranges: std::ptr::null(),
         ..Default::default()

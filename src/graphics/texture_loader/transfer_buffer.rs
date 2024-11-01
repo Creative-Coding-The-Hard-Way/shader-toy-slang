@@ -71,11 +71,6 @@ impl TransferBuffer {
         self.buffer.raw
     }
 
-    /// A non-owning copy of the Vulkan device memory handle.
-    pub fn memory(&self) -> vk::DeviceMemory {
-        self.block.memory()
-    }
-
     // Private API ------------------------------------------------------------
 
     /// Returns true if the internal buffer needs to be resized.

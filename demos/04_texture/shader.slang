@@ -5,10 +5,13 @@ struct FrameData {
     float time;
 };
 
+// Per-frame data is provided in descriptor set 0
 [vk_binding(0, 0)] ConstantBuffer<FrameData> frame;
 
-[vk_binding(1, 0)] SamplerState sampler;
-[vk_binding(2, 0)] texture2D texture;
+// samplers and textures are provided in descriptor set 1
+[vk_binding(0, 1)] SamplerState sampler;
+[vk_binding(1, 1)] texture2D background;
+[vk_binding(2, 1)] texture2D brush;
 
 
 [shader("fragment")]
@@ -16,11 +19,7 @@ float4 main(
     float2 pos: SmoothOutput_pos,
     float2 uv: SmoothOutput_uv
 ) : SV_Target {
-    uint w;
-    uint h;
-    texture.GetDimensions(w, h); // whatt??
-    if (frame.time < 0.1) {
-        printf("%d, %d", w, h);
-    }
-    return texture.Sample(sampler, float2(uv.x, 1.0 - uv.y));
+    uv = float2(uv.x, 1.0 - uv.y);
+
+    return background.Sample(sampler, uv) * brush.Sample(sampler, uv);
 }

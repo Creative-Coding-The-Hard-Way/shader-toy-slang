@@ -12,7 +12,7 @@ use {
 ///
 /// # How It Works
 ///
-/// The UniformBuffer allocates enough data to hold N copies of the FrameDataT
+/// The UniformBuffer allocates enough data to hold N copies of the DataT
 /// data type. This allows up to N independent frames-in-flight that can
 /// independently update their data.
 ///
@@ -26,17 +26,17 @@ use {
 /// *only* presenting a single uniform buffer, but will need to be changed if
 /// used as part of a larger application.
 #[derive(Debug)]
-pub struct UniformBuffer<FrameDataT: Sized + Copy + Default> {
+pub struct UniformBuffer<DataT: Sized + Copy> {
     pub buffer: raii::Buffer,
     pub block: OwnedBlock,
     aligned_unit_size: usize,
     count: usize,
-    _phantom_data: PhantomData<FrameDataT>,
+    _phantom_data: PhantomData<DataT>,
 }
 
-impl<FrameDataT> UniformBuffer<FrameDataT>
+impl<DataT> UniformBuffer<DataT>
 where
-    FrameDataT: Sized + Copy + Default,
+    DataT: Sized + Copy,
 {
     /// Allocate a new buffer and GPU memory for holding per-frame uniform data.
     ///
@@ -50,7 +50,7 @@ where
                 .get_physical_device_properties(device.physical_device)
         };
         let aligned_unit_size: u64 = {
-            let count = std::mem::size_of::<FrameDataT>() as u64
+            let count = std::mem::size_of::<DataT>() as u64
                 / properties.limits.min_uniform_buffer_offset_alignment;
             (count + 1) * properties.limits.min_uniform_buffer_offset_alignment
         };
@@ -96,7 +96,7 @@ where
     pub unsafe fn write_indexed(
         &mut self,
         index: usize,
-        data: FrameDataT,
+        data: DataT,
     ) -> Result<()> {
         if index >= self.count {
             bail!(
@@ -107,7 +107,7 @@ where
         let offset = self.offset_for_index(index) as isize;
         std::ptr::copy_nonoverlapping(
             &data,
-            self.block.mapped_ptr().byte_offset(offset) as *mut FrameDataT,
+            self.block.mapped_ptr().byte_offset(offset) as *mut DataT,
             1,
         );
 
