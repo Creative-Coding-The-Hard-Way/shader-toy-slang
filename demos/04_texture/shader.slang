@@ -19,7 +19,15 @@ float4 main(
     float2 pos: SmoothOutput_pos,
     float2 uv: SmoothOutput_uv
 ) : SV_Target {
+    let d = length(pos - frame.mouse_pos);
+
     uv = float2(uv.x, 1.0 - uv.y);
 
-    return background.Sample(sampler, uv) * brush.Sample(sampler, uv);
+    let b = background.Sample(sampler, uv);
+    let c = brush.Sample(sampler, uv);
+    let c2 = brush.Sample(sampler, (uv * 0.5));
+
+    let c3 = c2 * c / d;
+
+    return b * c3;
 }
