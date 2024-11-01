@@ -105,9 +105,10 @@ where
         }
 
         let offset = self.offset_for_index(index) as isize;
-        std::ptr::write_volatile(
+        std::ptr::copy_nonoverlapping(
+            &data,
             self.block.mapped_ptr().byte_offset(offset) as *mut FrameDataT,
-            data,
+            1,
         );
 
         Ok(())
