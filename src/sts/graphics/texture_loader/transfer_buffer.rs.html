@@ -110,11 +110,6 @@
 <a href="#110" id="110">110</a>
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
-<a href="#115" id="115">115</a>
-<a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">crate</span>::{
         graphics::vulkan::{raii, Device, OwnedBlock},
@@ -186,11 +181,6 @@
     <span class="doccomment">/// A non-owning copy of the Vulkan buffer handle.
     </span><span class="kw">pub fn </span>buffer(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; vk::Buffer {
         <span class="self">self</span>.buffer.raw
-    }
-
-    <span class="doccomment">/// A non-owning copy of the Vulkan device memory handle.
-    </span><span class="kw">pub fn </span>memory(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; vk::DeviceMemory {
-        <span class="self">self</span>.block.memory()
     }
 
     <span class="comment">// Private API ------------------------------------------------------------

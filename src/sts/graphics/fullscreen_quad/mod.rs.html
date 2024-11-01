@@ -141,108 +141,78 @@
 <a href="#141" id="141">141</a>
 <a href="#142" id="142">142</a>
 <a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-</pre></div><pre class="rust"><code><span class="kw">mod </span>descriptors;
+</pre></div><pre class="rust"><code><span class="kw">mod </span>frame_data;
 <span class="kw">mod </span>pipeline;
-<span class="kw">mod </span>uniform_buffer;
+<span class="kw">mod </span>static_textures;
 
 <span class="kw">use </span>{
-    <span class="self">self</span>::uniform_buffer::UniformBuffer,
+    <span class="self">self</span>::{frame_data::FrameData, static_textures::StaticTextures},
     <span class="kw">crate</span>::{
-        graphics::vulkan::{raii, Device, Frame, FramesInFlight, Swapchain},
+        graphics::{
+            vulkan::{raii, Device, Frame, FramesInFlight, Swapchain},
+            Texture,
+        },
         trace,
     },
     anyhow::{Context, <span class="prelude-ty">Result</span>},
     ash::vk,
+    bon::bon,
     std::sync::Arc,
 };
 
 <span class="doccomment">/// Render a single fullscreen quad using the provided fragment shader.
 ///
-/// A fullscreen quad will always pass a copy of FrameDataT to the fragment
+/// A fullscreen quad will always pass a copy of UserDataT to the fragment
 /// shader with a uniform buffer bound at 0,0.
-</span><span class="kw">pub struct </span>FullscreenQuad&lt;FrameDataT: Sized + Copy + Default&gt; {
+</span><span class="kw">pub struct </span>FullscreenQuad&lt;UserDataT: Sized + Copy + Default&gt; {
     pipeline: raii::Pipeline,
     pipeline_layout: raii::PipelineLayout,
-    descriptor_set_layout: raii::DescriptorSetLayout,
-    _descriptor_pool: raii::DescriptorPool,
-    descriptor_sets: Vec&lt;vk::DescriptorSet&gt;,
-    uniform_buffer: UniformBuffer&lt;FrameDataT&gt;,
+    frame_data: FrameData&lt;UserDataT&gt;,
+    static_textures: StaticTextures,
     device: Arc&lt;Device&gt;,
 }
 
-<span class="kw">impl</span>&lt;FrameDataT&gt; FullscreenQuad&lt;FrameDataT&gt;
+<span class="attr">#[bon]
+</span><span class="kw">impl</span>&lt;UserDataT&gt; FullscreenQuad&lt;UserDataT&gt;
 <span class="kw">where
-    </span>FrameDataT: Sized + Copy + Default,
+    </span>UserDataT: Sized + Copy + Default,
 {
     <span class="doccomment">/// Creates a new fullscreen quad that uses the provided fragment shader
     /// source.
+    </span><span class="attr">#[builder]
     </span><span class="kw">pub fn </span>new(
         device: Arc&lt;Device&gt;,
         fragment_shader_source: <span class="kw-2">&amp;</span>[u8],
         frames_in_flight: <span class="kw-2">&amp;</span>FramesInFlight,
         swapchain: <span class="kw-2">&amp;</span>Swapchain,
         render_pass: <span class="kw-2">&amp;</span>raii::RenderPass,
+        textures: Vec&lt;Texture&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>uniform_buffer = UniformBuffer::&lt;FrameDataT&gt;::allocate(
-            <span class="kw-2">&amp;</span>device,
-            frames_in_flight.frame_count(),
-        )
-        .with_context(<span class="macro">trace!</span>(
-            <span class="string">"Error allocating a uniform buffer for per-frame data!"
-        </span>))<span class="question-mark">?</span>;
+        <span class="kw">let </span>frame_data =
+            FrameData::new(<span class="kw-2">&amp;</span>device, frames_in_flight.frame_count())
+                .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to initialize per-frame data!"</span>))<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>descriptor_set_layout =
-            descriptors::create_descriptor_set_layout(<span class="kw-2">&amp;</span>device).with_context(
-                <span class="macro">trace!</span>(<span class="string">"Error while creating the descriptor set layout!"</span>),
-            )<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>descriptor_pool = descriptors::create_descriptor_pool(
-            <span class="kw-2">&amp;</span>device,
-            frames_in_flight.frame_count(),
-        )
-        .with_context(<span class="macro">trace!</span>(<span class="string">"Error while creating the descriptor pool!"</span>))<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>descriptor_sets = descriptors::allocate_descriptor_sets(
-            <span class="kw-2">&amp;</span>device,
-            <span class="kw-2">&amp;</span>descriptor_pool,
-            <span class="kw-2">&amp;</span>descriptor_set_layout,
-            frames_in_flight.frame_count(),
-        )
-        .with_context(<span class="macro">trace!</span>(<span class="string">"Error while allocating descriptor sets!"</span>))<span class="question-mark">?</span>;
-
-        descriptors::initialize_descriptor_sets(
-            <span class="kw-2">&amp;</span>device,
-            <span class="kw-2">&amp;</span>descriptor_sets,
-            <span class="kw-2">&amp;</span>uniform_buffer,
-        );
+        <span class="kw">let </span>static_textures = StaticTextures::new(<span class="kw-2">&amp;</span>device, textures)
+            .with_context(<span class="macro">trace!</span>(
+                <span class="string">"Unable to create static textures resources!"
+            </span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>(pipeline, pipeline_layout) = pipeline::create_pipeline(
             <span class="kw-2">&amp;</span>device,
             swapchain,
             render_pass,
-            <span class="kw-2">&amp;</span>descriptor_set_layout,
+            <span class="kw-2">&amp;</span>[
+                frame_data.descriptor_set_layout(),
+                static_textures.descriptor_set_layout(),
+            ],
             fragment_shader_source,
         )<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             pipeline,
             pipeline_layout,
-            descriptor_set_layout,
-            _descriptor_pool: descriptor_pool,
-            descriptor_sets,
-            uniform_buffer,
+            frame_data,
+            static_textures,
             device,
         })
     }
@@ -264,7 +234,10 @@
             <span class="kw-2">&amp;</span><span class="self">self</span>.device,
             swapchain,
             render_pass,
-            <span class="kw-2">&amp;</span><span class="self">self</span>.descriptor_set_layout,
+            <span class="kw-2">&amp;</span>[
+                <span class="self">self</span>.frame_data.descriptor_set_layout(),
+                <span class="self">self</span>.static_textures.descriptor_set_layout(),
+            ],
             fragment_shader_source,
         )
         .with_context(<span class="macro">trace!</span>(
@@ -279,16 +252,16 @@
     ///
     /// The caller must begin a compatible render pass in the command buffer
     /// prior to calling this function.
-    </span><span class="kw">pub fn </span>draw(<span class="kw-2">&amp;mut </span><span class="self">self</span>, frame: <span class="kw-2">&amp;</span>Frame, data: FrameDataT) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    </span><span class="kw">pub fn </span>draw(<span class="kw-2">&amp;mut </span><span class="self">self</span>, frame: <span class="kw-2">&amp;</span>Frame, data: UserDataT) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.frame_data.update(frame, data).with_context(<span class="macro">trace!</span>(
+            <span class="string">"Unable to update user data for the frame!"
+        </span>))<span class="question-mark">?</span>;
+
         <span class="comment">// SAFE BECAUSE:
         // The only way to construct a Frame is to get it from the
         // frames-in-flight which ensures that all graphics commands for
         // this frame are complete
         </span><span class="kw">unsafe </span>{
-            <span class="self">self</span>.uniform_buffer
-                .write_indexed(frame.frame_index(), data)
-                .with_context(<span class="macro">trace!</span>(<span class="string">"Error while updating frame data!"</span>))<span class="question-mark">?</span>;
-
             <span class="self">self</span>.device.cmd_bind_pipeline(
                 frame.command_buffer(),
                 vk::PipelineBindPoint::GRAPHICS,
@@ -299,7 +272,10 @@
                 vk::PipelineBindPoint::GRAPHICS,
                 <span class="self">self</span>.pipeline_layout.raw,
                 <span class="number">0</span>,
-                <span class="kw-2">&amp;</span>[<span class="self">self</span>.descriptor_sets[frame.frame_index()]],
+                <span class="kw-2">&amp;</span>[
+                    <span class="self">self</span>.frame_data.current_descriptor_set(frame),
+                    <span class="self">self</span>.static_textures.descriptor_set(),
+                ],
                 <span class="kw-2">&amp;</span>[],
             );
             <span class="self">self</span>.device.cmd_draw(frame.command_buffer(), <span class="number">6</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>);

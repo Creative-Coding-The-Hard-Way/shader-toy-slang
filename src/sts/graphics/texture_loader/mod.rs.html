@@ -186,7 +186,30 @@
 <a href="#186" id="186">186</a>
 <a href="#187" id="187">187</a>
 <a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
+    <span class="kw">super</span>::vulkan::raii,
     <span class="kw">crate</span>::{
         graphics::vulkan::{Device, OwnedBlock, SyncCommands},
         trace,
@@ -240,7 +263,7 @@
             <span class="kw-2">&amp;</span>vk::ImageCreateInfo {
                 flags: vk::ImageCreateFlags::empty(),
                 image_type: vk::ImageType::TYPE_2D,
-                format: vk::Format::R8G8B8A8_UNORM,
+                format: vk::Format::R8G8B8A8_SRGB,
                 extent: vk::Extent3D {
                     width,
                     height,
@@ -365,10 +388,31 @@
                 <span class="string">"Error while copying data to image memory!"
             </span>))<span class="question-mark">?</span>;
 
+        <span class="kw">let </span>image_view = raii::ImageView::new(
+            device.logical_device.clone(),
+            <span class="kw-2">&amp;</span>vk::ImageViewCreateInfo {
+                flags: vk::ImageViewCreateFlags::empty(),
+                image: image.raw,
+                view_type: vk::ImageViewType::TYPE_2D,
+                format: vk::Format::R8G8B8A8_SRGB,
+                components: vk::ComponentMapping::default(),
+                subresource_range: vk::ImageSubresourceRange {
+                    aspect_mask: vk::ImageAspectFlags::COLOR,
+                    base_mip_level: <span class="number">0</span>,
+                    level_count: <span class="number">1</span>,
+                    base_array_layer: <span class="number">0</span>,
+                    layer_count: <span class="number">1</span>,
+                },
+                ..Default::default()
+            },
+        )
+        .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to create image view!"</span>))<span class="question-mark">?</span>;
+
         <span class="prelude-val">Ok</span>(Texture::builder()
             .path(path)
             .width(width)
             .height(height)
+            .image_view(image_view)
             .image(image)
             .block(block)
             .build())

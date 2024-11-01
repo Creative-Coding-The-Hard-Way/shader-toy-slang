@@ -164,6 +164,10 @@
 <a href="#164" id="164">164</a>
 <a href="#165" id="165">165</a>
 <a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">crate</span>::{
         graphics::vulkan::{raii, Device, Swapchain},
@@ -180,12 +184,16 @@
     device: <span class="kw-2">&amp;</span>Device,
     swapchain: <span class="kw-2">&amp;</span>Swapchain,
     render_pass: <span class="kw-2">&amp;</span>raii::RenderPass,
-    descriptor_set_layout: <span class="kw-2">&amp;</span>raii::DescriptorSetLayout,
+    descriptor_set_layouts: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>raii::DescriptorSetLayout],
     fragment_shader_source: <span class="kw-2">&amp;</span>[u8],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(raii::Pipeline, raii::PipelineLayout)&gt; {
+    <span class="kw">let </span>set_layouts = descriptor_set_layouts
+        .iter()
+        .map(|layout| layout.raw)
+        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
     <span class="kw">let </span>layout_create_info = vk::PipelineLayoutCreateInfo {
-        set_layout_count: <span class="number">1</span>,
-        p_set_layouts: <span class="kw-2">&amp;</span>descriptor_set_layout.raw,
+        set_layout_count: set_layouts.len() <span class="kw">as </span>u32,
+        p_set_layouts: set_layouts.as_ptr(),
         push_constant_range_count: <span class="number">0</span>,
         p_push_constant_ranges: std::ptr::null(),
         ..Default::default()
