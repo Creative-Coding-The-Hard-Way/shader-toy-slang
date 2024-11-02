@@ -140,7 +140,6 @@
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
 <a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>frame_data;
 <span class="kw">mod </span>pipeline;
 <span class="kw">mod </span>static_textures;
@@ -188,9 +187,8 @@
         render_pass: <span class="kw-2">&amp;</span>raii::RenderPass,
         textures: Vec&lt;Texture&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>frame_data =
-            FrameData::new(<span class="kw-2">&amp;</span>device, frames_in_flight.frame_count())
-                .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to initialize per-frame data!"</span>))<span class="question-mark">?</span>;
+        <span class="kw">let </span>frame_data = FrameData::new(<span class="kw-2">&amp;</span>device, <span class="kw-2">&amp;</span>frames_in_flight)
+            .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to initialize per-frame data!"</span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>static_textures = StaticTextures::new(<span class="kw-2">&amp;</span>device, textures)
             .with_context(<span class="macro">trace!</span>(

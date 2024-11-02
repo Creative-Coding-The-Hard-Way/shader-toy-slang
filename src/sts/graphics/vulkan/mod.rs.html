@@ -12,12 +12,15 @@
 <a href="#12" id="12">12</a>
 <a href="#13" id="13">13</a>
 <a href="#14" id="14">14</a>
+<a href="#15" id="15">15</a>
+<a href="#16" id="16">16</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>allocator;
 <span class="kw">mod </span>device;
 <span class="kw">mod </span>frames_in_flight;
 <span class="kw">pub mod </span>raii;
 <span class="kw">mod </span>swapchain;
 <span class="kw">mod </span>sync_commands;
+<span class="kw">mod </span>uniform_buffer;
 
 <span class="kw">pub use </span><span class="self">self</span>::{
     allocator::{block::Block, owned_block::OwnedBlock, Allocator},
@@ -25,5 +28,6 @@
     frames_in_flight::{Frame, FrameStatus, FramesInFlight},
     swapchain::{AcquireImageStatus, PresentImageStatus, Swapchain},
     sync_commands::SyncCommands,
+    uniform_buffer::UniformBuffer,
 };
 </code></pre></div></section></main></body></html>

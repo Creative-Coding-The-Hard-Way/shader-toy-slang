@@ -187,6 +187,12 @@
 <a href="#187" id="187">187</a>
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! This module provides a tool for automatically recompiling a shader-slang
 //! file any time it changes.
 //!
@@ -365,7 +371,13 @@
 </span><span class="kw">fn </span>try_compile_shader_file(shader_source_path_str: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
     <span class="macro">log::info!</span>(<span class="string">"Compiling {}..."</span>, shader_source_path_str);
     <span class="kw">let </span>output = std::process::Command::new(<span class="string">"slangc"</span>)
-        .args([<span class="string">"-target"</span>, <span class="string">"spirv"</span>, <span class="string">"--"</span>, shader_source_path_str])
+        .args([
+            <span class="string">"-matrix-layout-column-major"</span>,
+            <span class="string">"-target"</span>,
+            <span class="string">"spirv"</span>,
+            <span class="string">"--"</span>,
+            shader_source_path_str,
+        ])
         .output()
         .with_context(<span class="macro">trace!</span>(<span class="string">"Error executing slangc!"</span>))<span class="question-mark">?</span>;
 

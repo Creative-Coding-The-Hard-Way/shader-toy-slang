@@ -87,13 +87,14 @@
 <a href="#87" id="87">87</a>
 <a href="#88" id="88">88</a>
 <a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>descriptors;
-<span class="kw">mod </span>uniform_buffer;
 
 <span class="kw">use </span>{
-    <span class="self">self</span>::uniform_buffer::UniformBuffer,
     <span class="kw">crate</span>::{
-        graphics::vulkan::{raii, Device, Frame},
+        graphics::vulkan::{
+            raii, Device, Frame, FramesInFlight, UniformBuffer,
+        },
         trace,
     },
     anyhow::{Context, <span class="prelude-ty">Result</span>},
@@ -112,31 +113,32 @@
 <span class="kw">where
     </span>UserDataT: Sized + Copy + Default,
 {
-    <span class="kw">pub fn </span>new(device: <span class="kw-2">&amp;</span>Device, frames_in_flight_count: usize) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>uniform_buffer = UniformBuffer::&lt;UserDataT&gt;::allocate(
-            device,
-            frames_in_flight_count,
-        )
-        .with_context(<span class="macro">trace!</span>(
-            <span class="string">"Error allocating a uniform buffer for per-frame data!"
-        </span>))<span class="question-mark">?</span>;
+    <span class="kw">pub fn </span>new(
+        device: <span class="kw-2">&amp;</span>Device,
+        frames_in_flight: <span class="kw-2">&amp;</span>FramesInFlight,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="kw">let </span>uniform_buffer =
+            UniformBuffer::&lt;UserDataT&gt;::allocate(device, frames_in_flight)
+                .with_context(<span class="macro">trace!</span>(
+                    <span class="string">"Error allocating a uniform buffer for per-frame data!"
+                </span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>descriptor_set_layout =
             descriptors::create_descriptor_set_layout(device).with_context(
                 <span class="macro">trace!</span>(<span class="string">"Error while creating the descriptor set layout!"</span>),
             )<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>descriptor_pool =
-            descriptors::create_descriptor_pool(device, frames_in_flight_count)
-                .with_context(<span class="macro">trace!</span>(
-                    <span class="string">"Error while creating the descriptor pool!"
-                </span>))<span class="question-mark">?</span>;
+        <span class="kw">let </span>descriptor_pool = descriptors::create_descriptor_pool(
+            device,
+            frames_in_flight.frame_count(),
+        )
+        .with_context(<span class="macro">trace!</span>(<span class="string">"Error while creating the descriptor pool!"</span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>descriptor_sets = descriptors::allocate_descriptor_sets(
             device,
             <span class="kw-2">&amp;</span>descriptor_pool,
             <span class="kw-2">&amp;</span>descriptor_set_layout,
-            frames_in_flight_count,
+            frames_in_flight.frame_count(),
         )
         .with_context(<span class="macro">trace!</span>(<span class="string">"Error while allocating descriptor sets!"</span>))<span class="question-mark">?</span>;
 

@@ -111,11 +111,9 @@
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
 <a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
-    <span class="kw">super</span>::uniform_buffer::UniformBuffer,
     <span class="kw">crate</span>::{
-        graphics::vulkan::{raii, Device},
+        graphics::vulkan::{raii, Device, UniformBuffer},
         trace,
     },
     anyhow::{Context, <span class="prelude-ty">Result</span>},
@@ -162,7 +160,7 @@
             .iter()
             .enumerate()
             .map(|(index, <span class="kw">_</span>)| vk::DescriptorBufferInfo {
-                buffer: uniform_buffer.buffer.raw,
+                buffer: uniform_buffer.buffer(),
                 offset: uniform_buffer.offset_for_index(index),
                 range: std::mem::size_of::&lt;UserDataT&gt;() <span class="kw">as </span>u64,
             })
