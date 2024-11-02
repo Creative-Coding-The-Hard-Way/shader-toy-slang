@@ -103,6 +103,8 @@ impl App for LiveParticles {
         let particles = Particles::new(device.clone(), &frames_in_flight)
             .with_context(trace!("Unable to create particles!"))?;
 
+        log::info!("{:#?}", particles);
+
         Ok(Self {
             frames_in_flight,
             swapchain,

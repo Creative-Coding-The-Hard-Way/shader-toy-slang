@@ -1,6 +1,6 @@
 use {
     crate::{
-        graphics::vulkan::{raii, Device, OwnedBlock},
+        graphics::vulkan::{raii, Device, Frame, FramesInFlight, OwnedBlock},
         trace,
     },
     anyhow::{bail, Result},
@@ -8,27 +8,12 @@ use {
     std::marker::PhantomData,
 };
 
-/// A CPU accessible buffer with some convenience functions for uploading data.
-///
-/// # How It Works
-///
-/// The UniformBuffer allocates enough data to hold N copies of the DataT
-/// data type. This allows up to N independent frames-in-flight that can
-/// independently update their data.
-///
-/// Notably, the implementation ensures that each copy of the frame data is
-/// aligned to the devices min uniform buffer offset alignment.
-///
-/// # Performance
-///
-/// This implementation always uses a dedicated host-coherent allocation for
-/// storing per-frame uniform data. This is fine for an application that's
-/// *only* presenting a single uniform buffer, but will need to be changed if
-/// used as part of a larger application.
+/// A CPU accessible buffer with some convenience functions for uploading
+/// per-frame data.
 #[derive(Debug)]
 pub struct UniformBuffer<DataT: Sized + Copy> {
-    pub buffer: raii::Buffer,
-    pub block: OwnedBlock,
+    buffer: raii::Buffer,
+    block: OwnedBlock,
     aligned_unit_size: usize,
     count: usize,
     _phantom_data: PhantomData<DataT>,
@@ -38,10 +23,14 @@ impl<DataT> UniformBuffer<DataT>
 where
     DataT: Sized + Copy,
 {
-    /// Allocate a new buffer and GPU memory for holding per-frame uniform data.
-    ///
-    /// The buffer will have enough size for `count` copies of the frame data.
-    pub fn allocate(device: &Device, count: usize) -> Result<Self> {
+    /// Allocates a new buffer and GPU memory for holding per-frame uniform
+    /// data.
+    pub fn allocate(
+        device: &Device,
+        frames_in_flight: &FramesInFlight,
+    ) -> Result<Self> {
+        let count = frames_in_flight.frame_count();
+
         // compute the aligned size for each element in the buffer
         let properties = unsafe {
             device
@@ -50,15 +39,13 @@ where
                 .get_physical_device_properties(device.physical_device)
         };
         let aligned_unit_size: u64 = {
-            let count = std::mem::size_of::<DataT>() as u64
+            let count = size_of::<DataT>() as u64
                 / properties.limits.min_uniform_buffer_offset_alignment;
             (count + 1) * properties.limits.min_uniform_buffer_offset_alignment
         };
-        log::trace!("Unit size: {}", aligned_unit_size);
 
         let buffer_size_in_bytes = aligned_unit_size * count as u64;
 
-        // create the buffer
         let (block, buffer) = OwnedBlock::allocate_buffer(
             device.allocator.clone(),
             &vk::BufferCreateInfo {
@@ -82,9 +69,27 @@ where
         })
     }
 
-    /// Returns the byte offset into the buffer for the item at an index.
-    pub fn offset_for_index(&self, index: usize) -> u64 {
-        (index * self.aligned_unit_size) as u64
+    /// Returns a non-owning copy of the Vulkan buffer handle.
+    pub fn buffer(&self) -> vk::Buffer {
+        self.buffer.raw
+    }
+
+    /// Updates GPU memory with the provided data for the current frame.
+    pub fn update_frame_data(
+        &mut self,
+        frame: &Frame,
+        data: DataT,
+    ) -> Result<()> {
+        // SAFE: because borrowing the Frame means that no pending graphics
+        // commands can still reference the targeted region of the
+        // buffer.
+        unsafe { self.write_indexed(frame.frame_index(), data) }
+    }
+
+    /// Returns the byte-offset into the buffer for the corresponding Frame's
+    /// data.
+    pub fn offset_for_index(&self, frame_index: usize) -> u64 {
+        (frame_index * self.aligned_unit_size) as u64
     }
 
     /// Writes data into the GPU memory at the given index.

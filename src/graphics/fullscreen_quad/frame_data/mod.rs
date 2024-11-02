@@ -1,10 +1,10 @@
 mod descriptors;
-mod uniform_buffer;
 
 use {
-    self::uniform_buffer::UniformBuffer,
     crate::{
-        graphics::vulkan::{raii, Device, Frame},
+        graphics::vulkan::{
+            raii, Device, Frame, FramesInFlight, UniformBuffer,
+        },
         trace,
     },
     anyhow::{Context, Result},
@@ -23,31 +23,32 @@ impl<UserDataT> FrameData<UserDataT>
 where
     UserDataT: Sized + Copy + Default,
 {
-    pub fn new(device: &Device, frames_in_flight_count: usize) -> Result<Self> {
-        let uniform_buffer = UniformBuffer::<UserDataT>::allocate(
-            device,
-            frames_in_flight_count,
-        )
-        .with_context(trace!(
-            "Error allocating a uniform buffer for per-frame data!"
-        ))?;
+    pub fn new(
+        device: &Device,
+        frames_in_flight: &FramesInFlight,
+    ) -> Result<Self> {
+        let uniform_buffer =
+            UniformBuffer::<UserDataT>::allocate(device, frames_in_flight)
+                .with_context(trace!(
+                    "Error allocating a uniform buffer for per-frame data!"
+                ))?;
 
         let descriptor_set_layout =
             descriptors::create_descriptor_set_layout(device).with_context(
                 trace!("Error while creating the descriptor set layout!"),
             )?;
 
-        let descriptor_pool =
-            descriptors::create_descriptor_pool(device, frames_in_flight_count)
-                .with_context(trace!(
-                    "Error while creating the descriptor pool!"
-                ))?;
+        let descriptor_pool = descriptors::create_descriptor_pool(
+            device,
+            frames_in_flight.frame_count(),
+        )
+        .with_context(trace!("Error while creating the descriptor pool!"))?;
 
         let descriptor_sets = descriptors::allocate_descriptor_sets(
             device,
             &descriptor_pool,
             &descriptor_set_layout,
-            frames_in_flight_count,
+            frames_in_flight.frame_count(),
         )
         .with_context(trace!("Error while allocating descriptor sets!"))?;
 

@@ -1,7 +1,6 @@
 use {
-    super::uniform_buffer::UniformBuffer,
     crate::{
-        graphics::vulkan::{raii, Device},
+        graphics::vulkan::{raii, Device, UniformBuffer},
         trace,
     },
     anyhow::{Context, Result},
@@ -48,7 +47,7 @@ pub fn initialize_descriptor_sets<UserDataT>(
             .iter()
             .enumerate()
             .map(|(index, _)| vk::DescriptorBufferInfo {
-                buffer: uniform_buffer.buffer.raw,
+                buffer: uniform_buffer.buffer(),
                 offset: uniform_buffer.offset_for_index(index),
                 range: std::mem::size_of::<UserDataT>() as u64,
             })
