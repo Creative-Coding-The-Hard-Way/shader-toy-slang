@@ -23,6 +23,7 @@ argfile = "*"
 ctrlc = "*"
 image = "*"
 bon = "*"
+nalgebra = "*"
 
 [dependencies.glfw]
 version = "*"

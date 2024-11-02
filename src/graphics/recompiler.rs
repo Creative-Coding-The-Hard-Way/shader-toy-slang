@@ -176,7 +176,13 @@ fn handle_debounced_event_result(
 fn try_compile_shader_file(shader_source_path_str: &str) -> Result<Vec<u8>> {
     log::info!("Compiling {}...", shader_source_path_str);
     let output = std::process::Command::new("slangc")
-        .args(["-target", "spirv", "--", shader_source_path_str])
+        .args([
+            "-matrix-layout-column-major",
+            "-target",
+            "spirv",
+            "--",
+            shader_source_path_str,
+        ])
         .output()
         .with_context(trace!("Error executing slangc!"))?;
 

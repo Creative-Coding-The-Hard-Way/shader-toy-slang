@@ -3,11 +3,14 @@ mod pipeline;
 
 use {
     crate::{
-        graphics::vulkan::{raii, Device, FramesInFlight, UniformBuffer},
+        graphics::vulkan::{
+            raii, Device, FramesInFlight, Swapchain, UniformBuffer,
+        },
         trace,
     },
     anyhow::{Context, Result},
     ash::vk,
+    bon::bon,
     std::sync::Arc,
 };
 
@@ -17,15 +20,19 @@ pub struct ParticlesView {
     descriptor_sets: Vec<vk::DescriptorSet>,
     descriptor_set_layout: raii::DescriptorSetLayout,
     descriptor_pool: raii::DescriptorPool,
-    // pipeline_layout: raii::PipelineLayout,
-    // pipeline: raii::Pipeline,
+    pipeline_layout: raii::PipelineLayout,
+    pipeline: raii::Pipeline,
     device: Arc<Device>,
 }
 
+#[bon]
 impl ParticlesView {
+    #[builder]
     pub fn new(
         device: Arc<Device>,
         frames_in_flight: &FramesInFlight,
+        swapchain: &Swapchain,
+        render_pass: &raii::RenderPass,
     ) -> Result<Self> {
         let descriptor_set_layout = descriptors::create_descriptor_set_layout(
             device.logical_device.clone(),
@@ -58,11 +65,27 @@ impl ParticlesView {
         )
         .with_context(trace!("Error while updating descriptor sets!"))?;
 
+        let pipeline_layout = pipeline::create_layout(
+            device.logical_device.clone(),
+            &descriptor_set_layout,
+        )
+        .with_context(trace!("Unable to create the pipeline layout!"))?;
+
+        let pipeline = pipeline::create_pipeline(
+            device.logical_device.clone(),
+            swapchain,
+            render_pass,
+            &pipeline_layout,
+        )
+        .with_context(trace!("Unable to create the graphics pipeline!"))?;
+
         Ok(Self {
             projection,
             descriptor_sets,
             descriptor_set_layout,
             descriptor_pool,
+            pipeline_layout,
+            pipeline,
             device,
         })
     }

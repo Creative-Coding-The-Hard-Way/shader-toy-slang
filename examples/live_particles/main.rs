@@ -100,7 +100,14 @@ impl App for LiveParticles {
             },
         )?;
 
-        let particles = Particles::new(device.clone(), &frames_in_flight)
+        let render_pass = create_render_pass(device.logical_device.clone())?;
+
+        let particles = Particles::builder()
+            .device(device.clone())
+            .frames_in_flight(&frames_in_flight)
+            .swapchain(&swapchain)
+            .render_pass(&render_pass)
+            .build()
             .with_context(trace!("Unable to create particles!"))?;
 
         log::info!("{:#?}", particles);
@@ -210,6 +217,50 @@ impl LiveParticles {
 
         Ok(())
     }
+}
+
+fn create_render_pass(
+    logical_device: Arc<raii::Device>,
+) -> Result<raii::RenderPass> {
+    let attachments = [vk::AttachmentDescription {
+        format: vk::Format::R8G8B8A8_SRGB,
+        samples: vk::SampleCountFlags::TYPE_1,
+        load_op: vk::AttachmentLoadOp::DONT_CARE,
+        store_op: vk::AttachmentStoreOp::STORE,
+        stencil_load_op: vk::AttachmentLoadOp::DONT_CARE,
+        stencil_store_op: vk::AttachmentStoreOp::DONT_CARE,
+        initial_layout: vk::ImageLayout::UNDEFINED,
+        final_layout: vk::ImageLayout::PRESENT_SRC_KHR,
+        ..Default::default()
+    }];
+    let color_attachment = [vk::AttachmentReference {
+        attachment: 0,
+        layout: vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL,
+    }];
+    let subpasses = [vk::SubpassDescription {
+        pipeline_bind_point: vk::PipelineBindPoint::GRAPHICS,
+        input_attachment_count: 0,
+        p_input_attachments: std::ptr::null(),
+        color_attachment_count: color_attachment.len() as u32,
+        p_color_attachments: color_attachment.as_ptr(),
+        p_resolve_attachments: std::ptr::null(),
+        p_depth_stencil_attachment: std::ptr::null(),
+        preserve_attachment_count: 0,
+        p_preserve_attachments: std::ptr::null(),
+        ..Default::default()
+    }];
+    raii::RenderPass::new(
+        logical_device,
+        &vk::RenderPassCreateInfo {
+            attachment_count: attachments.len() as u32,
+            p_attachments: attachments.as_ptr(),
+            subpass_count: subpasses.len() as u32,
+            p_subpasses: subpasses.as_ptr(),
+            dependency_count: 0,
+            p_dependencies: std::ptr::null(),
+            ..Default::default()
+        },
+    )
 }
 
 fn main() {
