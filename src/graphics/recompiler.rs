@@ -177,7 +177,7 @@ fn try_compile_shader_file(shader_source_path_str: &str) -> Result<Vec<u8>> {
     log::info!("Compiling {}...", shader_source_path_str);
     let output = std::process::Command::new("slangc")
         .args([
-            "-matrix-layout-column-major",
+            "-matrix-layout-column-major", // compatible with nalgebra
             "-target",
             "spirv",
             "--",

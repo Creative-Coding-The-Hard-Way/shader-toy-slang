@@ -25,7 +25,9 @@ struct Args {
 
 struct LiveParticles {
     frames_in_flight: FramesInFlight,
+    renderpass: raii::RenderPass,
     swapchain: Arc<Swapchain>,
+    framebuffers: Vec<raii::Framebuffer>,
     swapchain_needs_rebuild: bool,
 
     particles: Particles,
@@ -100,13 +102,16 @@ impl App for LiveParticles {
             },
         )?;
 
-        let render_pass = create_render_pass(device.logical_device.clone())?;
+        let renderpass =
+            create_renderpass(device.logical_device.clone(), &swapchain)?;
+        let framebuffers =
+            create_framebuffers(&device, &renderpass, &swapchain)?;
 
         let particles = Particles::builder()
             .device(device.clone())
             .frames_in_flight(&frames_in_flight)
             .swapchain(&swapchain)
-            .render_pass(&render_pass)
+            .render_pass(&renderpass)
             .build()
             .with_context(trace!("Unable to create particles!"))?;
 
@@ -114,11 +119,13 @@ impl App for LiveParticles {
 
         Ok(Self {
             frames_in_flight,
+            framebuffers,
             swapchain,
             swapchain_needs_rebuild: false,
             particles,
             kernel_compiler,
             device,
+            renderpass,
         })
     }
 
@@ -148,40 +155,34 @@ impl App for LiveParticles {
             }
         };
 
+        let clear_colors = [vk::ClearValue {
+            color: vk::ClearColorValue {
+                float32: [0.0, 0.0, 0.0, 0.0],
+            },
+        }];
         unsafe {
-            self.device.cmd_pipeline_barrier(
+            self.device.cmd_begin_render_pass(
                 frame.command_buffer(),
-                vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
-                vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
-                vk::DependencyFlags::empty(),
-                &[],
-                &[],
-                &[vk::ImageMemoryBarrier {
-                    src_access_mask: vk::AccessFlags::empty(),
-                    dst_access_mask: vk::AccessFlags::empty(),
-                    old_layout: vk::ImageLayout::UNDEFINED,
-                    new_layout: vk::ImageLayout::PRESENT_SRC_KHR,
-                    src_queue_family_index: self
-                        .device
-                        .graphics_queue_family_index,
-                    dst_queue_family_index: self
-                        .device
-                        .graphics_queue_family_index,
-                    image: self.swapchain.images
-                        [frame.swapchain_image_index() as usize],
-                    subresource_range: vk::ImageSubresourceRange {
-                        aspect_mask: vk::ImageAspectFlags::COLOR,
-                        base_mip_level: 0,
-                        level_count: 1,
-                        base_array_layer: 0,
-                        layer_count: 1,
+                &vk::RenderPassBeginInfo {
+                    render_pass: self.renderpass.raw,
+                    framebuffer: self.framebuffers
+                        [frame.swapchain_image_index() as usize]
+                        .raw,
+                    render_area: vk::Rect2D {
+                        offset: vk::Offset2D { x: 0, y: 0 },
+                        extent: self.swapchain.extent,
                     },
+                    clear_value_count: clear_colors.len() as u32,
+                    p_clear_values: clear_colors.as_ptr(),
                     ..Default::default()
-                }],
+                },
+                vk::SubpassContents::INLINE,
             );
-        }
 
-        // TODO: do work here
+            // TODO: draw here
+
+            self.device.cmd_end_render_pass(frame.command_buffer());
+        }
 
         if self
             .frames_in_flight
@@ -213,19 +214,28 @@ impl LiveParticles {
             )?
         };
 
-        // TODO: rebuild render pass and framebuffers
+        self.renderpass = create_renderpass(
+            self.device.logical_device.clone(),
+            &self.swapchain,
+        )?;
+        self.framebuffers = create_framebuffers(
+            &self.device,
+            &self.renderpass,
+            &self.swapchain,
+        )?;
 
         Ok(())
     }
 }
 
-fn create_render_pass(
+fn create_renderpass(
     logical_device: Arc<raii::Device>,
+    swapchain: &Swapchain,
 ) -> Result<raii::RenderPass> {
     let attachments = [vk::AttachmentDescription {
-        format: vk::Format::R8G8B8A8_SRGB,
+        format: swapchain.format.format,
         samples: vk::SampleCountFlags::TYPE_1,
-        load_op: vk::AttachmentLoadOp::DONT_CARE,
+        load_op: vk::AttachmentLoadOp::CLEAR,
         store_op: vk::AttachmentStoreOp::STORE,
         stencil_load_op: vk::AttachmentLoadOp::DONT_CARE,
         stencil_store_op: vk::AttachmentStoreOp::DONT_CARE,
@@ -249,6 +259,15 @@ fn create_render_pass(
         p_preserve_attachments: std::ptr::null(),
         ..Default::default()
     }];
+    let dependencies = [vk::SubpassDependency {
+        src_subpass: vk::SUBPASS_EXTERNAL,
+        dst_subpass: 0,
+        src_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
+        src_access_mask: vk::AccessFlags::empty(),
+        dst_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
+        dst_access_mask: vk::AccessFlags::COLOR_ATTACHMENT_WRITE,
+        dependency_flags: vk::DependencyFlags::empty(),
+    }];
     raii::RenderPass::new(
         logical_device,
         &vk::RenderPassCreateInfo {
@@ -256,11 +275,39 @@ fn create_render_pass(
             p_attachments: attachments.as_ptr(),
             subpass_count: subpasses.len() as u32,
             p_subpasses: subpasses.as_ptr(),
-            dependency_count: 0,
-            p_dependencies: std::ptr::null(),
+            dependency_count: dependencies.len() as u32,
+            p_dependencies: dependencies.as_ptr(),
             ..Default::default()
         },
     )
+}
+
+/// Creates one framebuffer per swapchain image view.
+///
+/// Framebuffers must be replaced when the swapchain is rebuilt.
+fn create_framebuffers(
+    device: &Device,
+    render_pass: &raii::RenderPass,
+    swapchain: &Swapchain,
+) -> Result<Vec<raii::Framebuffer>> {
+    let mut framebuffers = vec![];
+    let vk::Extent2D { width, height } = swapchain.extent;
+    for image_view in &swapchain.image_views {
+        let create_info = vk::FramebufferCreateInfo {
+            render_pass: render_pass.raw,
+            attachment_count: 1,
+            p_attachments: &image_view.raw,
+            width,
+            height,
+            layers: 1,
+            ..Default::default()
+        };
+        framebuffers.push(raii::Framebuffer::new(
+            device.logical_device.clone(),
+            &create_info,
+        )?);
+    }
+    Ok(framebuffers)
 }
 
 fn main() {
