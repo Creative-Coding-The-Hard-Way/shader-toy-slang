@@ -60,48 +60,6 @@ impl App for LiveParticles {
 
         let kernel_compiler = Recompiler::new(&_args.kernel_source, &[])?;
 
-        // make the compute layout
-        let layout = raii::PipelineLayout::new(
-            device.logical_device.clone(),
-            &vk::PipelineLayoutCreateInfo {
-                set_layout_count: 0,
-                p_set_layouts: std::ptr::null(),
-                push_constant_range_count: 0,
-                p_push_constant_ranges: std::ptr::null(),
-                ..Default::default()
-            },
-        )?;
-
-        // make a compute pipeline
-        let module = {
-            let shader_words = ash::util::read_spv(&mut std::io::Cursor::new(
-                kernel_compiler.current_shader_bytes(),
-            ))?;
-            raii::ShaderModule::new(
-                device.logical_device.clone(),
-                &vk::ShaderModuleCreateInfo {
-                    code_size: shader_words.len() * 4,
-                    p_code: shader_words.as_ptr(),
-                    ..Default::default()
-                },
-            )?
-        };
-        let main = std::ffi::CString::new("main").unwrap();
-        let compute = raii::Pipeline::new_compute_pipeline(
-            device.logical_device.clone(),
-            &vk::ComputePipelineCreateInfo {
-                stage: vk::PipelineShaderStageCreateInfo {
-                    stage: vk::ShaderStageFlags::COMPUTE,
-                    module: module.raw,
-                    p_name: main.as_ptr(),
-                    p_specialization_info: std::ptr::null(),
-                    ..Default::default()
-                },
-                layout: layout.raw,
-                ..Default::default()
-            },
-        )?;
-
         let renderpass =
             create_renderpass(device.logical_device.clone(), &swapchain)?;
         let framebuffers =
@@ -112,6 +70,7 @@ impl App for LiveParticles {
             .frames_in_flight(&frames_in_flight)
             .swapchain(&swapchain)
             .render_pass(&renderpass)
+            .kernel_bytes(kernel_compiler.current_shader_bytes())
             .build()
             .with_context(trace!("Unable to create particles!"))?;
 
@@ -147,6 +106,13 @@ impl App for LiveParticles {
             self.rebuild_swapchain(window)?;
         }
 
+        if self.kernel_compiler.check_for_update()? {
+            self.particles.compute_updated(
+                self.kernel_compiler.current_shader_bytes(),
+                &self.frames_in_flight,
+            )?;
+        }
+
         let frame = match self.frames_in_flight.start_frame(&self.swapchain)? {
             FrameStatus::FrameStarted(frame) => frame,
             FrameStatus::SwapchainNeedsRebuild => {
@@ -154,6 +120,8 @@ impl App for LiveParticles {
                 return Ok(());
             }
         };
+
+        self.particles.tick(&frame)?;
 
         let clear_colors = [vk::ClearValue {
             color: vk::ClearColorValue {
@@ -178,9 +146,11 @@ impl App for LiveParticles {
                 },
                 vk::SubpassContents::INLINE,
             );
+        }
 
-            // TODO: draw here
+        self.particles.draw(&frame)?;
 
+        unsafe {
             self.device.cmd_end_render_pass(frame.command_buffer());
         }
 
@@ -224,6 +194,9 @@ impl LiveParticles {
             &self.swapchain,
         )?;
 
+        self.particles
+            .swapchain_rebuilt(&self.swapchain, &self.renderpass)?;
+
         Ok(())
     }
 }
@@ -259,15 +232,26 @@ fn create_renderpass(
         p_preserve_attachments: std::ptr::null(),
         ..Default::default()
     }];
-    let dependencies = [vk::SubpassDependency {
-        src_subpass: vk::SUBPASS_EXTERNAL,
-        dst_subpass: 0,
-        src_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
-        src_access_mask: vk::AccessFlags::empty(),
-        dst_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
-        dst_access_mask: vk::AccessFlags::COLOR_ATTACHMENT_WRITE,
-        dependency_flags: vk::DependencyFlags::empty(),
-    }];
+    let dependencies = [
+        vk::SubpassDependency {
+            src_subpass: vk::SUBPASS_EXTERNAL,
+            dst_subpass: 0,
+            src_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
+            src_access_mask: vk::AccessFlags::empty(),
+            dst_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
+            dst_access_mask: vk::AccessFlags::COLOR_ATTACHMENT_WRITE,
+            dependency_flags: vk::DependencyFlags::empty(),
+        },
+        vk::SubpassDependency {
+            src_subpass: 0,
+            dst_subpass: vk::SUBPASS_EXTERNAL,
+            src_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
+            src_access_mask: vk::AccessFlags::COLOR_ATTACHMENT_WRITE,
+            dst_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
+            dst_access_mask: vk::AccessFlags::empty(),
+            dependency_flags: vk::DependencyFlags::empty(),
+        },
+    ];
     raii::RenderPass::new(
         logical_device,
         &vk::RenderPassCreateInfo {
