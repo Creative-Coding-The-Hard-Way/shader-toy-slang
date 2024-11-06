@@ -90,30 +90,98 @@
 <a href="#90" id="90">90</a>
 <a href="#91" id="91">91</a>
 <a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>descriptors;
 <span class="kw">mod </span>pipeline;
 
 <span class="kw">use </span>{
+    <span class="kw">super</span>::Particle,
     <span class="kw">crate</span>::{
-        graphics::vulkan::{
-            raii, Device, FramesInFlight, Swapchain, UniformBuffer,
+        graphics::{
+            ortho_projection,
+            vulkan::{
+                raii, CPUBuffer, Device, Frame, FramesInFlight, Swapchain,
+                UniformBuffer,
+            },
         },
         trace,
     },
     anyhow::{Context, <span class="prelude-ty">Result</span>},
     ash::vk,
     bon::bon,
+    nalgebra::Matrix4,
     std::sync::Arc,
 };
 
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>ParticlesView {
-    projection: UniformBuffer&lt;[f32; <span class="number">16</span>]&gt;,
+    projection: UniformBuffer&lt;[[f32; <span class="number">4</span>]; <span class="number">4</span>]&gt;,
     descriptor_sets: Vec&lt;vk::DescriptorSet&gt;,
     descriptor_set_layout: raii::DescriptorSetLayout,
     descriptor_pool: raii::DescriptorPool,
     pipeline_layout: raii::PipelineLayout,
     pipeline: raii::Pipeline,
+    projection_matrix: Matrix4&lt;f32&gt;,
     device: Arc&lt;Device&gt;,
 }
 
@@ -125,6 +193,7 @@
         frames_in_flight: <span class="kw-2">&amp;</span>FramesInFlight,
         swapchain: <span class="kw-2">&amp;</span>Swapchain,
         render_pass: <span class="kw-2">&amp;</span>raii::RenderPass,
+        particles_buffer: <span class="kw-2">&amp;</span>CPUBuffer&lt;Particle&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>descriptor_set_layout = descriptors::create_descriptor_set_layout(
             device.logical_device.clone(),
@@ -145,8 +214,9 @@
         )
         .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to allocate view descriptor sets!"</span>))<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>projection = UniformBuffer::allocate(<span class="kw-2">&amp;</span>device, frames_in_flight)
-            .with_context(<span class="macro">trace!</span>(
+        <span class="kw">let </span>projection =
+            UniformBuffer::allocate_per_frame(<span class="kw-2">&amp;</span>device, frames_in_flight)
+                .with_context(<span class="macro">trace!</span>(
                 <span class="string">"Unable to allocate a uniform buffer for projection matrix!"
             </span>))<span class="question-mark">?</span>;
 
@@ -154,6 +224,7 @@
             <span class="kw-2">&amp;</span>device,
             <span class="kw-2">&amp;</span>descriptor_sets,
             <span class="kw-2">&amp;</span>projection,
+            particles_buffer,
         )
         .with_context(<span class="macro">trace!</span>(<span class="string">"Error while updating descriptor sets!"</span>))<span class="question-mark">?</span>;
 
@@ -171,8 +242,14 @@
         )
         .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to create the graphics pipeline!"</span>))<span class="question-mark">?</span>;
 
+        <span class="kw">let </span>projection_matrix = ortho_projection(
+            swapchain.extent.width <span class="kw">as </span>f32 / swapchain.extent.height <span class="kw">as </span>f32,
+            <span class="number">20.0</span>,
+        );
+
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             projection,
+            projection_matrix,
             descriptor_sets,
             descriptor_set_layout,
             descriptor_pool,
@@ -180,6 +257,51 @@
             pipeline,
             device,
         })
+    }
+
+    <span class="kw">pub fn </span>draw(<span class="kw-2">&amp;mut </span><span class="self">self</span>, frame: <span class="kw-2">&amp;</span>Frame) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.projection
+            .update_frame_data(frame, <span class="self">self</span>.projection_matrix.data.<span class="number">0</span>)<span class="question-mark">?</span>;
+
+        <span class="kw">unsafe </span>{
+            <span class="self">self</span>.device.cmd_bind_pipeline(
+                frame.command_buffer(),
+                vk::PipelineBindPoint::GRAPHICS,
+                <span class="self">self</span>.pipeline.raw,
+            );
+
+            <span class="self">self</span>.device.cmd_bind_descriptor_sets(
+                frame.command_buffer(),
+                vk::PipelineBindPoint::GRAPHICS,
+                <span class="self">self</span>.pipeline_layout.raw,
+                <span class="number">0</span>,
+                <span class="kw-2">&amp;</span>[<span class="self">self</span>.descriptor_sets[frame.frame_index()]],
+                <span class="kw-2">&amp;</span>[],
+            );
+
+            <span class="self">self</span>.device.cmd_draw(frame.command_buffer(), <span class="number">6</span>, <span class="number">320</span>, <span class="number">0</span>, <span class="number">0</span>);
+        }
+
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">pub fn </span>swapchain_rebuilt(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        swapchain: <span class="kw-2">&amp;</span>Swapchain,
+        render_pass: <span class="kw-2">&amp;</span>raii::RenderPass,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+        <span class="self">self</span>.pipeline = pipeline::create_pipeline(
+            <span class="self">self</span>.device.logical_device.clone(),
+            swapchain,
+            render_pass,
+            <span class="kw-2">&amp;</span><span class="self">self</span>.pipeline_layout,
+        )<span class="question-mark">?</span>;
+
+        <span class="self">self</span>.projection_matrix = ortho_projection(
+            swapchain.extent.width <span class="kw">as </span>f32 / swapchain.extent.height <span class="kw">as </span>f32,
+            <span class="number">20.0</span>,
+        );
+        <span class="prelude-val">Ok</span>(())
     }
 }
 </code></pre></div></section></main></body></html>

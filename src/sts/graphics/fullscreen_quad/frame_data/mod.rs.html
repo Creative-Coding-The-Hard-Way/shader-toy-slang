@@ -88,6 +88,8 @@
 <a href="#88" id="88">88</a>
 <a href="#89" id="89">89</a>
 <a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>descriptors;
 
 <span class="kw">use </span>{
@@ -117,11 +119,13 @@
         device: <span class="kw-2">&amp;</span>Device,
         frames_in_flight: <span class="kw-2">&amp;</span>FramesInFlight,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>uniform_buffer =
-            UniformBuffer::&lt;UserDataT&gt;::allocate(device, frames_in_flight)
-                .with_context(<span class="macro">trace!</span>(
-                    <span class="string">"Error allocating a uniform buffer for per-frame data!"
-                </span>))<span class="question-mark">?</span>;
+        <span class="kw">let </span>uniform_buffer = UniformBuffer::&lt;UserDataT&gt;::allocate_per_frame(
+            device,
+            frames_in_flight,
+        )
+        .with_context(<span class="macro">trace!</span>(
+            <span class="string">"Error allocating a uniform buffer for per-frame data!"
+        </span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>descriptor_set_layout =
             descriptors::create_descriptor_set_layout(device).with_context(

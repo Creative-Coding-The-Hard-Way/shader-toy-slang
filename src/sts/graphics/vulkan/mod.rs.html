@@ -14,7 +14,10 @@
 <a href="#14" id="14">14</a>
 <a href="#15" id="15">15</a>
 <a href="#16" id="16">16</a>
+<a href="#17" id="17">17</a>
+<a href="#18" id="18">18</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>allocator;
+<span class="kw">mod </span>cpu_buffer;
 <span class="kw">mod </span>device;
 <span class="kw">mod </span>frames_in_flight;
 <span class="kw">pub mod </span>raii;
@@ -24,6 +27,7 @@
 
 <span class="kw">pub use </span><span class="self">self</span>::{
     allocator::{block::Block, owned_block::OwnedBlock, Allocator},
+    cpu_buffer::CPUBuffer,
     device::{Device, Instance},
     frames_in_flight::{Frame, FrameStatus, FramesInFlight},
     swapchain::{AcquireImageStatus, PresentImageStatus, Swapchain},

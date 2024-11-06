@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/graphics/particles/view/descriptors.rs`."><title>descriptors.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="sts" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/graphics/particles/compute/descriptors.rs`."><title>descriptors.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="sts" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -141,18 +141,9 @@
 <a href="#141" id="141">141</a>
 <a href="#142" id="142">142</a>
 <a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">crate</span>::{
-        graphics::{
-            particles::Particle,
-            vulkan::{raii, CPUBuffer, Device, FramesInFlight, UniformBuffer},
-        },
+        graphics::vulkan::{raii, CPUBuffer, Device, UniformBuffer},
         trace,
     },
     anyhow::{Context, <span class="prelude-ty">Result</span>},
@@ -160,34 +151,34 @@
     std::sync::Arc,
 };
 
-<span class="kw">pub fn </span>update_descriptor_sets&lt;T: Copy + Sized&gt;(
+<span class="kw">pub fn </span>update_descriptor_sets&lt;T: Copy + Sized, DataT: Copy + Sized&gt;(
     device: <span class="kw-2">&amp;</span>Device,
     descriptor_sets: <span class="kw-2">&amp;</span>[vk::DescriptorSet],
-    uniform_buffer: <span class="kw-2">&amp;</span>UniformBuffer&lt;T&gt;,
-    particles_buffer: <span class="kw-2">&amp;</span>CPUBuffer&lt;Particle&gt;,
+    particles_buffer: <span class="kw-2">&amp;</span>CPUBuffer&lt;T&gt;,
+    frame_data: <span class="kw-2">&amp;</span>UniformBuffer&lt;DataT&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">let </span>particles_buffer_info = descriptor_sets
-        .iter()
-        .map(|<span class="kw">_</span>| vk::DescriptorBufferInfo {
-            buffer: particles_buffer.buffer(),
-            offset: <span class="number">0</span>,
-            range: particles_buffer.size_in_bytes(),
-        })
-        .collect::&lt;Vec&lt;vk::DescriptorBufferInfo&gt;&gt;();
     <span class="kw">let </span>buffer_infos = descriptor_sets
         .iter()
         .enumerate()
-        .map(|(index, <span class="kw">_</span>)| vk::DescriptorBufferInfo {
-            buffer: uniform_buffer.buffer(),
-            offset: uniform_buffer.offset_for_index(index),
-            range: size_of::&lt;T&gt;() <span class="kw">as </span>u64,
+        .map(|(index, <span class="kw">_</span>)| {
+            (
+                vk::DescriptorBufferInfo {
+                    buffer: particles_buffer.buffer(),
+                    offset: <span class="number">0</span>,
+                    range: particles_buffer.size_in_bytes(),
+                },
+                vk::DescriptorBufferInfo {
+                    buffer: frame_data.buffer(),
+                    offset: frame_data.offset_for_index(index),
+                    range: size_of::&lt;DataT&gt;() <span class="kw">as </span>u64,
+                },
+            )
         })
-        .collect::&lt;Vec&lt;vk::DescriptorBufferInfo&gt;&gt;();
+        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
     <span class="kw">let </span>writes = buffer_infos
         .iter()
-        .zip(particles_buffer_info.iter())
         .zip(descriptor_sets)
-        .flat_map(|((buffer_info, particles_buffer_info), <span class="kw-2">&amp;</span>descriptor_set)| {
+        .flat_map(|((particles_info, frame_data_info), <span class="kw-2">&amp;</span>descriptor_set)| {
             [
                 vk::WriteDescriptorSet {
                     dst_set: descriptor_set,
@@ -196,7 +187,7 @@
                     descriptor_count: <span class="number">1</span>,
                     descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
                     p_image_info: std::ptr::null(),
-                    p_buffer_info: buffer_info,
+                    p_buffer_info: frame_data_info,
                     p_texel_buffer_view: std::ptr::null(),
                     ..Default::default()
                 },
@@ -207,13 +198,13 @@
                     descriptor_count: <span class="number">1</span>,
                     descriptor_type: vk::DescriptorType::STORAGE_BUFFER,
                     p_image_info: std::ptr::null(),
-                    p_buffer_info: particles_buffer_info,
+                    p_buffer_info: particles_info,
                     p_texel_buffer_view: std::ptr::null(),
                     ..Default::default()
                 },
             ]
         })
-        .collect::&lt;Vec&lt;vk::WriteDescriptorSet&gt;&gt;();
+        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
     <span class="kw">unsafe </span>{
         device.update_descriptor_sets(<span class="kw-2">&amp;</span>writes, <span class="kw-2">&amp;</span>[]);
     }
@@ -224,41 +215,38 @@
     device: <span class="kw-2">&amp;</span>Device,
     descriptor_pool: <span class="kw-2">&amp;</span>raii::DescriptorPool,
     descriptor_set_layout: <span class="kw-2">&amp;</span>raii::DescriptorSetLayout,
-    frames_in_flight: <span class="kw-2">&amp;</span>FramesInFlight,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;vk::DescriptorSet&gt;&gt; {
-    <span class="kw">let </span>layouts = (<span class="number">0</span>..frames_in_flight.frame_count())
-        .map(|<span class="kw">_</span>| descriptor_set_layout.raw)
-        .collect::&lt;Vec&lt;vk::DescriptorSetLayout&gt;&gt;();
-    <span class="kw">unsafe </span>{
+    <span class="kw">let </span>layouts = [descriptor_set_layout.raw, descriptor_set_layout.raw];
+    <span class="kw">let </span>descriptor = <span class="kw">unsafe </span>{
         device
             .allocate_descriptor_sets(<span class="kw-2">&amp;</span>vk::DescriptorSetAllocateInfo {
                 descriptor_pool: descriptor_pool.raw,
-                descriptor_set_count: frames_in_flight.frame_count() <span class="kw">as </span>u32,
+                descriptor_set_count: <span class="number">2</span>,
                 p_set_layouts: layouts.as_ptr(),
                 ..Default::default()
             })
-            .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to allocated descriptor sets!"</span>))
-    }
+            .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to allocated descriptor sets!"</span>))<span class="question-mark">?
+    </span>};
+    <span class="prelude-val">Ok</span>(descriptor)
 }
 
 <span class="kw">pub fn </span>create_descriptor_pool(
     logical_device: Arc&lt;raii::Device&gt;,
-    frames_in_flight: <span class="kw-2">&amp;</span>FramesInFlight,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;raii::DescriptorPool&gt; {
     <span class="kw">let </span>pool_sizes = [
         vk::DescriptorPoolSize {
             ty: vk::DescriptorType::UNIFORM_BUFFER,
-            descriptor_count: frames_in_flight.frame_count() <span class="kw">as </span>u32,
+            descriptor_count: <span class="number">2</span>,
         },
         vk::DescriptorPoolSize {
             ty: vk::DescriptorType::STORAGE_BUFFER,
-            descriptor_count: frames_in_flight.frame_count() <span class="kw">as </span>u32,
+            descriptor_count: <span class="number">2</span>,
         },
     ];
     raii::DescriptorPool::new(
         logical_device,
         <span class="kw-2">&amp;</span>vk::DescriptorPoolCreateInfo {
-            max_sets: frames_in_flight.frame_count() <span class="kw">as </span>u32,
+            max_sets: <span class="number">2</span>,
             pool_size_count: pool_sizes.len() <span class="kw">as </span>u32,
             p_pool_sizes: pool_sizes.as_ptr(),
             ..Default::default()
@@ -274,7 +262,7 @@
             binding: <span class="number">0</span>,
             descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
             descriptor_count: <span class="number">1</span>,
-            stage_flags: vk::ShaderStageFlags::VERTEX,
+            stage_flags: vk::ShaderStageFlags::COMPUTE,
             p_immutable_samplers: std::ptr::null(),
             ..Default::default()
         },
@@ -282,7 +270,7 @@
             binding: <span class="number">1</span>,
             descriptor_type: vk::DescriptorType::STORAGE_BUFFER,
             descriptor_count: <span class="number">1</span>,
-            stage_flags: vk::ShaderStageFlags::VERTEX,
+            stage_flags: vk::ShaderStageFlags::COMPUTE,
             p_immutable_samplers: std::ptr::null(),
             ..Default::default()
         },

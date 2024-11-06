@@ -372,8 +372,8 @@
     <span class="macro">log::info!</span>(<span class="string">"Compiling {}..."</span>, shader_source_path_str);
     <span class="kw">let </span>output = std::process::Command::new(<span class="string">"slangc"</span>)
         .args([
-            <span class="string">"-matrix-layout-column-major"</span>,
-            <span class="string">"-target"</span>,
+            <span class="string">"-matrix-layout-column-major"</span>, <span class="comment">// compatible with nalgebra
+            </span><span class="string">"-target"</span>,
             <span class="string">"spirv"</span>,
             <span class="string">"--"</span>,
             shader_source_path_str,
