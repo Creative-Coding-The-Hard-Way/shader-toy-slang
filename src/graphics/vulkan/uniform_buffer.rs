@@ -23,14 +23,9 @@ impl<DataT> UniformBuffer<DataT>
 where
     DataT: Sized + Copy,
 {
-    /// Allocates a new buffer and GPU memory for holding per-frame uniform
-    /// data.
-    pub fn allocate(
-        device: &Device,
-        frames_in_flight: &FramesInFlight,
-    ) -> Result<Self> {
-        let count = frames_in_flight.frame_count();
-
+    /// Allocates a buffer with enough space for count copies of DataT aligned
+    /// such that each copy can be bound to a separate descriptor set.
+    pub fn allocate(device: &Device, count: usize) -> Result<Self> {
         // compute the aligned size for each element in the buffer
         let properties = unsafe {
             device
@@ -67,6 +62,15 @@ where
             aligned_unit_size: aligned_unit_size as usize,
             _phantom_data: PhantomData,
         })
+    }
+
+    /// Allocates a new buffer and GPU memory for holding per-frame uniform
+    /// data.
+    pub fn allocate_per_frame(
+        device: &Device,
+        frames_in_flight: &FramesInFlight,
+    ) -> Result<Self> {
+        Self::allocate(device, frames_in_flight.frame_count())
     }
 
     /// Returns a non-owning copy of the Vulkan buffer handle.

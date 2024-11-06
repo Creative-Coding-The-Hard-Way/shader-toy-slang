@@ -27,11 +27,13 @@ where
         device: &Device,
         frames_in_flight: &FramesInFlight,
     ) -> Result<Self> {
-        let uniform_buffer =
-            UniformBuffer::<UserDataT>::allocate(device, frames_in_flight)
-                .with_context(trace!(
-                    "Error allocating a uniform buffer for per-frame data!"
-                ))?;
+        let uniform_buffer = UniformBuffer::<UserDataT>::allocate_per_frame(
+            device,
+            frames_in_flight,
+        )
+        .with_context(trace!(
+            "Error allocating a uniform buffer for per-frame data!"
+        ))?;
 
         let descriptor_set_layout =
             descriptors::create_descriptor_set_layout(device).with_context(

@@ -45,7 +45,8 @@ StructuredBuffer<Particle, Std430DataLayout> particles;
 VertexStageOutput main(int index: SV_VertexID, int instance: SV_InstanceID) {
     VertexStageOutput output;
 
-    let pos = vertices[index] + particles[instance].pos;
+    let particle = particles[instance];
+    let pos = particle.size * vertices[index] + particle.pos;
     output.sv_position = mul(projection, float4(pos, 0.0, 1.0));
     output.uv = uvs[index];
 

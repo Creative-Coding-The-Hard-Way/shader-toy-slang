@@ -3,7 +3,7 @@ use {
     ash::vk,
     clap::Parser,
     glfw::{Action, Key, Window, WindowEvent},
-    std::{path::PathBuf, sync::Arc},
+    std::{path::PathBuf, sync::Arc, time::Instant},
     sts::{
         app::{app_main, App},
         graphics::{
@@ -17,22 +17,38 @@ use {
     },
 };
 
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
+#[repr(C)]
+pub struct FrameData {
+    pub mouse_pos: [f32; 2],
+    pub screen_size: [f32; 2],
+    pub dt: f32,
+    pub time: f32,
+}
+
 #[derive(Parser, Debug)]
 struct Args {
     #[arg(short, long)]
     kernel_source: PathBuf,
+
+    #[arg(short, long)]
+    init_source: PathBuf,
 }
 
 struct LiveParticles {
+    start_time: Instant,
+    last_frame: Instant,
+
     frames_in_flight: FramesInFlight,
     renderpass: raii::RenderPass,
     swapchain: Arc<Swapchain>,
     framebuffers: Vec<raii::Framebuffer>,
     swapchain_needs_rebuild: bool,
 
-    particles: Particles,
+    particles: Particles<FrameData>,
 
     kernel_compiler: Recompiler,
+    init_compiler: Recompiler,
 
     device: Arc<Device>,
 }
@@ -59,6 +75,7 @@ impl App for LiveParticles {
             .with_context(trace!("Unable to create frames_in_flight!"))?;
 
         let kernel_compiler = Recompiler::new(&_args.kernel_source, &[])?;
+        let init_compiler = Recompiler::new(&_args.init_source, &[])?;
 
         let renderpass =
             create_renderpass(device.logical_device.clone(), &swapchain)?;
@@ -71,18 +88,22 @@ impl App for LiveParticles {
             .swapchain(&swapchain)
             .render_pass(&renderpass)
             .kernel_bytes(kernel_compiler.current_shader_bytes())
+            .init_bytes(init_compiler.current_shader_bytes())
             .build()
             .with_context(trace!("Unable to create particles!"))?;
 
         log::info!("{:#?}", particles);
 
         Ok(Self {
+            start_time: Instant::now(),
+            last_frame: Instant::now(),
             frames_in_flight,
             framebuffers,
             swapchain,
             swapchain_needs_rebuild: false,
             particles,
             kernel_compiler,
+            init_compiler,
             device,
             renderpass,
         })
@@ -106,11 +127,15 @@ impl App for LiveParticles {
             self.rebuild_swapchain(window)?;
         }
 
-        if self.kernel_compiler.check_for_update()? {
+        if self.kernel_compiler.check_for_update()?
+            || self.init_compiler.check_for_update()?
+        {
             self.particles.compute_updated(
                 self.kernel_compiler.current_shader_bytes(),
+                self.init_compiler.current_shader_bytes(),
                 &self.frames_in_flight,
             )?;
+            self.start_time = Instant::now();
         }
 
         let frame = match self.frames_in_flight.start_frame(&self.swapchain)? {
@@ -121,7 +146,28 @@ impl App for LiveParticles {
             }
         };
 
-        self.particles.tick(&frame)?;
+        let frame_data = {
+            let now = Instant::now();
+            let dt = (now - self.last_frame).as_secs_f32();
+            self.last_frame = now;
+
+            let (x_64, y_64) = window.get_cursor_pos();
+            let (w_i32, h_i32) = window.get_size();
+
+            let (x, y) = (x_64 as f32, y_64 as f32);
+            let (w, h) = (w_i32 as f32, h_i32 as f32);
+
+            FrameData {
+                mouse_pos: [
+                    sts::map(x, 0.0..w, -1.0..1.0),
+                    sts::map(y, 0.0..h, 1.0..-1.0),
+                ],
+                screen_size: [w, h],
+                time: (now - self.start_time).as_secs_f32(),
+                dt,
+            }
+        };
+        self.particles.tick(&frame, frame_data)?;
 
         let clear_colors = [vk::ClearValue {
             color: vk::ClearColorValue {

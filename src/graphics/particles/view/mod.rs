@@ -61,8 +61,9 @@ impl ParticlesView {
         )
         .with_context(trace!("Unable to allocate view descriptor sets!"))?;
 
-        let projection = UniformBuffer::allocate(&device, frames_in_flight)
-            .with_context(trace!(
+        let projection =
+            UniformBuffer::allocate_per_frame(&device, frames_in_flight)
+                .with_context(trace!(
                 "Unable to allocate a uniform buffer for projection matrix!"
             ))?;
 
@@ -125,7 +126,7 @@ impl ParticlesView {
                 &[],
             );
 
-            self.device.cmd_draw(frame.command_buffer(), 6, 1, 0, 0);
+            self.device.cmd_draw(frame.command_buffer(), 6, 320, 0, 0);
         }
 
         Ok(())

@@ -22,15 +22,17 @@ struct Particle {
 }
 
 #[derive(Debug)]
-pub struct Particles {
+pub struct Particles<FrameDataT: Copy + Sized> {
     particles_buffer: CPUBuffer<Particle>,
     view: ParticlesView,
-    compute: ParticlesCompute,
+    init: ParticlesCompute<FrameDataT>,
+    compute: ParticlesCompute<FrameDataT>,
+    init_requested: bool,
     device: Arc<Device>,
 }
 
 #[bon]
-impl Particles {
+impl<FrameDataT: Copy + Sized> Particles<FrameDataT> {
     #[builder]
     pub fn new(
         device: Arc<Device>,
@@ -38,23 +40,13 @@ impl Particles {
         swapchain: &Swapchain,
         render_pass: &raii::RenderPass,
         kernel_bytes: &[u8],
+        init_bytes: &[u8],
     ) -> Result<Self> {
-        let mut particles_buffer = CPUBuffer::<Particle>::allocate(
+        let particles_buffer = CPUBuffer::<Particle>::allocate(
             &device,
-            1,
+            320,
             vk::BufferUsageFlags::STORAGE_BUFFER,
         )?;
-        unsafe {
-            particles_buffer.write_data(
-                0,
-                &[Particle {
-                    pos: [5.0, 5.0],
-                    vel: [0.1, 0.1],
-                    size: 1.0,
-                    mass: 1.0,
-                }],
-            )?;
-        }
 
         let view = ParticlesView::builder()
             .device(device.clone())
@@ -70,9 +62,17 @@ impl Particles {
             .kernel_bytes(kernel_bytes)
             .build()?;
 
+        let init = ParticlesCompute::builder()
+            .device(device.clone())
+            .particles_buffer(&particles_buffer)
+            .kernel_bytes(init_bytes)
+            .build()?;
+
         Ok(Self {
             particles_buffer,
             view,
+            init,
+            init_requested: true,
             compute,
             device,
         })
@@ -81,14 +81,24 @@ impl Particles {
     pub fn compute_updated(
         &mut self,
         kernel_bytes: &[u8],
+        init_bytes: &[u8],
         frames_in_flight: &FramesInFlight,
     ) -> Result<()> {
+        self.init_requested = true;
         frames_in_flight.wait_for_all_frames_to_complete()?;
         // safe because all frames are stalled
-        unsafe { self.compute.rebuild_kernel(kernel_bytes) }
+        unsafe {
+            self.init.rebuild_kernel(init_bytes)?;
+            self.compute.rebuild_kernel(kernel_bytes)?;
+        }
+        Ok(())
     }
 
-    pub fn tick(&mut self, frame: &Frame) -> Result<()> {
+    pub fn tick(
+        &mut self,
+        frame: &Frame,
+        frame_data: FrameDataT,
+    ) -> Result<()> {
         unsafe {
             self.device.cmd_pipeline_barrier(
                 frame.command_buffer(),
@@ -113,7 +123,12 @@ impl Particles {
                 &[],
             );
         }
-        self.compute.update(frame)?;
+        if self.init_requested {
+            self.init.update(frame, frame_data)?;
+            self.init_requested = false;
+        } else {
+            self.compute.update(frame, frame_data)?;
+        }
         unsafe {
             self.device.cmd_pipeline_barrier(
                 frame.command_buffer(),
