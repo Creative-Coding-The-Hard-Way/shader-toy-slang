@@ -226,7 +226,7 @@ impl LiveParticles {
             Swapchain::new(
                 self.device.clone(),
                 (w as u32, h as u32),
-                Some(self.swapchain.raw.raw),
+                Some(self.swapchain.raw()),
             )?
         };
 

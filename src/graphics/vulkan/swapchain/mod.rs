@@ -24,7 +24,7 @@ pub enum PresentImageStatus {
 
 /// All Vulkan resources related to the Swapchain - images, views, etc...
 pub struct Swapchain {
-    pub raw: Arc<raii::Swapchain>,
+    raw: Arc<raii::Swapchain>,
     pub extent: vk::Extent2D,
     pub format: vk::SurfaceFormatKHR,
     pub images: Vec<vk::Image>,
@@ -76,6 +76,11 @@ impl Swapchain {
             image_views,
             device,
         }))
+    }
+
+    /// Returns the non-owning Vulkan swapchain handle.
+    pub fn raw(&self) -> vk::SwapchainKHR {
+        self.raw.raw
     }
 
     pub fn acquire_image(

@@ -275,7 +275,7 @@ impl LiveReload {
         self.swapchain = Swapchain::new(
             self.device.clone(),
             (w as u32, h as u32),
-            Some(self.swapchain.raw.raw),
+            Some(self.swapchain.raw()),
         )?;
 
         self.render_pass = create_renderpass(&self.device, &self.swapchain)?;
