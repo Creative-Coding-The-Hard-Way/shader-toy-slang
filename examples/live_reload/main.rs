@@ -236,7 +236,7 @@ impl App for LiveReload {
                         .raw,
                     render_area: vk::Rect2D {
                         offset: vk::Offset2D { x: 0, y: 0 },
-                        extent: self.swapchain.extent,
+                        extent: self.swapchain.extent(),
                     },
                     clear_value_count: 1,
                     p_clear_values: &clear_value,
@@ -305,7 +305,7 @@ fn create_renderpass(
     swapchain: &Swapchain,
 ) -> Result<raii::RenderPass> {
     let attachment_description = vk::AttachmentDescription {
-        format: swapchain.format.format,
+        format: swapchain.format(),
         samples: vk::SampleCountFlags::TYPE_1,
         load_op: vk::AttachmentLoadOp::CLEAR,
         store_op: vk::AttachmentStoreOp::STORE,
@@ -357,8 +357,8 @@ fn create_framebuffers(
     swapchain: &Swapchain,
 ) -> Result<Vec<raii::Framebuffer>> {
     let mut framebuffers = vec![];
-    let vk::Extent2D { width, height } = swapchain.extent;
-    for image_view in &swapchain.image_views {
+    let vk::Extent2D { width, height } = swapchain.extent();
+    for image_view in swapchain.image_views() {
         let create_info = vk::FramebufferCreateInfo {
             render_pass: render_pass.raw,
             attachment_count: 1,

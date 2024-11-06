@@ -85,14 +85,14 @@ pub fn create_pipeline(
     let viewports = [vk::Viewport {
         x: 0.0,
         y: 0.0,
-        width: swapchain.extent.width as f32,
-        height: swapchain.extent.height as f32,
+        width: swapchain.extent().width as f32,
+        height: swapchain.extent().height as f32,
         min_depth: 0.0,
         max_depth: 1.0,
     }];
     let scissors = [vk::Rect2D {
         offset: vk::Offset2D { x: 0, y: 0 },
-        extent: swapchain.extent,
+        extent: swapchain.extent(),
     }];
     let viewport_state = vk::PipelineViewportStateCreateInfo {
         viewport_count: viewports.len() as u32,

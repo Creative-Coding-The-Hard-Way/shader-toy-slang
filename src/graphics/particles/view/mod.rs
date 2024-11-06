@@ -90,7 +90,7 @@ impl ParticlesView {
         .with_context(trace!("Unable to create the graphics pipeline!"))?;
 
         let projection_matrix = ortho_projection(
-            swapchain.extent.width as f32 / swapchain.extent.height as f32,
+            swapchain.extent().width as f32 / swapchain.extent().height as f32,
             20.0,
         );
 
@@ -145,7 +145,7 @@ impl ParticlesView {
         )?;
 
         self.projection_matrix = ortho_projection(
-            swapchain.extent.width as f32 / swapchain.extent.height as f32,
+            swapchain.extent().width as f32 / swapchain.extent().height as f32,
             20.0,
         );
         Ok(())
