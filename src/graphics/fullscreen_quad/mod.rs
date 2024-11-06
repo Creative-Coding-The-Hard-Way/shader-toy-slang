@@ -45,7 +45,7 @@ where
         render_pass: &raii::RenderPass,
         textures: Vec<Texture>,
     ) -> Result<Self> {
-        let frame_data = FrameData::new(&device, &frames_in_flight)
+        let frame_data = FrameData::new(&device, frames_in_flight)
             .with_context(trace!("Unable to initialize per-frame data!"))?;
 
         let static_textures = StaticTextures::new(&device, textures)

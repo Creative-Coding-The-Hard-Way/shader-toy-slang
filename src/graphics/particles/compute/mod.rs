@@ -22,8 +22,8 @@ enum CurrentFrame {
 #[derive(Debug)]
 pub struct ParticlesCompute<DataT: Copy + Sized> {
     descriptor_sets: Vec<vk::DescriptorSet>,
-    descriptor_pool: raii::DescriptorPool,
-    descriptor_set_layout: raii::DescriptorSetLayout,
+    _descriptor_pool: raii::DescriptorPool,
+    _descriptor_set_layout: raii::DescriptorSetLayout,
     device: Arc<Device>,
     pipeline: raii::Pipeline,
     pipeline_layout: raii::PipelineLayout,
@@ -71,8 +71,8 @@ impl<DataT: Copy + Sized> ParticlesCompute<DataT> {
 
         Ok(Self {
             descriptor_sets,
-            descriptor_pool,
-            descriptor_set_layout,
+            _descriptor_pool: descriptor_pool,
+            _descriptor_set_layout: descriptor_set_layout,
             device,
             pipeline_layout,
             pipeline,
