@@ -23,6 +23,8 @@ pub enum FrameStatus {
     SwapchainNeedsRebuild,
 }
 
+/// A Frame is guaranteed to be synchronized such that no two frames with the
+/// same frame_index can be in-flight on the GPU at the same time.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Frame {
     command_buffer: vk::CommandBuffer,
@@ -53,8 +55,18 @@ struct FrameSync {
     command_buffer: vk::CommandBuffer,
 }
 
-/// All of the synchronization primitives required to manage multiple frames
-/// in flight.
+/// The primary synchronization mechanism for managing multiple in-flight
+/// frames.
+///
+/// There can be 1-N frames in flight for the application, decided at the time
+/// of construction. This is independent from the number of swapchain images,
+/// though there is little-to-no benefit to having more frames in flight than
+/// swapchain images.
+///
+/// Synchronization is performed such that when [Self::start_frame] returns, all
+/// commands submitted to that frame are guaranteed to be complete. Thus, the
+/// application can keep N copies of a resource and use the frame_index to
+/// prevent synchronization errors.
 pub struct FramesInFlight {
     frames: Vec<FrameSync>,
     frame_index: usize,
@@ -62,6 +74,7 @@ pub struct FramesInFlight {
 }
 
 impl FramesInFlight {
+    /// Creates a new instance with `frame_count` frames.
     pub fn new(cxt: Arc<VulkanContext>, frame_count: usize) -> Result<Self> {
         let mut frames = Vec::with_capacity(frame_count);
         for index in 0..frame_count {
@@ -129,6 +142,7 @@ impl FramesInFlight {
         self.frames.len()
     }
 
+    /// Blocks until all submitted commands for all frames have completed.
     pub fn wait_for_all_frames_to_complete(&self) -> Result<()> {
         let fences = self
             .frames
@@ -152,12 +166,10 @@ impl FramesInFlight {
     ///
     /// # Returns
     ///
-    /// - FrameStatus::FrameStarted(vk::CommandBuffer): A non-owning copy of the
-    ///   graphics command buffer for the current frame. The caller does not
-    ///   need to call begin_command_buffer or end_command_buffer, both are
-    ///   handled automatically.
-    /// - FrameStatus::SwapchainNeedsRebuild: Indicates that the swapchain needs
-    ///   to be rebuilt before a frame can be acquired.
+    /// A [FrameStatus] containing one of:
+    /// * A [Frame] that must be returned to [Self::present_frame]
+    /// * A flag indicating that the Swapchain needs to be rebuilt before the
+    ///   next frame.
     pub fn start_frame(
         &mut self,
         swapchain: &Swapchain,
@@ -228,6 +240,7 @@ impl FramesInFlight {
         }))
     }
 
+    /// Queues the [Frame]'s command buffer and swapchain presentation.
     pub fn present_frame(
         &mut self,
         swapchain: &Swapchain,
