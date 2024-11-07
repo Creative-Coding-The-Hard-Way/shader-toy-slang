@@ -27,10 +27,7 @@ use {
     },
 };
 
-/// Watches a shader source file and recompiles it with `slangc`.
-///
-/// Note: the recompiler expects to find `slangc` on the system PATH. `slangc`
-/// is included in the Vulkan SDK.
+/// Automatically recompiles a slang source file any time it changes.
 pub struct Recompiler {
     shader: raii::ShaderModule,
     compile_thread_join_handle: Option<JoinHandle<()>>,
@@ -118,18 +115,20 @@ fn spawn_compiler_thread(
 ) -> Result<JoinHandle<()>> {
     let additional_watch_paths = additional_watch_paths.to_vec();
     let shader_source_path = shader_source_path.to_owned();
-    let shader_source_path_clone = shader_source_path.clone();
+
     let compile_thread_join_handle = std::thread::spawn(move || {
-        let mut debouncer =
+        let mut debouncer = {
+            let shader_source_path = shader_source_path.clone();
             new_debouncer(Duration::from_millis(250), None, move |result| {
                 handle_debounced_event_result(
                     &ctx,
                     result,
-                    &shader_source_path_clone,
+                    &shader_source_path,
                     &shader_sender,
                 );
             })
-            .unwrap();
+            .unwrap()
+        };
 
         debouncer
             .watcher()
@@ -164,8 +163,10 @@ fn handle_debounced_event_result(
         return;
     }
 
-    match try_compile_shader_file(ctx, shader_source_path) {
+    log::info!("Compiling {:?}...", shader_source_path);
+    match compile_slang(ctx, shader_source_path) {
         Ok(shader_src_bytes) => {
+            log::info!("{:?} succeeded!", shader_source_path);
             shader_sender
                 .send(shader_src_bytes)
                 .expect("Unable to send updated shader source!");
@@ -174,20 +175,4 @@ fn handle_debounced_event_result(
             log::error!("{}", e);
         }
     }
-}
-
-/// Tries to invoke `slangc` on the system PATH to compile a shader file.
-///
-/// If the shader fails to compile, then a descriptive error message is included
-/// in the returned error.
-fn try_compile_shader_file(
-    ctx: &VulkanContext,
-    shader_source_path: &Path,
-) -> Result<raii::ShaderModule> {
-    log::info!("Compiling {:?}...", shader_source_path);
-
-    let shader = compile_slang(ctx, shader_source_path)?;
-
-    log::info!("{:?} succeeded!", shader_source_path);
-    Ok(shader)
 }
