@@ -37,13 +37,21 @@ enum Request {
     ShutDown,
 }
 
-/// A Vulkan device memory allocator.
+/// The Vulkan device memory allocator.
 ///
-/// # Ownership
+/// # Performance
 ///
-/// The owner of the Allocator is responsible for ensuring that the phisacal
-/// device, the ash library instance, and the Vulkan logical device all outlive
-/// the Allocator.
+/// All Vulkan allocations are serialized into a single queue served by a
+/// background thread. This is to simplify the allocator implementation (it's
+/// single-threaded) but it means that allocating tons of memory from many
+/// threads could cause bottlenecks. In practice, this doesn't seem to matter
+/// because device allocations are typically fairly long-lived.
+///
+/// # Device Memory Usage
+///
+/// The allocator implementation attempts to only allocate large blocks of
+/// Device memory, then subdivide them to fit individual allocation requests.
+/// This logic is hosted in the private composable_allocator module.
 pub struct Allocator {
     logical_device: Arc<raii::Device>,
     client: Sender<Request>,
