@@ -169,12 +169,16 @@
 <a href="#169" id="169">169</a>
 <a href="#170" id="170">170</a>
 <a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>compute;
 <span class="kw">mod </span>view;
 
 <span class="kw">use </span>{
     <span class="kw">super</span>::vulkan::CPUBuffer,
-    <span class="kw">crate</span>::graphics::vulkan::{raii, Device, Frame, FramesInFlight, Swapchain},
+    <span class="kw">crate</span>::graphics::vulkan::{
+        raii, Frame, FramesInFlight, Swapchain, VulkanContext,
+    },
     anyhow::Result,
     ash::vk,
     bon::bon,
@@ -199,28 +203,28 @@
     init: ParticlesCompute&lt;FrameDataT&gt;,
     compute: ParticlesCompute&lt;FrameDataT&gt;,
     init_requested: bool,
-    device: Arc&lt;Device&gt;,
+    cxt: Arc&lt;VulkanContext&gt;,
 }
 
 <span class="attr">#[bon]
 </span><span class="kw">impl</span>&lt;FrameDataT: Copy + Sized&gt; Particles&lt;FrameDataT&gt; {
     <span class="attr">#[builder]
     </span><span class="kw">pub fn </span>new(
-        device: Arc&lt;Device&gt;,
+        cxt: Arc&lt;VulkanContext&gt;,
         frames_in_flight: <span class="kw-2">&amp;</span>FramesInFlight,
         swapchain: <span class="kw-2">&amp;</span>Swapchain,
         render_pass: <span class="kw-2">&amp;</span>raii::RenderPass,
-        kernel_bytes: <span class="kw-2">&amp;</span>[u8],
-        init_bytes: <span class="kw-2">&amp;</span>[u8],
+        kernel: <span class="kw-2">&amp;</span>raii::ShaderModule,
+        init: <span class="kw-2">&amp;</span>raii::ShaderModule,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>particles_buffer = CPUBuffer::&lt;Particle&gt;::allocate(
-            <span class="kw-2">&amp;</span>device,
+            <span class="kw-2">&amp;</span>cxt,
             <span class="number">320</span>,
             vk::BufferUsageFlags::STORAGE_BUFFER,
         )<span class="question-mark">?</span>;
 
         <span class="kw">let </span>view = ParticlesView::builder()
-            .device(device.clone())
+            .cxt(cxt.clone())
             .frames_in_flight(frames_in_flight)
             .swapchain(swapchain)
             .render_pass(render_pass)
@@ -228,15 +232,15 @@
             .build()<span class="question-mark">?</span>;
 
         <span class="kw">let </span>compute = ParticlesCompute::builder()
-            .device(device.clone())
+            .cxt(cxt.clone())
             .particles_buffer(<span class="kw-2">&amp;</span>particles_buffer)
-            .kernel_bytes(kernel_bytes)
+            .kernel(kernel)
             .build()<span class="question-mark">?</span>;
 
         <span class="kw">let </span>init = ParticlesCompute::builder()
-            .device(device.clone())
+            .cxt(cxt.clone())
             .particles_buffer(<span class="kw-2">&amp;</span>particles_buffer)
-            .kernel_bytes(init_bytes)
+            .kernel(init)
             .build()<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
@@ -245,22 +249,22 @@
             init,
             init_requested: <span class="bool-val">true</span>,
             compute,
-            device,
+            cxt,
         })
     }
 
     <span class="kw">pub fn </span>compute_updated(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        kernel_bytes: <span class="kw-2">&amp;</span>[u8],
-        init_bytes: <span class="kw-2">&amp;</span>[u8],
+        kernel: <span class="kw-2">&amp;</span>raii::ShaderModule,
+        init: <span class="kw-2">&amp;</span>raii::ShaderModule,
         frames_in_flight: <span class="kw-2">&amp;</span>FramesInFlight,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="self">self</span>.init_requested = <span class="bool-val">true</span>;
         frames_in_flight.wait_for_all_frames_to_complete()<span class="question-mark">?</span>;
         <span class="comment">// safe because all frames are stalled
         </span><span class="kw">unsafe </span>{
-            <span class="self">self</span>.init.rebuild_kernel(init_bytes)<span class="question-mark">?</span>;
-            <span class="self">self</span>.compute.rebuild_kernel(kernel_bytes)<span class="question-mark">?</span>;
+            <span class="self">self</span>.init.rebuild_kernel(init)<span class="question-mark">?</span>;
+            <span class="self">self</span>.compute.rebuild_kernel(kernel)<span class="question-mark">?</span>;
         }
         <span class="prelude-val">Ok</span>(())
     }
@@ -271,7 +275,7 @@
         frame_data: FrameDataT,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">unsafe </span>{
-            <span class="self">self</span>.device.cmd_pipeline_barrier(
+            <span class="self">self</span>.cxt.cmd_pipeline_barrier(
                 frame.command_buffer(),
                 vk::PipelineStageFlags::VERTEX_SHADER,
                 vk::PipelineStageFlags::COMPUTE_SHADER,
@@ -281,10 +285,10 @@
                     src_access_mask: vk::AccessFlags::SHADER_READ,
                     dst_access_mask: vk::AccessFlags::SHADER_WRITE,
                     src_queue_family_index: <span class="self">self
-                        </span>.device
+                        </span>.cxt
                         .graphics_queue_family_index,
                     dst_queue_family_index: <span class="self">self
-                        </span>.device
+                        </span>.cxt
                         .graphics_queue_family_index,
                     buffer: <span class="self">self</span>.particles_buffer.buffer(),
                     offset: <span class="number">0</span>,
@@ -301,7 +305,7 @@
             <span class="self">self</span>.compute.update(frame, frame_data)<span class="question-mark">?</span>;
         }
         <span class="kw">unsafe </span>{
-            <span class="self">self</span>.device.cmd_pipeline_barrier(
+            <span class="self">self</span>.cxt.cmd_pipeline_barrier(
                 frame.command_buffer(),
                 vk::PipelineStageFlags::COMPUTE_SHADER,
                 vk::PipelineStageFlags::VERTEX_SHADER,
@@ -311,10 +315,10 @@
                     src_access_mask: vk::AccessFlags::SHADER_WRITE,
                     dst_access_mask: vk::AccessFlags::SHADER_READ,
                     src_queue_family_index: <span class="self">self
-                        </span>.device
+                        </span>.cxt
                         .graphics_queue_family_index,
                     dst_queue_family_index: <span class="self">self
-                        </span>.device
+                        </span>.cxt
                         .graphics_queue_family_index,
                     buffer: <span class="self">self</span>.particles_buffer.buffer(),
                     offset: <span class="number">0</span>,

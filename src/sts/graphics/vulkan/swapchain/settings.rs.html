@@ -142,13 +142,9 @@
 <a href="#142" id="142">142</a>
 <a href="#143" id="143">143</a>
 <a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">crate</span>::{
-        graphics::vulkan::{raii, Device},
+        graphics::vulkan::{raii, VulkanContext},
         trace,
     },
     anyhow::{Context, <span class="prelude-ty">Result</span>},
@@ -157,27 +153,26 @@
 };
 
 <span class="kw">pub fn </span>create_swapchain(
-    device: <span class="kw-2">&amp;</span>Device,
+    cxt: <span class="kw-2">&amp;</span>VulkanContext,
     framebuffer_size: (u32, u32),
     previous_swapchain: <span class="prelude-ty">Option</span>&lt;vk::SwapchainKHR&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(Arc&lt;raii::Swapchain&gt;, vk::Extent2D, vk::SurfaceFormatKHR)&gt; {
     <span class="kw">let </span>capabilities = <span class="kw">unsafe </span>{
-        device
-            .surface_khr
+        cxt.surface_khr
             .ext
             .get_physical_device_surface_capabilities(
-                device.physical_device,
-                device.surface_khr.raw,
+                cxt.physical_device,
+                cxt.surface_khr.raw,
             )
             .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to get surface capabilities!"</span>))<span class="question-mark">?
     </span>};
     <span class="macro">log::trace!</span>(<span class="string">"Device capabilities:\n{:#?}"</span>, capabilities);
 
-    <span class="kw">let </span>format = select_image_format(device)<span class="question-mark">?</span>;
+    <span class="kw">let </span>format = select_image_format(cxt)<span class="question-mark">?</span>;
     <span class="kw">let </span>extent = select_image_extent(<span class="kw-2">&amp;</span>capabilities, framebuffer_size);
-    <span class="kw">let </span>queue_families = [device.graphics_queue_family_index];
+    <span class="kw">let </span>queue_families = [cxt.graphics_queue_family_index];
     <span class="kw">let </span>create_info = vk::SwapchainCreateInfoKHR {
-        surface: device.surface_khr.raw,
+        surface: cxt.surface_khr.raw,
         min_image_count: select_image_count(<span class="kw-2">&amp;</span>capabilities),
         image_format: format.format,
         image_color_space: format.color_space,
@@ -189,13 +184,12 @@
         p_queue_family_indices: queue_families.as_ptr(),
         pre_transform: capabilities.current_transform,
         composite_alpha: vk::CompositeAlphaFlagsKHR::OPAQUE,
-        present_mode: select_present_mode(device)<span class="question-mark">?</span>,
+        present_mode: select_present_mode(cxt)<span class="question-mark">?</span>,
         clipped: vk::TRUE,
         old_swapchain: previous_swapchain.unwrap_or(vk::SwapchainKHR::null()),
         ..Default::default()
     };
-    <span class="kw">let </span>swapchain =
-        raii::Swapchain::new(device.logical_device.clone(), <span class="kw-2">&amp;</span>create_info)<span class="question-mark">?</span>;
+    <span class="kw">let </span>swapchain = raii::Swapchain::new(cxt.device.clone(), <span class="kw-2">&amp;</span>create_info)<span class="question-mark">?</span>;
     <span class="macro">log::trace!</span>(
         <span class="macro">indoc::indoc!</span>(
             <span class="string">"
@@ -213,14 +207,13 @@
 }
 
 <span class="doccomment">/// Pick the desired image format for the swapchain.
-</span><span class="kw">fn </span>select_image_format(device: <span class="kw-2">&amp;</span>Device) -&gt; <span class="prelude-ty">Result</span>&lt;vk::SurfaceFormatKHR&gt; {
+</span><span class="kw">fn </span>select_image_format(cxt: <span class="kw-2">&amp;</span>VulkanContext) -&gt; <span class="prelude-ty">Result</span>&lt;vk::SurfaceFormatKHR&gt; {
     <span class="kw">let </span>surface_formats = <span class="kw">unsafe </span>{
-        device
-            .surface_khr
+        cxt.surface_khr
             .ext
             .get_physical_device_surface_formats(
-                device.physical_device,
-                device.surface_khr.raw,
+                cxt.physical_device,
+                cxt.surface_khr.raw,
             )
             .with_context(<span class="macro">trace!</span>(
                 <span class="string">"Error while listing available surface formats!"
@@ -277,14 +270,13 @@
     }
 }
 
-<span class="kw">fn </span>select_present_mode(device: <span class="kw-2">&amp;</span>Device) -&gt; <span class="prelude-ty">Result</span>&lt;vk::PresentModeKHR&gt; {
+<span class="kw">fn </span>select_present_mode(cxt: <span class="kw-2">&amp;</span>VulkanContext) -&gt; <span class="prelude-ty">Result</span>&lt;vk::PresentModeKHR&gt; {
     <span class="kw">let </span>present_modes = <span class="kw">unsafe </span>{
-        device
-            .surface_khr
+        cxt.surface_khr
             .ext
             .get_physical_device_surface_present_modes(
-                device.physical_device,
-                device.surface_khr.raw,
+                cxt.physical_device,
+                cxt.surface_khr.raw,
             )<span class="question-mark">?
     </span>};
     <span class="macro">log::trace!</span>(<span class="string">"Present modes for device:\n{:#?}"</span>, present_modes);

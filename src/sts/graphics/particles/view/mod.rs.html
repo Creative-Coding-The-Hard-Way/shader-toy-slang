@@ -151,6 +151,7 @@
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
 <a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>descriptors;
 <span class="kw">mod </span>pipeline;
 
@@ -160,8 +161,8 @@
         graphics::{
             ortho_projection,
             vulkan::{
-                raii, CPUBuffer, Device, Frame, FramesInFlight, Swapchain,
-                UniformBuffer,
+                raii, CPUBuffer, Frame, FramesInFlight, Swapchain,
+                UniformBuffer, VulkanContext,
             },
         },
         trace,
@@ -177,37 +178,38 @@
 </span><span class="kw">pub struct </span>ParticlesView {
     projection: UniformBuffer&lt;[[f32; <span class="number">4</span>]; <span class="number">4</span>]&gt;,
     descriptor_sets: Vec&lt;vk::DescriptorSet&gt;,
-    descriptor_set_layout: raii::DescriptorSetLayout,
-    descriptor_pool: raii::DescriptorPool,
+    _descriptor_set_layout: raii::DescriptorSetLayout,
+    _descriptor_pool: raii::DescriptorPool,
     pipeline_layout: raii::PipelineLayout,
     pipeline: raii::Pipeline,
     projection_matrix: Matrix4&lt;f32&gt;,
-    device: Arc&lt;Device&gt;,
+    cxt: Arc&lt;VulkanContext&gt;,
 }
 
 <span class="attr">#[bon]
 </span><span class="kw">impl </span>ParticlesView {
     <span class="attr">#[builder]
     </span><span class="kw">pub fn </span>new(
-        device: Arc&lt;Device&gt;,
+        cxt: Arc&lt;VulkanContext&gt;,
         frames_in_flight: <span class="kw-2">&amp;</span>FramesInFlight,
         swapchain: <span class="kw-2">&amp;</span>Swapchain,
         render_pass: <span class="kw-2">&amp;</span>raii::RenderPass,
         particles_buffer: <span class="kw-2">&amp;</span>CPUBuffer&lt;Particle&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>descriptor_set_layout = descriptors::create_descriptor_set_layout(
-            device.logical_device.clone(),
-        )
-        .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to create view descriptor set layout!"</span>))<span class="question-mark">?</span>;
+        <span class="kw">let </span>descriptor_set_layout =
+            descriptors::create_descriptor_set_layout(cxt.device.clone())
+                .with_context(<span class="macro">trace!</span>(
+                    <span class="string">"Unable to create view descriptor set layout!"
+                </span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>descriptor_pool = descriptors::create_descriptor_pool(
-            device.logical_device.clone(),
+            cxt.device.clone(),
             frames_in_flight,
         )
         .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to create view descriptor pool!"</span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>descriptor_sets = descriptors::allocate_descriptor_sets(
-            <span class="kw-2">&amp;</span>device,
+            <span class="kw-2">&amp;</span>cxt,
             <span class="kw-2">&amp;</span>descriptor_pool,
             <span class="kw-2">&amp;</span>descriptor_set_layout,
             frames_in_flight,
@@ -215,27 +217,27 @@
         .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to allocate view descriptor sets!"</span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>projection =
-            UniformBuffer::allocate_per_frame(<span class="kw-2">&amp;</span>device, frames_in_flight)
+            UniformBuffer::allocate_per_frame(<span class="kw-2">&amp;</span>cxt, frames_in_flight)
                 .with_context(<span class="macro">trace!</span>(
                 <span class="string">"Unable to allocate a uniform buffer for projection matrix!"
             </span>))<span class="question-mark">?</span>;
 
         descriptors::update_descriptor_sets(
-            <span class="kw-2">&amp;</span>device,
+            <span class="kw-2">&amp;</span>cxt,
             <span class="kw-2">&amp;</span>descriptor_sets,
             <span class="kw-2">&amp;</span>projection,
             particles_buffer,
         )
         .with_context(<span class="macro">trace!</span>(<span class="string">"Error while updating descriptor sets!"</span>))<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>pipeline_layout = pipeline::create_layout(
-            device.logical_device.clone(),
-            <span class="kw-2">&amp;</span>descriptor_set_layout,
-        )
-        .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to create the pipeline layout!"</span>))<span class="question-mark">?</span>;
+        <span class="kw">let </span>pipeline_layout =
+            pipeline::create_layout(cxt.device.clone(), <span class="kw-2">&amp;</span>descriptor_set_layout)
+                .with_context(<span class="macro">trace!</span>(
+                    <span class="string">"Unable to create the pipeline layout!"
+                </span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>pipeline = pipeline::create_pipeline(
-            device.logical_device.clone(),
+            cxt.device.clone(),
             swapchain,
             render_pass,
             <span class="kw-2">&amp;</span>pipeline_layout,
@@ -243,7 +245,7 @@
         .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to create the graphics pipeline!"</span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>projection_matrix = ortho_projection(
-            swapchain.extent.width <span class="kw">as </span>f32 / swapchain.extent.height <span class="kw">as </span>f32,
+            swapchain.extent().width <span class="kw">as </span>f32 / swapchain.extent().height <span class="kw">as </span>f32,
             <span class="number">20.0</span>,
         );
 
@@ -251,11 +253,11 @@
             projection,
             projection_matrix,
             descriptor_sets,
-            descriptor_set_layout,
-            descriptor_pool,
+            _descriptor_set_layout: descriptor_set_layout,
+            _descriptor_pool: descriptor_pool,
             pipeline_layout,
             pipeline,
-            device,
+            cxt,
         })
     }
 
@@ -264,13 +266,13 @@
             .update_frame_data(frame, <span class="self">self</span>.projection_matrix.data.<span class="number">0</span>)<span class="question-mark">?</span>;
 
         <span class="kw">unsafe </span>{
-            <span class="self">self</span>.device.cmd_bind_pipeline(
+            <span class="self">self</span>.cxt.cmd_bind_pipeline(
                 frame.command_buffer(),
                 vk::PipelineBindPoint::GRAPHICS,
                 <span class="self">self</span>.pipeline.raw,
             );
 
-            <span class="self">self</span>.device.cmd_bind_descriptor_sets(
+            <span class="self">self</span>.cxt.cmd_bind_descriptor_sets(
                 frame.command_buffer(),
                 vk::PipelineBindPoint::GRAPHICS,
                 <span class="self">self</span>.pipeline_layout.raw,
@@ -279,7 +281,7 @@
                 <span class="kw-2">&amp;</span>[],
             );
 
-            <span class="self">self</span>.device.cmd_draw(frame.command_buffer(), <span class="number">6</span>, <span class="number">320</span>, <span class="number">0</span>, <span class="number">0</span>);
+            <span class="self">self</span>.cxt.cmd_draw(frame.command_buffer(), <span class="number">6</span>, <span class="number">320</span>, <span class="number">0</span>, <span class="number">0</span>);
         }
 
         <span class="prelude-val">Ok</span>(())
@@ -291,14 +293,14 @@
         render_pass: <span class="kw-2">&amp;</span>raii::RenderPass,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="self">self</span>.pipeline = pipeline::create_pipeline(
-            <span class="self">self</span>.device.logical_device.clone(),
+            <span class="self">self</span>.cxt.device.clone(),
             swapchain,
             render_pass,
             <span class="kw-2">&amp;</span><span class="self">self</span>.pipeline_layout,
         )<span class="question-mark">?</span>;
 
         <span class="self">self</span>.projection_matrix = ortho_projection(
-            swapchain.extent.width <span class="kw">as </span>f32 / swapchain.extent.height <span class="kw">as </span>f32,
+            swapchain.extent().width <span class="kw">as </span>f32 / swapchain.extent().height <span class="kw">as </span>f32,
             <span class="number">20.0</span>,
         );
         <span class="prelude-val">Ok</span>(())

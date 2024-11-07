@@ -110,10 +110,9 @@
 <a href="#110" id="110">110</a>
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">crate</span>::{
-        graphics::vulkan::{raii, Device, UniformBuffer},
+        graphics::vulkan::{raii, UniformBuffer, VulkanContext},
         trace,
     },
     anyhow::{Context, <span class="prelude-ty">Result</span>},
@@ -122,7 +121,7 @@
 
 <span class="doccomment">/// Allocates the descriptor sets.
 </span><span class="kw">pub fn </span>allocate_descriptor_sets(
-    device: <span class="kw-2">&amp;</span>Device,
+    cxt: <span class="kw-2">&amp;</span>VulkanContext,
     pool: <span class="kw-2">&amp;</span>raii::DescriptorPool,
     layout: <span class="kw-2">&amp;</span>raii::DescriptorSetLayout,
     count: usize,
@@ -138,8 +137,7 @@
             p_set_layouts: layouts.as_ptr(),
             ..Default::default()
         };
-        device
-            .allocate_descriptor_sets(<span class="kw-2">&amp;</span>allocate_info)
+        cxt.allocate_descriptor_sets(<span class="kw-2">&amp;</span>allocate_info)
             .with_context(<span class="macro">trace!</span>(<span class="string">"Error while allocating descriptor sets!"</span>))
     }
 }
@@ -147,7 +145,7 @@
 <span class="doccomment">/// Updates each descriptor set to refer to the correct location within the
 /// uniform buffer.
 </span><span class="kw">pub fn </span>initialize_descriptor_sets&lt;UserDataT&gt;(
-    device: <span class="kw-2">&amp;</span>Device,
+    cxt: <span class="kw-2">&amp;</span>VulkanContext,
     descriptor_sets: <span class="kw-2">&amp;</span>[vk::DescriptorSet],
     uniform_buffer: <span class="kw-2">&amp;</span>UniformBuffer&lt;UserDataT&gt;,
 ) <span class="kw">where
@@ -180,14 +178,14 @@
                 ..Default::default()
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        device.update_descriptor_sets(<span class="kw-2">&amp;</span>writes, <span class="kw-2">&amp;</span>[]);
+        cxt.update_descriptor_sets(<span class="kw-2">&amp;</span>writes, <span class="kw-2">&amp;</span>[]);
     };
 }
 
 <span class="doccomment">/// Creates a new descriptor pool with capacity for `count` uniform buffer
 /// descriptors. (one for each frame in flight)
 </span><span class="kw">pub fn </span>create_descriptor_pool(
-    device: <span class="kw-2">&amp;</span>Device,
+    cxt: <span class="kw-2">&amp;</span>VulkanContext,
     count: usize,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;raii::DescriptorPool&gt; {
     <span class="kw">let </span>sizes = [vk::DescriptorPoolSize {
@@ -200,13 +198,13 @@
         p_pool_sizes: sizes.as_ptr(),
         ..Default::default()
     };
-    raii::DescriptorPool::new(device.logical_device.clone(), <span class="kw-2">&amp;</span>create_info)
+    raii::DescriptorPool::new(cxt.device.clone(), <span class="kw-2">&amp;</span>create_info)
 }
 
 <span class="doccomment">/// Creates the descriptor layout. Only one is created because the layout is the
 /// same for each frame in flight.
 </span><span class="kw">pub fn </span>create_descriptor_set_layout(
-    device: <span class="kw-2">&amp;</span>Device,
+    cxt: <span class="kw-2">&amp;</span>VulkanContext,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;raii::DescriptorSetLayout&gt; {
     <span class="kw">let </span>descriptor_set_bindings = [vk::DescriptorSetLayoutBinding {
         binding: <span class="number">0</span>,
@@ -222,6 +220,6 @@
         p_bindings: descriptor_set_bindings.as_ptr(),
         ..Default::default()
     };
-    raii::DescriptorSetLayout::new(device.logical_device.clone(), <span class="kw-2">&amp;</span>create_info)
+    raii::DescriptorSetLayout::new(cxt.device.clone(), <span class="kw-2">&amp;</span>create_info)
 }
 </code></pre></div></section></main></body></html>

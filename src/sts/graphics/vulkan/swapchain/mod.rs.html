@@ -145,11 +145,49 @@
 <a href="#145" id="145">145</a>
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>settings;
 
 <span class="kw">use </span>{
     <span class="kw">crate</span>::{
-        graphics::vulkan::{raii, Device},
+        graphics::vulkan::{raii, VulkanContext},
         trace,
     },
     anyhow::{anyhow, Context, <span class="prelude-ty">Result</span>},
@@ -169,30 +207,32 @@
     SwapchainNeedsRebuild,
 }
 
-<span class="doccomment">/// All Vulkan resources related to the Swapchain - images, views, etc...
+<span class="doccomment">/// The Vulkan swapchain and associated resources.
 </span><span class="kw">pub struct </span>Swapchain {
-    <span class="kw">pub </span>raw: Arc&lt;raii::Swapchain&gt;,
-    <span class="kw">pub </span>extent: vk::Extent2D,
-    <span class="kw">pub </span>format: vk::SurfaceFormatKHR,
-    <span class="kw">pub </span>images: Vec&lt;vk::Image&gt;,
-    <span class="kw">pub </span>image_views: Vec&lt;raii::ImageView&gt;,
-    device: Arc&lt;Device&gt;,
+    swapchain: Arc&lt;raii::Swapchain&gt;,
+    extent: vk::Extent2D,
+    format: vk::SurfaceFormatKHR,
+    images: Vec&lt;vk::Image&gt;,
+    image_views: Vec&lt;raii::ImageView&gt;,
+    cxt: Arc&lt;VulkanContext&gt;,
 }
 
 <span class="kw">impl </span>Swapchain {
-    <span class="kw">pub fn </span>new(
-        device: Arc&lt;Device&gt;,
+    <span class="doccomment">/// Creates a new Vulkan swapchain.
+    </span><span class="kw">pub fn </span>new(
+        cxt: Arc&lt;VulkanContext&gt;,
         framebuffer_size: (u32, u32),
         previous_swapchain: <span class="prelude-ty">Option</span>&lt;vk::SwapchainKHR&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="self">Self</span>&gt;&gt; {
-        <span class="kw">let </span>(raw, extent, format) = settings::create_swapchain(
-            <span class="kw-2">&amp;</span>device,
+        <span class="kw">let </span>(swapchain, extent, format) = settings::create_swapchain(
+            <span class="kw-2">&amp;</span>cxt,
             framebuffer_size,
             previous_swapchain,
         )
         .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to initialize swapchain!"</span>))<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>images = <span class="kw">unsafe </span>{ raw.ext.get_swapchain_images(raw.raw)<span class="question-mark">? </span>};
+        <span class="kw">let </span>images =
+            <span class="kw">unsafe </span>{ swapchain.ext.get_swapchain_images(swapchain.raw)<span class="question-mark">? </span>};
         <span class="kw">let </span><span class="kw-2">mut </span>image_views = <span class="macro">vec!</span>[];
         <span class="kw">for </span>image <span class="kw">in </span><span class="kw-2">&amp;</span>images {
             <span class="kw">let </span>create_info = vk::ImageViewCreateInfo {
@@ -209,29 +249,59 @@
                 },
                 ..Default::default()
             };
-            image_views.push(raii::ImageView::new(
-                device.logical_device.clone(),
-                <span class="kw-2">&amp;</span>create_info,
-            )<span class="question-mark">?</span>);
+            image_views
+                .push(raii::ImageView::new(cxt.device.clone(), <span class="kw-2">&amp;</span>create_info)<span class="question-mark">?</span>);
         }
 
         <span class="prelude-val">Ok</span>(Arc::new(<span class="self">Self </span>{
-            raw,
+            swapchain,
             extent,
             format,
             images,
             image_views,
-            device,
+            cxt,
         }))
     }
 
-    <span class="kw">pub fn </span>acquire_image(
+    <span class="doccomment">/// Returns the non-owning Vulkan swapchain handle.
+    </span><span class="kw">pub fn </span>raw(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; vk::SwapchainKHR {
+        <span class="self">self</span>.swapchain.raw
+    }
+
+    <span class="doccomment">/// Returns the Swapchain's current extent.
+    </span><span class="kw">pub fn </span>extent(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; vk::Extent2D {
+        <span class="self">self</span>.extent
+    }
+
+    <span class="doccomment">/// Returns the Swapchain's image format.
+    </span><span class="kw">pub fn </span>format(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; vk::Format {
+        <span class="self">self</span>.format.format
+    }
+
+    <span class="doccomment">/// Returns the Swapchain's image handles.
+    </span><span class="kw">pub fn </span>images(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[vk::Image] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.images
+    }
+
+    <span class="doccomment">/// Returns the Swapchain's image views.
+    ///
+    /// Views are paired 1-1 with images of the same index.
+    </span><span class="kw">pub fn </span>image_views(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[raii::ImageView] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.image_views
+    }
+
+    <span class="doccomment">/// Acquires the index for the next swapchain image.
+    ///
+    /// * `image_ready_semaphore` - A Vulkan semaphore to signal when the
+    ///   swapchain image is ready. This can be `vk::Semaphore::null()` if not
+    ///   required.
+    </span><span class="kw">pub fn </span>acquire_image(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         image_ready_semaphore: vk::Semaphore,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;AcquireImageStatus&gt; {
         <span class="kw">let </span>result = <span class="kw">unsafe </span>{
-            <span class="self">self</span>.raw.ext.acquire_next_image(
-                <span class="self">self</span>.raw.raw,
+            <span class="self">self</span>.swapchain.ext.acquire_next_image(
+                <span class="self">self</span>.swapchain.raw,
                 u64::MAX,
                 image_ready_semaphore,
                 vk::Fence::null(),
@@ -251,7 +321,13 @@
         }
     }
 
-    <span class="kw">pub fn </span>present_image(
+    <span class="doccomment">/// Presents the swapchain image.
+    ///
+    /// * `wait_semaphore` - Image presentation waits for the semaphore to be
+    ///   signalled.
+    /// * `image_index` - The index of the swapchain image being presented. This
+    ///   must come from a prior call to [Self::acquire_image].
+    </span><span class="kw">pub fn </span>present_image(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         wait_semaphore: vk::Semaphore,
         image_index: u32,
@@ -260,14 +336,14 @@
             wait_semaphore_count: <span class="number">1</span>,
             p_wait_semaphores: <span class="kw-2">&amp;</span>wait_semaphore,
             swapchain_count: <span class="number">1</span>,
-            p_swapchains: <span class="kw-2">&amp;</span><span class="self">self</span>.raw.raw,
+            p_swapchains: <span class="kw-2">&amp;</span><span class="self">self</span>.swapchain.raw,
             p_image_indices: <span class="kw-2">&amp;</span>image_index,
             ..Default::default()
         };
         <span class="kw">let </span>result = <span class="kw">unsafe </span>{
-            <span class="self">self</span>.raw
+            <span class="self">self</span>.swapchain
                 .ext
-                .queue_present(<span class="self">self</span>.device.graphics_queue, <span class="kw-2">&amp;</span>present_info)
+                .queue_present(<span class="self">self</span>.cxt.graphics_queue, <span class="kw-2">&amp;</span>present_info)
         };
         <span class="kw">match </span>result {
             <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) =&gt; <span class="prelude-val">Ok</span>(PresentImageStatus::Queued),
@@ -284,7 +360,7 @@
 <span class="kw">impl </span>std::fmt::Debug <span class="kw">for </span>Swapchain {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
         f.debug_struct(<span class="string">"Swapchain"</span>)
-            .field(<span class="string">"raw"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.raw)
+            .field(<span class="string">"swapchain"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.swapchain)
             .field(<span class="string">"extent"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.extent)
             .field(<span class="string">"format"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.format)
             .field(<span class="string">"images"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.images)

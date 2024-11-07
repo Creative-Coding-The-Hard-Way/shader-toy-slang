@@ -148,7 +148,7 @@
     <span class="self">self</span>::{frame_data::FrameData, static_textures::StaticTextures},
     <span class="kw">crate</span>::{
         graphics::{
-            vulkan::{raii, Device, Frame, FramesInFlight, Swapchain},
+            vulkan::{raii, Frame, FramesInFlight, Swapchain, VulkanContext},
             Texture,
         },
         trace,
@@ -168,7 +168,7 @@
     pipeline_layout: raii::PipelineLayout,
     frame_data: FrameData&lt;UserDataT&gt;,
     static_textures: StaticTextures,
-    device: Arc&lt;Device&gt;,
+    cxt: Arc&lt;VulkanContext&gt;,
 }
 
 <span class="attr">#[bon]
@@ -180,30 +180,30 @@
     /// source.
     </span><span class="attr">#[builder]
     </span><span class="kw">pub fn </span>new(
-        device: Arc&lt;Device&gt;,
-        fragment_shader_source: <span class="kw-2">&amp;</span>[u8],
+        cxt: Arc&lt;VulkanContext&gt;,
+        fragment_shader: <span class="kw-2">&amp;</span>raii::ShaderModule,
         frames_in_flight: <span class="kw-2">&amp;</span>FramesInFlight,
         swapchain: <span class="kw-2">&amp;</span>Swapchain,
         render_pass: <span class="kw-2">&amp;</span>raii::RenderPass,
         textures: Vec&lt;Texture&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>frame_data = FrameData::new(<span class="kw-2">&amp;</span>device, <span class="kw-2">&amp;</span>frames_in_flight)
+        <span class="kw">let </span>frame_data = FrameData::new(<span class="kw-2">&amp;</span>cxt, frames_in_flight)
             .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to initialize per-frame data!"</span>))<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>static_textures = StaticTextures::new(<span class="kw-2">&amp;</span>device, textures)
+        <span class="kw">let </span>static_textures = StaticTextures::new(<span class="kw-2">&amp;</span>cxt, textures)
             .with_context(<span class="macro">trace!</span>(
                 <span class="string">"Unable to create static textures resources!"
             </span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>(pipeline, pipeline_layout) = pipeline::create_pipeline(
-            <span class="kw-2">&amp;</span>device,
+            <span class="kw-2">&amp;</span>cxt,
             swapchain,
             render_pass,
             <span class="kw-2">&amp;</span>[
                 frame_data.descriptor_set_layout(),
                 static_textures.descriptor_set_layout(),
             ],
-            fragment_shader_source,
+            fragment_shader,
         )<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
@@ -211,7 +211,7 @@
             pipeline_layout,
             frame_data,
             static_textures,
-            device,
+            cxt,
         })
     }
 
@@ -226,17 +226,17 @@
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         swapchain: <span class="kw-2">&amp;</span>Swapchain,
         render_pass: <span class="kw-2">&amp;</span>raii::RenderPass,
-        fragment_shader_source: <span class="kw-2">&amp;</span>[u8],
+        fragment_shader: <span class="kw-2">&amp;</span>raii::ShaderModule,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>(pipeline, pipeline_layout) = pipeline::create_pipeline(
-            <span class="kw-2">&amp;</span><span class="self">self</span>.device,
+            <span class="kw-2">&amp;</span><span class="self">self</span>.cxt,
             swapchain,
             render_pass,
             <span class="kw-2">&amp;</span>[
                 <span class="self">self</span>.frame_data.descriptor_set_layout(),
                 <span class="self">self</span>.static_textures.descriptor_set_layout(),
             ],
-            fragment_shader_source,
+            fragment_shader,
         )
         .with_context(<span class="macro">trace!</span>(
             <span class="string">"Error while rebuilding the graphics pipeline!"
@@ -260,12 +260,12 @@
         // frames-in-flight which ensures that all graphics commands for
         // this frame are complete
         </span><span class="kw">unsafe </span>{
-            <span class="self">self</span>.device.cmd_bind_pipeline(
+            <span class="self">self</span>.cxt.cmd_bind_pipeline(
                 frame.command_buffer(),
                 vk::PipelineBindPoint::GRAPHICS,
                 <span class="self">self</span>.pipeline.raw,
             );
-            <span class="self">self</span>.device.cmd_bind_descriptor_sets(
+            <span class="self">self</span>.cxt.cmd_bind_descriptor_sets(
                 frame.command_buffer(),
                 vk::PipelineBindPoint::GRAPHICS,
                 <span class="self">self</span>.pipeline_layout.raw,
@@ -276,7 +276,7 @@
                 ],
                 <span class="kw-2">&amp;</span>[],
             );
-            <span class="self">self</span>.device.cmd_draw(frame.command_buffer(), <span class="number">6</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>);
+            <span class="self">self</span>.cxt.cmd_draw(frame.command_buffer(), <span class="number">6</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>);
         }
 
         <span class="prelude-val">Ok</span>(())

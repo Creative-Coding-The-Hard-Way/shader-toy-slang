@@ -109,12 +109,9 @@
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
 <a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">crate</span>::{
-        graphics::vulkan::{raii, Device},
+        graphics::vulkan::{raii, VulkanContext},
         trace,
     },
     anyhow::{Context, <span class="prelude-ty">Result</span>},
@@ -128,41 +125,38 @@
     command_pool: raii::CommandPool,
     command_buffer: vk::CommandBuffer,
     fence: raii::Fence,
-    device: Arc&lt;Device&gt;,
+    cxt: Arc&lt;VulkanContext&gt;,
 }
 
 <span class="kw">impl </span>SyncCommands {
-    <span class="kw">pub fn </span>new(device: Arc&lt;Device&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+    <span class="kw">pub fn </span>new(cxt: Arc&lt;VulkanContext&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>command_pool = raii::CommandPool::new(
-            device.logical_device.clone(),
+            cxt.device.clone(),
             <span class="kw-2">&amp;</span>vk::CommandPoolCreateInfo {
                 flags: vk::CommandPoolCreateFlags::TRANSIENT,
-                queue_family_index: device.graphics_queue_family_index,
+                queue_family_index: cxt.graphics_queue_family_index,
                 ..Default::default()
             },
         )
         .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to create command pool!"</span>))<span class="question-mark">?</span>;
         <span class="kw">let </span>command_buffer = <span class="kw">unsafe </span>{
-            device
-                .allocate_command_buffers(<span class="kw-2">&amp;</span>vk::CommandBufferAllocateInfo {
-                    command_pool: command_pool.raw,
-                    level: vk::CommandBufferLevel::PRIMARY,
-                    command_buffer_count: <span class="number">1</span>,
-                    ..Default::default()
-                })
-                .with_context(<span class="macro">trace!</span>(
-                    <span class="string">"Unable to allocate the command buffer!"
-                </span>))<span class="question-mark">?</span>[<span class="number">0</span>]
+            cxt.allocate_command_buffers(<span class="kw-2">&amp;</span>vk::CommandBufferAllocateInfo {
+                command_pool: command_pool.raw,
+                level: vk::CommandBufferLevel::PRIMARY,
+                command_buffer_count: <span class="number">1</span>,
+                ..Default::default()
+            })
+            .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to allocate the command buffer!"</span>))<span class="question-mark">?</span>[<span class="number">0</span>]
         };
         <span class="kw">let </span>fence = raii::Fence::new(
-            device.logical_device.clone(),
+            cxt.device.clone(),
             <span class="kw-2">&amp;</span>vk::FenceCreateInfo::default(),
         )<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             command_pool,
             command_buffer,
             fence,
-            device,
+            cxt,
         })
     }
 
@@ -171,14 +165,14 @@
         build_commands: <span class="kw">impl </span>FnOnce(vk::CommandBuffer) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">unsafe </span>{
-            <span class="self">self</span>.device
+            <span class="self">self</span>.cxt
                 .reset_command_pool(
                     <span class="self">self</span>.command_pool.raw,
                     vk::CommandPoolResetFlags::empty(),
                 )
                 .with_context(<span class="macro">trace!</span>(<span class="string">"Error while resetting command pool!"</span>))<span class="question-mark">?</span>;
 
-            <span class="self">self</span>.device.begin_command_buffer(
+            <span class="self">self</span>.cxt.begin_command_buffer(
                 <span class="self">self</span>.command_buffer,
                 <span class="kw-2">&amp;</span>vk::CommandBufferBeginInfo {
                     flags: vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT,
@@ -192,13 +186,13 @@
         </span>))<span class="question-mark">?</span>;
 
         <span class="kw">unsafe </span>{
-            <span class="self">self</span>.device
+            <span class="self">self</span>.cxt
                 .end_command_buffer(<span class="self">self</span>.command_buffer)
                 .with_context(<span class="macro">trace!</span>(<span class="string">"Error while ending command buffer!"</span>))<span class="question-mark">?</span>;
 
-            <span class="self">self</span>.device
+            <span class="self">self</span>.cxt
                 .queue_submit(
-                    <span class="self">self</span>.device.graphics_queue,
+                    <span class="self">self</span>.cxt.graphics_queue,
                     <span class="kw-2">&amp;</span>[vk::SubmitInfo {
                         wait_semaphore_count: <span class="number">0</span>,
                         p_wait_semaphores: std::ptr::null(),
@@ -213,12 +207,12 @@
                 )
                 .with_context(<span class="macro">trace!</span>(<span class="string">"Error while submitting commands!"</span>))<span class="question-mark">?</span>;
 
-            <span class="self">self</span>.device
+            <span class="self">self</span>.cxt
                 .wait_for_fences(<span class="kw-2">&amp;</span>[<span class="self">self</span>.fence.raw], <span class="bool-val">true</span>, u64::MAX)
                 .with_context(<span class="macro">trace!</span>(
                     <span class="string">"Error while waiting for commands to finish!"
                 </span>))<span class="question-mark">?</span>;
-            <span class="self">self</span>.device
+            <span class="self">self</span>.cxt
                 .reset_fences(<span class="kw-2">&amp;</span>[<span class="self">self</span>.fence.raw])
                 .with_context(<span class="macro">trace!</span>(<span class="string">"Error while resetting fences!"</span>))<span class="question-mark">?</span>;
         }

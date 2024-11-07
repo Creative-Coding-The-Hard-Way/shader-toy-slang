@@ -147,11 +147,14 @@
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
 <a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">crate</span>::{
         graphics::{
             particles::Particle,
-            vulkan::{raii, CPUBuffer, Device, FramesInFlight, UniformBuffer},
+            vulkan::{
+                raii, CPUBuffer, FramesInFlight, UniformBuffer, VulkanContext,
+            },
         },
         trace,
     },
@@ -161,7 +164,7 @@
 };
 
 <span class="kw">pub fn </span>update_descriptor_sets&lt;T: Copy + Sized&gt;(
-    device: <span class="kw-2">&amp;</span>Device,
+    cxt: <span class="kw-2">&amp;</span>VulkanContext,
     descriptor_sets: <span class="kw-2">&amp;</span>[vk::DescriptorSet],
     uniform_buffer: <span class="kw-2">&amp;</span>UniformBuffer&lt;T&gt;,
     particles_buffer: <span class="kw-2">&amp;</span>CPUBuffer&lt;Particle&gt;,
@@ -215,13 +218,13 @@
         })
         .collect::&lt;Vec&lt;vk::WriteDescriptorSet&gt;&gt;();
     <span class="kw">unsafe </span>{
-        device.update_descriptor_sets(<span class="kw-2">&amp;</span>writes, <span class="kw-2">&amp;</span>[]);
+        cxt.update_descriptor_sets(<span class="kw-2">&amp;</span>writes, <span class="kw-2">&amp;</span>[]);
     }
     <span class="prelude-val">Ok</span>(())
 }
 
 <span class="kw">pub fn </span>allocate_descriptor_sets(
-    device: <span class="kw-2">&amp;</span>Device,
+    cxt: <span class="kw-2">&amp;</span>VulkanContext,
     descriptor_pool: <span class="kw-2">&amp;</span>raii::DescriptorPool,
     descriptor_set_layout: <span class="kw-2">&amp;</span>raii::DescriptorSetLayout,
     frames_in_flight: <span class="kw-2">&amp;</span>FramesInFlight,
@@ -230,14 +233,13 @@
         .map(|<span class="kw">_</span>| descriptor_set_layout.raw)
         .collect::&lt;Vec&lt;vk::DescriptorSetLayout&gt;&gt;();
     <span class="kw">unsafe </span>{
-        device
-            .allocate_descriptor_sets(<span class="kw-2">&amp;</span>vk::DescriptorSetAllocateInfo {
-                descriptor_pool: descriptor_pool.raw,
-                descriptor_set_count: frames_in_flight.frame_count() <span class="kw">as </span>u32,
-                p_set_layouts: layouts.as_ptr(),
-                ..Default::default()
-            })
-            .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to allocated descriptor sets!"</span>))
+        cxt.allocate_descriptor_sets(<span class="kw-2">&amp;</span>vk::DescriptorSetAllocateInfo {
+            descriptor_pool: descriptor_pool.raw,
+            descriptor_set_count: frames_in_flight.frame_count() <span class="kw">as </span>u32,
+            p_set_layouts: layouts.as_ptr(),
+            ..Default::default()
+        })
+        .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to allocated descriptor sets!"</span>))
     }
 }
 

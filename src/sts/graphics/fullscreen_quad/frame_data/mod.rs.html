@@ -95,7 +95,7 @@
 <span class="kw">use </span>{
     <span class="kw">crate</span>::{
         graphics::vulkan::{
-            raii, Device, Frame, FramesInFlight, UniformBuffer,
+            raii, Frame, FramesInFlight, UniformBuffer, VulkanContext,
         },
         trace,
     },
@@ -116,11 +116,11 @@
     </span>UserDataT: Sized + Copy + Default,
 {
     <span class="kw">pub fn </span>new(
-        device: <span class="kw-2">&amp;</span>Device,
+        cxt: <span class="kw-2">&amp;</span>VulkanContext,
         frames_in_flight: <span class="kw-2">&amp;</span>FramesInFlight,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>uniform_buffer = UniformBuffer::&lt;UserDataT&gt;::allocate_per_frame(
-            device,
+            cxt,
             frames_in_flight,
         )
         .with_context(<span class="macro">trace!</span>(
@@ -128,18 +128,18 @@
         </span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>descriptor_set_layout =
-            descriptors::create_descriptor_set_layout(device).with_context(
+            descriptors::create_descriptor_set_layout(cxt).with_context(
                 <span class="macro">trace!</span>(<span class="string">"Error while creating the descriptor set layout!"</span>),
             )<span class="question-mark">?</span>;
 
         <span class="kw">let </span>descriptor_pool = descriptors::create_descriptor_pool(
-            device,
+            cxt,
             frames_in_flight.frame_count(),
         )
         .with_context(<span class="macro">trace!</span>(<span class="string">"Error while creating the descriptor pool!"</span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>descriptor_sets = descriptors::allocate_descriptor_sets(
-            device,
+            cxt,
             <span class="kw-2">&amp;</span>descriptor_pool,
             <span class="kw-2">&amp;</span>descriptor_set_layout,
             frames_in_flight.frame_count(),
@@ -147,7 +147,7 @@
         .with_context(<span class="macro">trace!</span>(<span class="string">"Error while allocating descriptor sets!"</span>))<span class="question-mark">?</span>;
 
         descriptors::initialize_descriptor_sets(
-            device,
+            cxt,
             <span class="kw-2">&amp;</span>descriptor_sets,
             <span class="kw-2">&amp;</span>uniform_buffer,
         );

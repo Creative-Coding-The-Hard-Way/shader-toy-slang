@@ -206,12 +206,10 @@
 <a href="#206" id="206">206</a>
 <a href="#207" id="207">207</a>
 <a href="#208" id="208">208</a>
-<a href="#209" id="209">209</a>
-<a href="#210" id="210">210</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">super</span>::vulkan::raii,
     <span class="kw">crate</span>::{
-        graphics::vulkan::{Device, OwnedBlock, SyncCommands},
+        graphics::vulkan::{OwnedBlock, SyncCommands, VulkanContext},
         trace,
     },
     anyhow::{Context, <span class="prelude-ty">Result</span>},
@@ -230,18 +228,18 @@
 </span><span class="kw">pub struct </span>TextureLoader {
     sync_commands: SyncCommands,
     transfer_buffer: TransferBuffer,
-    device: Arc&lt;Device&gt;,
+    cxt: Arc&lt;VulkanContext&gt;,
 }
 
 <span class="kw">impl </span>TextureLoader {
     <span class="doccomment">/// Creates the texture loader and underlying resources.
-    </span><span class="kw">pub fn </span>new(device: Arc&lt;Device&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+    </span><span class="kw">pub fn </span>new(cxt: Arc&lt;VulkanContext&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
-            sync_commands: SyncCommands::new(device.clone())
+            sync_commands: SyncCommands::new(cxt.clone())
                 .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to create sync commands!"</span>))<span class="question-mark">?</span>,
-            transfer_buffer: TransferBuffer::new(device.clone(), <span class="number">8</span>)
+            transfer_buffer: TransferBuffer::new(cxt.clone(), <span class="number">8</span>)
                 .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to create transfer buffer!"</span>))<span class="question-mark">?</span>,
-            device,
+            cxt,
         })
     }
 
@@ -259,7 +257,7 @@
         <span class="kw">let </span>(width, height) = image_file.dimensions();
 
         <span class="kw">let </span>(block, image) = OwnedBlock::allocate_image(
-            <span class="self">self</span>.device.allocator.clone(),
+            <span class="self">self</span>.cxt.allocator.clone(),
             <span class="kw-2">&amp;</span>vk::ImageCreateInfo {
                 flags: vk::ImageCreateFlags::empty(),
                 image_type: vk::ImageType::TYPE_2D,
@@ -277,9 +275,7 @@
                     | vk::ImageUsageFlags::SAMPLED,
                 sharing_mode: vk::SharingMode::EXCLUSIVE,
                 queue_family_index_count: <span class="number">1</span>,
-                p_queue_family_indices: <span class="kw-2">&amp;</span><span class="self">self
-                    </span>.device
-                    .graphics_queue_family_index,
+                p_queue_family_indices: <span class="kw-2">&amp;</span><span class="self">self</span>.cxt.graphics_queue_family_index,
                 initial_layout: vk::ImageLayout::UNDEFINED,
                 ..Default::default()
             },
@@ -296,11 +292,11 @@
                 </span>))<span class="question-mark">?</span>;
         }
 
-        <span class="kw">let </span>device = <span class="kw-2">&amp;</span><span class="self">self</span>.device;
+        <span class="kw">let </span>cxt = <span class="kw-2">&amp;</span><span class="self">self</span>.cxt;
         <span class="kw">let </span>transfer_buffer = <span class="self">self</span>.transfer_buffer.buffer();
         <span class="self">self</span>.sync_commands
             .submit_and_wait(|cmd| <span class="kw">unsafe </span>{
-                device.cmd_pipeline_barrier(
+                cxt.cmd_pipeline_barrier(
                     cmd,
                     vk::PipelineStageFlags::TOP_OF_PIPE,
                     vk::PipelineStageFlags::TRANSFER,
@@ -313,10 +309,10 @@
                         old_layout: vk::ImageLayout::UNDEFINED,
                         new_layout: vk::ImageLayout::TRANSFER_DST_OPTIMAL,
                         src_queue_family_index: <span class="self">self
-                            </span>.device
+                            </span>.cxt
                             .graphics_queue_family_index,
                         dst_queue_family_index: <span class="self">self
-                            </span>.device
+                            </span>.cxt
                             .graphics_queue_family_index,
                         image: image.raw,
                         subresource_range: vk::ImageSubresourceRange {
@@ -329,7 +325,7 @@
                         ..Default::default()
                     }],
                 );
-                device.cmd_copy_buffer_to_image(
+                cxt.cmd_copy_buffer_to_image(
                     cmd,
                     transfer_buffer,
                     image.raw,
@@ -352,7 +348,7 @@
                         },
                     }],
                 );
-                device.cmd_pipeline_barrier(
+                cxt.cmd_pipeline_barrier(
                     cmd,
                     vk::PipelineStageFlags::TRANSFER,
                     vk::PipelineStageFlags::BOTTOM_OF_PIPE,
@@ -365,10 +361,10 @@
                         old_layout: vk::ImageLayout::TRANSFER_DST_OPTIMAL,
                         new_layout: vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL,
                         src_queue_family_index: <span class="self">self
-                            </span>.device
+                            </span>.cxt
                             .graphics_queue_family_index,
                         dst_queue_family_index: <span class="self">self
-                            </span>.device
+                            </span>.cxt
                             .graphics_queue_family_index,
                         image: image.raw,
                         subresource_range: vk::ImageSubresourceRange {
@@ -389,7 +385,7 @@
             </span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>image_view = raii::ImageView::new(
-            device.logical_device.clone(),
+            cxt.device.clone(),
             <span class="kw-2">&amp;</span>vk::ImageViewCreateInfo {
                 flags: vk::ImageViewCreateFlags::empty(),
                 image: image.raw,

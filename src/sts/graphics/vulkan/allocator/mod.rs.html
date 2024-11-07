@@ -235,7 +235,7 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>memory_properties = <span class="kw">unsafe </span>{
             logical_device
-                .instance
+                .ash
                 .get_physical_device_memory_properties(physical_device)
         };
         <span class="kw">let </span>(handle, client) = <span class="self">Self</span>::spawn_allocator_thread(

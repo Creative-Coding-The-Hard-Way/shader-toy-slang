@@ -6,7 +6,7 @@ shader with a uniform buffer bound at 0,0.</p>
     &amp;mut self,
     swapchain: &amp;<a class="struct" href="vulkan/struct.Swapchain.html" title="struct sts::graphics::vulkan::Swapchain">Swapchain</a>,
     render_pass: &amp;<a class="struct" href="vulkan/raii/struct.RenderPass.html" title="struct sts::graphics::vulkan::raii::RenderPass">RenderPass</a>,
-    fragment_shader_source: &amp;[<a class="primitive" href="https://doc.rust-lang.org/1.82.0/std/primitive.u8.html">u8</a>],
+    fragment_shader: &amp;<a class="struct" href="vulkan/raii/struct.ShaderModule.html" title="struct sts::graphics::vulkan::raii::ShaderModule">ShaderModule</a>,
 ) -&gt; <a class="type" href="../../anyhow/type.Result.html" title="type anyhow::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.82.0/std/primitive.unit.html">()</a>&gt;</h4></section></summary><div class="docblock"><p>Rebuilds the graphics pipeline using the provided fragment shader
 source.</p>
 <h5 id="warning"><a class="doc-anchor" href="#warning">§</a>WARNING</h5>

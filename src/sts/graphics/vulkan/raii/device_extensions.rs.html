@@ -134,7 +134,7 @@
         device: Arc&lt;raii::Device&gt;,
         create_info: <span class="kw-2">&amp;</span>vk::SwapchainCreateInfoKHR,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="self">Self</span>&gt;&gt; {
-        <span class="kw">let </span>ext = ash::khr::swapchain::Device::new(<span class="kw-2">&amp;</span>device.instance, <span class="kw-2">&amp;</span>device);
+        <span class="kw">let </span>ext = ash::khr::swapchain::Device::new(<span class="kw-2">&amp;</span>device.ash, <span class="kw-2">&amp;</span>device);
         <span class="kw">let </span>raw = <span class="kw">unsafe </span>{
             ext.create_swapchain(create_info, <span class="prelude-val">None</span>)
                 .with_context(<span class="macro">trace!</span>(<span class="string">"Error while creating swapchain!"</span>))<span class="question-mark">?

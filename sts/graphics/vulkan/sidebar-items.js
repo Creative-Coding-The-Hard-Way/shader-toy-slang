@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["AcquireImageStatus","FrameStatus","PresentImageStatus"],"mod":["raii"],"struct":["Allocator","Block","CPUBuffer","Device","Frame","FramesInFlight","Instance","OwnedBlock","Swapchain","SyncCommands","UniformBuffer"]};
+window.SIDEBAR_ITEMS = {"enum":["AcquireImageStatus","FrameStatus","PresentImageStatus"],"fn":["compile_slang","spirv_words"],"mod":["raii"],"struct":["Allocator","Block","CPUBuffer","Frame","FramesInFlight","Instance","OwnedBlock","Swapchain","SyncCommands","UniformBuffer","VulkanContext"]};

@@ -284,10 +284,23 @@
 <a href="#284" id="284">284</a>
 <a href="#285" id="285">285</a>
 <a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">crate</span>::{
         graphics::vulkan::{
-            raii, AcquireImageStatus, Device, PresentImageStatus, Swapchain,
+            raii, AcquireImageStatus, PresentImageStatus, Swapchain,
+            VulkanContext,
         },
         trace,
     },
@@ -308,7 +321,9 @@
     </span>SwapchainNeedsRebuild,
 }
 
-<span class="attr">#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+<span class="doccomment">/// A Frame is guaranteed to be synchronized such that no two frames with the
+/// same frame_index can be in-flight on the GPU at the same time.
+</span><span class="attr">#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>Frame {
     command_buffer: vk::CommandBuffer,
     swapchain_image_index: u32,
@@ -338,23 +353,34 @@
     command_buffer: vk::CommandBuffer,
 }
 
-<span class="doccomment">/// All of the synchronization primitives required to manage multiple frames
-/// in flight.
+<span class="doccomment">/// The primary synchronization mechanism for managing multiple in-flight
+/// frames.
+///
+/// There can be 1-N frames in flight for the application, decided at the time
+/// of construction. This is independent from the number of swapchain images,
+/// though there is little-to-no benefit to having more frames in flight than
+/// swapchain images.
+///
+/// Synchronization is performed such that when [Self::start_frame] returns, all
+/// commands submitted to that frame are guaranteed to be complete. Thus, the
+/// application can keep N copies of a resource and use the frame_index to
+/// prevent synchronization errors.
 </span><span class="kw">pub struct </span>FramesInFlight {
     frames: Vec&lt;FrameSync&gt;,
     frame_index: usize,
-    device: Arc&lt;Device&gt;,
+    cxt: Arc&lt;VulkanContext&gt;,
 }
 
 <span class="kw">impl </span>FramesInFlight {
-    <span class="kw">pub fn </span>new(device: Arc&lt;Device&gt;, frame_count: usize) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+    <span class="doccomment">/// Creates a new instance with `frame_count` frames.
+    </span><span class="kw">pub fn </span>new(cxt: Arc&lt;VulkanContext&gt;, frame_count: usize) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>frames = Vec::with_capacity(frame_count);
         <span class="kw">for </span>index <span class="kw">in </span><span class="number">0</span>..frame_count {
             <span class="kw">let </span>command_pool = raii::CommandPool::new(
-                device.logical_device.clone(),
+                cxt.device.clone(),
                 <span class="kw-2">&amp;</span>vk::CommandPoolCreateInfo {
                     flags: vk::CommandPoolCreateFlags::TRANSIENT,
-                    queue_family_index: device.graphics_queue_family_index,
+                    queue_family_index: cxt.graphics_queue_family_index,
                     ..Default::default()
                 },
             )
@@ -363,18 +389,16 @@
                 index
             ))<span class="question-mark">?</span>;
             <span class="kw">let </span>command_buffer = <span class="kw">unsafe </span>{
-                device.allocate_command_buffers(
-                    <span class="kw-2">&amp;</span>vk::CommandBufferAllocateInfo {
-                        command_pool: command_pool.raw,
-                        level: vk::CommandBufferLevel::PRIMARY,
-                        command_buffer_count: <span class="number">1</span>,
-                        ..Default::default()
-                    },
-                )<span class="question-mark">?</span>[<span class="number">0</span>]
+                cxt.allocate_command_buffers(<span class="kw-2">&amp;</span>vk::CommandBufferAllocateInfo {
+                    command_pool: command_pool.raw,
+                    level: vk::CommandBufferLevel::PRIMARY,
+                    command_buffer_count: <span class="number">1</span>,
+                    ..Default::default()
+                })<span class="question-mark">?</span>[<span class="number">0</span>]
             };
             frames.push(FrameSync {
                 swapchain_image_acquired: raii::Semaphore::new(
-                    device.logical_device.clone(),
+                    cxt.device.clone(),
                     <span class="kw-2">&amp;</span>vk::SemaphoreCreateInfo::default(),
                 )
                 .with_context(<span class="macro">trace!</span>(
@@ -382,7 +406,7 @@
                     index
                 ))<span class="question-mark">?</span>,
                 color_attachment_written: raii::Semaphore::new(
-                    device.logical_device.clone(),
+                    cxt.device.clone(),
                     <span class="kw-2">&amp;</span>vk::SemaphoreCreateInfo::default(),
                 )
                 .with_context(<span class="macro">trace!</span>(
@@ -390,7 +414,7 @@
                     index
                 ))<span class="question-mark">?</span>,
                 graphics_commands_complete: raii::Fence::new(
-                    device.logical_device.clone(),
+                    cxt.device.clone(),
                     <span class="kw-2">&amp;</span>vk::FenceCreateInfo {
                         flags: vk::FenceCreateFlags::SIGNALED,
                         ..Default::default()
@@ -407,7 +431,7 @@
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             frames,
             frame_index: <span class="number">0</span>,
-            device,
+            cxt,
         })
     }
 
@@ -416,14 +440,15 @@
         <span class="self">self</span>.frames.len()
     }
 
-    <span class="kw">pub fn </span>wait_for_all_frames_to_complete(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="doccomment">/// Blocks until all submitted commands for all frames have completed.
+    </span><span class="kw">pub fn </span>wait_for_all_frames_to_complete(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="kw">let </span>fences = <span class="self">self
             </span>.frames
             .iter()
             .map(|frame_sync| frame_sync.graphics_commands_complete.raw)
             .collect::&lt;Vec&lt;vk::Fence&gt;&gt;();
         <span class="kw">unsafe </span>{
-            <span class="self">self</span>.device
+            <span class="self">self</span>.cxt
                 .wait_for_fences(<span class="kw-2">&amp;</span>fences, <span class="bool-val">true</span>, u64::MAX)
                 .with_context(<span class="macro">trace!</span>(
                     <span class="string">"Error while waiting for all frames to finish rendering!"
@@ -439,12 +464,10 @@
     ///
     /// # Returns
     ///
-    /// - FrameStatus::FrameStarted(vk::CommandBuffer): A non-owning copy of the
-    ///   graphics command buffer for the current frame. The caller does not
-    ///   need to call begin_command_buffer or end_command_buffer, both are
-    ///   handled automatically.
-    /// - FrameStatus::SwapchainNeedsRebuild: Indicates that the swapchain needs
-    ///   to be rebuilt before a frame can be acquired.
+    /// A [FrameStatus] containing one of:
+    /// * A [Frame] that must be returned to [Self::present_frame]
+    /// * A flag indicating that the Swapchain needs to be rebuilt before the
+    ///   next frame.
     </span><span class="kw">pub fn </span>start_frame(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         swapchain: <span class="kw-2">&amp;</span>Swapchain,
@@ -456,7 +479,7 @@
         <span class="kw">unsafe </span>{
             <span class="comment">// Wait for the last frame's submission to complete, if its still
             // running.
-            </span><span class="self">self</span>.device
+            </span><span class="self">self</span>.cxt
                 .wait_for_fences(
                     <span class="kw-2">&amp;</span>[frame_sync.graphics_commands_complete.raw],
                     <span class="bool-val">true</span>,
@@ -465,7 +488,7 @@
                 .with_context(<span class="macro">trace!</span>(
                     <span class="string">"Error while waiting for frame's commands to complete!"
                 </span>))<span class="question-mark">?</span>;
-            <span class="self">self</span>.device
+            <span class="self">self</span>.cxt
                 .reset_fences(<span class="kw-2">&amp;</span>[frame_sync.graphics_commands_complete.raw])
                 .with_context(<span class="macro">trace!</span>(
                     <span class="string">"Error while resetting the frame's fence!"
@@ -487,7 +510,7 @@
 
         <span class="comment">// Start the Frame's command buffer.
         </span><span class="kw">unsafe </span>{
-            <span class="self">self</span>.device
+            <span class="self">self</span>.cxt
                 .reset_command_pool(
                     frame_sync.command_pool.raw,
                     vk::CommandPoolResetFlags::empty(),
@@ -495,7 +518,7 @@
                 .with_context(<span class="macro">trace!</span>(
                     <span class="string">"Error while resetting command buffer for frame!"
                 </span>))<span class="question-mark">?</span>;
-            <span class="self">self</span>.device
+            <span class="self">self</span>.cxt
                 .begin_command_buffer(
                     frame_sync.command_buffer,
                     <span class="kw-2">&amp;</span>vk::CommandBufferBeginInfo {
@@ -515,23 +538,24 @@
         }))
     }
 
-    <span class="kw">pub fn </span>present_frame(
+    <span class="doccomment">/// Queues the [Frame]'s command buffer and swapchain presentation.
+    </span><span class="kw">pub fn </span>present_frame(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         swapchain: <span class="kw-2">&amp;</span>Swapchain,
         frame: Frame,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;PresentImageStatus&gt; {
         <span class="kw">let </span>frame_sync = <span class="kw-2">&amp;</span><span class="self">self</span>.frames[frame.frame_index()];
         <span class="kw">unsafe </span>{
-            <span class="self">self</span>.device
+            <span class="self">self</span>.cxt
                 .end_command_buffer(frame_sync.command_buffer)
                 .with_context(<span class="macro">trace!</span>(
                     <span class="string">"Error while ending the command buffer!"
                 </span>))<span class="question-mark">?</span>;
 
             <span class="kw">let </span>wait_stage = vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT;
-            <span class="self">self</span>.device
+            <span class="self">self</span>.cxt
                 .queue_submit(
-                    <span class="self">self</span>.device.graphics_queue,
+                    <span class="self">self</span>.cxt.graphics_queue,
                     <span class="kw-2">&amp;</span>[vk::SubmitInfo {
                         wait_semaphore_count: <span class="number">1</span>,
                         p_wait_semaphores: <span class="kw-2">&amp;</span>frame_sync
@@ -566,7 +590,7 @@
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="self">self</span>.wait_for_all_frames_to_complete().unwrap();
         <span class="kw">unsafe </span>{
-            <span class="self">self</span>.device.device_wait_idle().unwrap();
+            <span class="self">self</span>.cxt.device_wait_idle().unwrap();
         }
     }
 }

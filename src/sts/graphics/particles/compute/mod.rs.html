@@ -135,14 +135,13 @@
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>descriptors;
 <span class="kw">mod </span>pipeline;
 
 <span class="kw">use </span>{
     <span class="kw">crate</span>::graphics::{
         particles::Particle,
-        vulkan::{raii, CPUBuffer, Device, Frame, UniformBuffer},
+        vulkan::{raii, CPUBuffer, Frame, UniformBuffer, VulkanContext},
     },
     anyhow::Result,
     ash::vk,
@@ -160,9 +159,9 @@
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>ParticlesCompute&lt;DataT: Copy + Sized&gt; {
     descriptor_sets: Vec&lt;vk::DescriptorSet&gt;,
-    descriptor_pool: raii::DescriptorPool,
-    descriptor_set_layout: raii::DescriptorSetLayout,
-    device: Arc&lt;Device&gt;,
+    _descriptor_pool: raii::DescriptorPool,
+    _descriptor_set_layout: raii::DescriptorSetLayout,
+    cxt: Arc&lt;VulkanContext&gt;,
     pipeline: raii::Pipeline,
     pipeline_layout: raii::PipelineLayout,
     frame_data: UniformBuffer&lt;DataT&gt;,
@@ -173,45 +172,44 @@
 </span><span class="kw">impl</span>&lt;DataT: Copy + Sized&gt; ParticlesCompute&lt;DataT&gt; {
     <span class="attr">#[builder]
     </span><span class="kw">pub fn </span>new(
-        device: Arc&lt;Device&gt;,
+        cxt: Arc&lt;VulkanContext&gt;,
         particles_buffer: <span class="kw-2">&amp;</span>CPUBuffer&lt;Particle&gt;,
-        kernel_bytes: <span class="kw-2">&amp;</span>[u8],
+        kernel: <span class="kw-2">&amp;</span>raii::ShaderModule,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>frame_data = UniformBuffer::allocate(<span class="kw-2">&amp;</span>device, <span class="number">2</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>frame_data = UniformBuffer::allocate(<span class="kw-2">&amp;</span>cxt, <span class="number">2</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>descriptor_set_layout = descriptors::create_descriptor_set_layout(
-            device.logical_device.clone(),
-        )<span class="question-mark">?</span>;
+        <span class="kw">let </span>descriptor_set_layout =
+            descriptors::create_descriptor_set_layout(cxt.device.clone())<span class="question-mark">?</span>;
         <span class="kw">let </span>descriptor_pool =
-            descriptors::create_descriptor_pool(device.logical_device.clone())<span class="question-mark">?</span>;
+            descriptors::create_descriptor_pool(cxt.device.clone())<span class="question-mark">?</span>;
         <span class="kw">let </span>descriptor_sets = descriptors::allocate_descriptor_sets(
-            <span class="kw-2">&amp;</span>device,
+            <span class="kw-2">&amp;</span>cxt,
             <span class="kw-2">&amp;</span>descriptor_pool,
             <span class="kw-2">&amp;</span>descriptor_set_layout,
         )<span class="question-mark">?</span>;
         descriptors::update_descriptor_sets(
-            <span class="kw-2">&amp;</span>device,
+            <span class="kw-2">&amp;</span>cxt,
             <span class="kw-2">&amp;</span>descriptor_sets,
             particles_buffer,
             <span class="kw-2">&amp;</span>frame_data,
         )<span class="question-mark">?</span>;
 
         <span class="kw">let </span>pipeline_layout = pipeline::create_layout(
-            device.logical_device.clone(),
+            cxt.device.clone(),
             <span class="kw-2">&amp;</span>descriptor_set_layout,
         )<span class="question-mark">?</span>;
 
         <span class="kw">let </span>pipeline = pipeline::create_pipeline(
-            device.logical_device.clone(),
+            cxt.device.clone(),
             <span class="kw-2">&amp;</span>pipeline_layout,
-            kernel_bytes,
+            kernel,
         )<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             descriptor_sets,
-            descriptor_pool,
-            descriptor_set_layout,
-            device,
+            _descriptor_pool: descriptor_pool,
+            _descriptor_set_layout: descriptor_set_layout,
+            cxt,
             pipeline_layout,
             pipeline,
             frame_data,
@@ -226,12 +224,12 @@
     ///   when this function is called.
     </span><span class="kw">pub unsafe fn </span>rebuild_kernel(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        kernel_source: <span class="kw-2">&amp;</span>[u8],
+        kernel: <span class="kw-2">&amp;</span>raii::ShaderModule,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="self">self</span>.pipeline = pipeline::create_pipeline(
-            <span class="self">self</span>.device.logical_device.clone(),
+            <span class="self">self</span>.cxt.device.clone(),
             <span class="kw-2">&amp;</span><span class="self">self</span>.pipeline_layout,
-            kernel_source,
+            kernel,
         )<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
@@ -255,12 +253,12 @@
         };
 
         <span class="kw">unsafe </span>{
-            <span class="self">self</span>.device.cmd_bind_pipeline(
+            <span class="self">self</span>.cxt.cmd_bind_pipeline(
                 frame.command_buffer(),
                 vk::PipelineBindPoint::COMPUTE,
                 <span class="self">self</span>.pipeline.raw,
             );
-            <span class="self">self</span>.device.cmd_bind_descriptor_sets(
+            <span class="self">self</span>.cxt.cmd_bind_descriptor_sets(
                 frame.command_buffer(),
                 vk::PipelineBindPoint::COMPUTE,
                 <span class="self">self</span>.pipeline_layout.raw,
@@ -268,7 +266,7 @@
                 <span class="kw-2">&amp;</span>[current_descriptor_set],
                 <span class="kw-2">&amp;</span>[],
             );
-            <span class="self">self</span>.device
+            <span class="self">self</span>.cxt
                 .cmd_dispatch(frame.command_buffer(), <span class="number">320 </span>/ <span class="number">32</span>, <span class="number">1</span>, <span class="number">1</span>);
         }
         <span class="prelude-val">Ok</span>(())

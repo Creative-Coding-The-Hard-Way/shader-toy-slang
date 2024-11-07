@@ -16,22 +16,34 @@
 <a href="#16" id="16">16</a>
 <a href="#17" id="17">17</a>
 <a href="#18" id="18">18</a>
-</pre></div><pre class="rust"><code><span class="kw">mod </span>allocator;
-<span class="kw">mod </span>cpu_buffer;
-<span class="kw">mod </span>device;
+<a href="#19" id="19">19</a>
+<a href="#20" id="20">20</a>
+<a href="#21" id="21">21</a>
+<a href="#22" id="22">22</a>
+<a href="#23" id="23">23</a>
+<a href="#24" id="24">24</a>
+</pre></div><pre class="rust"><code><span class="doccomment">//! This module defines traits, structs, and functions to interact with a Vulkan
+//! device.
+//!
+//! The primary entrypoint is the [VulkanContext] which can be initialized with
+//! a [glfw::Window].
+
+</span><span class="kw">mod </span>allocator;
+<span class="kw">mod </span>buffers;
+<span class="kw">mod </span>context;
 <span class="kw">mod </span>frames_in_flight;
 <span class="kw">pub mod </span>raii;
+<span class="kw">mod </span>shader_compiler;
 <span class="kw">mod </span>swapchain;
 <span class="kw">mod </span>sync_commands;
-<span class="kw">mod </span>uniform_buffer;
 
 <span class="kw">pub use </span><span class="self">self</span>::{
     allocator::{block::Block, owned_block::OwnedBlock, Allocator},
-    cpu_buffer::CPUBuffer,
-    device::{Device, Instance},
+    buffers::{CPUBuffer, UniformBuffer},
+    context::{Instance, VulkanContext},
     frames_in_flight::{Frame, FrameStatus, FramesInFlight},
+    shader_compiler::{compile_slang, spirv_words},
     swapchain::{AcquireImageStatus, PresentImageStatus, Swapchain},
     sync_commands::SyncCommands,
-    uniform_buffer::UniformBuffer,
 };
 </code></pre></div></section></main></body></html>

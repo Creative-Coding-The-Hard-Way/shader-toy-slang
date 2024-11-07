@@ -167,10 +167,8 @@
 <a href="#167" id="167">167</a>
 <a href="#168" id="168">168</a>
 <a href="#169" id="169">169</a>
-<a href="#170" id="170">170</a>
-<a href="#171" id="171">171</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
-    <span class="kw">crate</span>::graphics::vulkan::{raii, Swapchain},
+    <span class="kw">crate</span>::graphics::vulkan::{raii, spirv_words, Swapchain},
     anyhow::Result,
     ash::vk,
     std::sync::Arc,
@@ -198,12 +196,10 @@
     render_pass: <span class="kw-2">&amp;</span>raii::RenderPass,
     pipeline_layout: <span class="kw-2">&amp;</span>raii::PipelineLayout,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;raii::Pipeline&gt; {
-    <span class="kw">let </span>vertex_source = ash::util::read_spv(<span class="kw-2">&amp;mut </span>std::io::Cursor::new(
-        <span class="macro">include_bytes!</span>(<span class="string">"./shaders/particle.vert.spv"</span>),
-    ))<span class="question-mark">?</span>;
-    <span class="kw">let </span>fragment_source = ash::util::read_spv(<span class="kw-2">&amp;mut </span>std::io::Cursor::new(
-        <span class="macro">include_bytes!</span>(<span class="string">"./shaders/particle.frag.spv"</span>),
-    ))<span class="question-mark">?</span>;
+    <span class="kw">let </span>vertex_source =
+        spirv_words(<span class="macro">include_bytes!</span>(<span class="string">"./shaders/particle.vert.spv"</span>))<span class="question-mark">?</span>;
+    <span class="kw">let </span>fragment_source =
+        spirv_words(<span class="macro">include_bytes!</span>(<span class="string">"./shaders/particle.frag.spv"</span>))<span class="question-mark">?</span>;
 
     <span class="kw">let </span>vertex_module = raii::ShaderModule::new(
         logical_device.clone(),
@@ -256,14 +252,14 @@
     <span class="kw">let </span>viewports = [vk::Viewport {
         x: <span class="number">0.0</span>,
         y: <span class="number">0.0</span>,
-        width: swapchain.extent.width <span class="kw">as </span>f32,
-        height: swapchain.extent.height <span class="kw">as </span>f32,
+        width: swapchain.extent().width <span class="kw">as </span>f32,
+        height: swapchain.extent().height <span class="kw">as </span>f32,
         min_depth: <span class="number">0.0</span>,
         max_depth: <span class="number">1.0</span>,
     }];
     <span class="kw">let </span>scissors = [vk::Rect2D {
         offset: vk::Offset2D { x: <span class="number">0</span>, y: <span class="number">0 </span>},
-        extent: swapchain.extent,
+        extent: swapchain.extent(),
     }];
     <span class="kw">let </span>viewport_state = vk::PipelineViewportStateCreateInfo {
         viewport_count: viewports.len() <span class="kw">as </span>u32,

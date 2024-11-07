@@ -151,26 +151,9 @@
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
 <a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
-<a href="#157" id="157">157</a>
-<a href="#158" id="158">158</a>
-<a href="#159" id="159">159</a>
-<a href="#160" id="160">160</a>
-<a href="#161" id="161">161</a>
-<a href="#162" id="162">162</a>
-<a href="#163" id="163">163</a>
-<a href="#164" id="164">164</a>
-<a href="#165" id="165">165</a>
-<a href="#166" id="166">166</a>
-<a href="#167" id="167">167</a>
-<a href="#168" id="168">168</a>
-<a href="#169" id="169">169</a>
-<a href="#170" id="170">170</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">crate</span>::{
-        graphics::vulkan::{raii, Device, Swapchain},
+        graphics::vulkan::{raii, Swapchain, VulkanContext},
         trace,
     },
     anyhow::{Context, <span class="prelude-ty">Result</span>},
@@ -181,11 +164,11 @@
 /// is compatible with the provided render pass, and uses the provided fragment
 /// shader source.
 </span><span class="kw">pub fn </span>create_pipeline(
-    device: <span class="kw-2">&amp;</span>Device,
+    cxt: <span class="kw-2">&amp;</span>VulkanContext,
     swapchain: <span class="kw-2">&amp;</span>Swapchain,
     render_pass: <span class="kw-2">&amp;</span>raii::RenderPass,
     descriptor_set_layouts: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>raii::DescriptorSetLayout],
-    fragment_shader_source: <span class="kw-2">&amp;</span>[u8],
+    fragment_shader: <span class="kw-2">&amp;</span>raii::ShaderModule,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(raii::Pipeline, raii::PipelineLayout)&gt; {
     <span class="kw">let </span>set_layouts = descriptor_set_layouts
         .iter()
@@ -198,31 +181,16 @@
         p_push_constant_ranges: std::ptr::null(),
         ..Default::default()
     };
-    <span class="kw">let </span>layout = raii::PipelineLayout::new(
-        device.logical_device.clone(),
-        <span class="kw-2">&amp;</span>layout_create_info,
-    )<span class="question-mark">?</span>;
+    <span class="kw">let </span>layout =
+        raii::PipelineLayout::new(cxt.device.clone(), <span class="kw-2">&amp;</span>layout_create_info)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>main = std::ffi::CString::new(<span class="string">"main"</span>)<span class="question-mark">?</span>;
-
-    <span class="kw">let </span>fragment_shader_words =
-        ash::util::read_spv(<span class="kw-2">&amp;mut </span>std::io::Cursor::new(fragment_shader_source))<span class="question-mark">?</span>;
-
-    <span class="kw">let </span>fragment_module = raii::ShaderModule::new(
-        device.logical_device.clone(),
-        <span class="kw-2">&amp;</span>vk::ShaderModuleCreateInfo {
-            code_size: fragment_shader_words.len() * <span class="number">4</span>,
-            p_code: fragment_shader_words.as_ptr(),
-            ..Default::default()
-        },
-    )
-    .with_context(<span class="macro">trace!</span>(<span class="string">"Error while creating fragment shader module!"</span>))<span class="question-mark">?</span>;
 
     <span class="kw">let </span>vertex_shader_words = ash::util::read_spv(<span class="kw-2">&amp;mut </span>std::io::Cursor::new(
         <span class="macro">include_bytes!</span>(<span class="string">"./shaders/fullscreen_quad.vert.spv"</span>),
     ))<span class="question-mark">?</span>;
     <span class="kw">let </span>vertex_module = raii::ShaderModule::new(
-        device.logical_device.clone(),
+        cxt.device.clone(),
         <span class="kw-2">&amp;</span>vk::ShaderModuleCreateInfo {
             code_size: vertex_shader_words.len() * <span class="number">4</span>,
             p_code: vertex_shader_words.as_ptr(),
@@ -238,7 +206,7 @@
         },
         vk::PipelineShaderStageCreateInfo {
             stage: vk::ShaderStageFlags::FRAGMENT,
-            module: fragment_module.raw,
+            module: fragment_shader.raw,
             p_name: main.as_ptr(),
             ..Default::default()
         },
@@ -252,14 +220,14 @@
     <span class="kw">let </span>viewport = vk::Viewport {
         x: <span class="number">0.0</span>,
         y: <span class="number">0.0</span>,
-        width: swapchain.extent.width <span class="kw">as </span>f32,
-        height: swapchain.extent.height <span class="kw">as </span>f32,
+        width: swapchain.extent().width <span class="kw">as </span>f32,
+        height: swapchain.extent().height <span class="kw">as </span>f32,
         min_depth: <span class="number">0.0</span>,
         max_depth: <span class="number">1.0</span>,
     };
     <span class="kw">let </span>scissor = vk::Rect2D {
         offset: vk::Offset2D { x: <span class="number">0</span>, y: <span class="number">0 </span>},
-        extent: swapchain.extent,
+        extent: swapchain.extent(),
     };
     <span class="kw">let </span>viewport_state = vk::PipelineViewportStateCreateInfo {
         viewport_count: <span class="number">1</span>,
@@ -328,13 +296,11 @@
         subpass: <span class="number">0</span>,
         ..Default::default()
     };
-    <span class="kw">let </span>pipeline = raii::Pipeline::new_graphics_pipeline(
-        device.logical_device.clone(),
-        <span class="kw-2">&amp;</span>create_info,
-    )
-    .with_context(<span class="macro">trace!</span>(
-        <span class="string">"Error while creating graphics pipeline for FullscreenQuad!"
-    </span>))<span class="question-mark">?</span>;
+    <span class="kw">let </span>pipeline =
+        raii::Pipeline::new_graphics_pipeline(cxt.device.clone(), <span class="kw-2">&amp;</span>create_info)
+            .with_context(<span class="macro">trace!</span>(
+                <span class="string">"Error while creating graphics pipeline for FullscreenQuad!"
+            </span>))<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>((pipeline, layout))
 }

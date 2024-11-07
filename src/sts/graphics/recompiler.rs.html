@@ -176,23 +176,6 @@
 <a href="#176" id="176">176</a>
 <a href="#177" id="177">177</a>
 <a href="#178" id="178">178</a>
-<a href="#179" id="179">179</a>
-<a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
-<a href="#183" id="183">183</a>
-<a href="#184" id="184">184</a>
-<a href="#185" id="185">185</a>
-<a href="#186" id="186">186</a>
-<a href="#187" id="187">187</a>
-<a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
-<a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! This module provides a tool for automatically recompiling a shader-slang
 //! file any time it changes.
 //!
@@ -200,8 +183,12 @@
 //! part of the Vulkan SDK.
 
 </span><span class="kw">use </span>{
-    <span class="kw">crate</span>::trace,
-    anyhow::{anyhow, bail, Context, <span class="prelude-ty">Result</span>},
+    <span class="kw">super</span>::vulkan::VulkanContext,
+    <span class="kw">crate</span>::{
+        graphics::vulkan::{compile_slang, raii},
+        trace,
+    },
+    anyhow::{anyhow, Context, <span class="prelude-ty">Result</span>},
     notify_debouncer_full::{
         new_debouncer,
         notify::{RecursiveMode, Watcher},
@@ -209,43 +196,40 @@
     },
     std::{
         path::{Path, PathBuf},
-        sync::mpsc::{sync_channel, Receiver, SyncSender, TryRecvError},
+        sync::{
+            mpsc::{sync_channel, Receiver, SyncSender, TryRecvError},
+            Arc,
+        },
         thread::JoinHandle,
         time::Duration,
     },
 };
 
-<span class="doccomment">/// Watches a shader source file and recompiles it with `slangc`.
-///
-/// Note: the recompiler expects to find `slangc` on the system PATH. `slangc`
-/// is included in the Vulkan SDK.
+<span class="doccomment">/// Automatically recompiles a slang source file any time it changes.
 </span><span class="kw">pub struct </span>Recompiler {
-    compiled_shader_bytes: Vec&lt;u8&gt;,
+    shader: raii::ShaderModule,
     compile_thread_join_handle: <span class="prelude-ty">Option</span>&lt;JoinHandle&lt;()&gt;&gt;,
     shutdown_sender: SyncSender&lt;()&gt;,
-    shader_source_receiver: Receiver&lt;Vec&lt;u8&gt;&gt;,
+    shader_receiver: Receiver&lt;raii::ShaderModule&gt;,
 }
 
 <span class="kw">impl </span>Recompiler {
     <span class="doccomment">/// Creates a new recompiler that attempts to compile the given shader
     /// source. Returns an error if the initial compilation fails.
     </span><span class="kw">pub fn </span>new(
+        ctx: Arc&lt;VulkanContext&gt;,
         shader_source_path: <span class="kw-2">&amp;</span>Path,
         additional_watch_paths: <span class="kw-2">&amp;</span>[PathBuf],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span>shader_source_path_str = shader_source_path
-            .to_str()
-            .with_context(<span class="macro">trace!</span>(<span class="string">"File path isn't a valid utf8 string!"</span>))<span class="question-mark">?
-            </span>.to_owned();
-
-        <span class="kw">let </span>initial_compiled_shader_bytes =
-            try_compile_shader_file(<span class="kw-2">&amp;</span>shader_source_path_str)
-                .with_context(<span class="macro">trace!</span>(<span class="string">"Initial build for shader failed!"</span>))<span class="question-mark">?</span>;
+        <span class="kw">let </span>shader = compile_slang(<span class="kw-2">&amp;</span>ctx, shader_source_path)
+            .with_context(<span class="macro">trace!</span>(<span class="string">"Initial build for shader failed!"</span>))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>(shutdown_sender, shutdown_receiver) = sync_channel::&lt;()&gt;(<span class="number">1</span>);
-        <span class="kw">let </span>(source_sender, source_receiver) = sync_channel::&lt;Vec&lt;u8&gt;&gt;(<span class="number">1</span>);
+        <span class="kw">let </span>(source_sender, source_receiver) =
+            sync_channel::&lt;raii::ShaderModule&gt;(<span class="number">1</span>);
 
         <span class="kw">let </span>compile_thread_join_handle = spawn_compiler_thread(
+            ctx,
             shader_source_path,
             additional_watch_paths,
             source_sender,
@@ -254,16 +238,16 @@
         .with_context(<span class="macro">trace!</span>(<span class="string">"Error while spawning the compiler thread!"</span>))<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
-            compiled_shader_bytes: initial_compiled_shader_bytes,
+            shader,
             compile_thread_join_handle: <span class="prelude-val">Some</span>(compile_thread_join_handle),
             shutdown_sender,
-            shader_source_receiver: source_receiver,
+            shader_receiver: source_receiver,
         })
     }
 
     <span class="doccomment">/// Returns the most up-to-date copy of the shader's compiled SPIR-V bytes.
-    </span><span class="kw">pub fn </span>current_shader_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.compiled_shader_bytes
+    </span><span class="kw">pub fn </span>shader(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>raii::ShaderModule {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.shader
     }
 
     <span class="doccomment">/// Checks for an updated copy of the compiled source code.
@@ -273,9 +257,9 @@
     /// - true: when there was an updated version of the source available
     /// - false: there was no pending update
     </span><span class="kw">pub fn </span>check_for_update(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-        <span class="kw">match </span><span class="self">self</span>.shader_source_receiver.try_recv() {
-            <span class="prelude-val">Ok</span>(new_shader_bytes) =&gt; {
-                <span class="self">self</span>.compiled_shader_bytes = new_shader_bytes;
+        <span class="kw">match </span><span class="self">self</span>.shader_receiver.try_recv() {
+            <span class="prelude-val">Ok</span>(new_shader) =&gt; {
+                <span class="self">self</span>.shader = new_shader;
                 <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
             }
             <span class="prelude-val">Err</span>(TryRecvError::Empty) =&gt; <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>),
@@ -301,24 +285,28 @@
 }
 
 <span class="kw">fn </span>spawn_compiler_thread(
+    ctx: Arc&lt;VulkanContext&gt;,
     shader_source_path: <span class="kw-2">&amp;</span>Path,
     additional_watch_paths: <span class="kw-2">&amp;</span>[PathBuf],
-    source_sender: SyncSender&lt;Vec&lt;u8&gt;&gt;,
+    shader_sender: SyncSender&lt;raii::ShaderModule&gt;,
     shutdown_receiver: Receiver&lt;()&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;JoinHandle&lt;()&gt;&gt; {
     <span class="kw">let </span>additional_watch_paths = additional_watch_paths.to_vec();
     <span class="kw">let </span>shader_source_path = shader_source_path.to_owned();
-    <span class="kw">let </span>shader_source_path_str = shader_source_path.display().to_string();
+
     <span class="kw">let </span>compile_thread_join_handle = std::thread::spawn(<span class="kw">move </span>|| {
-        <span class="kw">let </span><span class="kw-2">mut </span>debouncer =
+        <span class="kw">let </span><span class="kw-2">mut </span>debouncer = {
+            <span class="kw">let </span>shader_source_path = shader_source_path.clone();
             new_debouncer(Duration::from_millis(<span class="number">250</span>), <span class="prelude-val">None</span>, <span class="kw">move </span>|result| {
                 handle_debounced_event_result(
+                    <span class="kw-2">&amp;</span>ctx,
                     result,
-                    <span class="kw-2">&amp;</span>shader_source_path_str,
-                    <span class="kw-2">&amp;</span>source_sender,
+                    <span class="kw-2">&amp;</span>shader_source_path,
+                    <span class="kw-2">&amp;</span>shader_sender,
                 );
             })
-            .unwrap();
+            .unwrap()
+        };
 
         debouncer
             .watcher()
@@ -343,18 +331,21 @@
 <span class="doccomment">/// Handles a set of debounced file change events to conditionally invoke the
 /// compiler.
 </span><span class="kw">fn </span>handle_debounced_event_result(
+    ctx: <span class="kw-2">&amp;</span>VulkanContext,
     result: DebounceEventResult,
-    shader_source_path_str: <span class="kw-2">&amp;</span>str,
-    source_sender: <span class="kw-2">&amp;</span>SyncSender&lt;Vec&lt;u8&gt;&gt;,
+    shader_source_path: <span class="kw-2">&amp;</span>Path,
+    shader_sender: <span class="kw-2">&amp;</span>SyncSender&lt;raii::ShaderModule&gt;,
 ) {
     <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = result {
         <span class="macro">log::error!</span>(<span class="string">"Error receiving file change notifications!\n{:#?}"</span>, err);
         <span class="kw">return</span>;
     }
 
-    <span class="kw">match </span>try_compile_shader_file(shader_source_path_str) {
+    <span class="macro">log::info!</span>(<span class="string">"Compiling {:?}..."</span>, shader_source_path);
+    <span class="kw">match </span>compile_slang(ctx, shader_source_path) {
         <span class="prelude-val">Ok</span>(shader_src_bytes) =&gt; {
-            source_sender
+            <span class="macro">log::info!</span>(<span class="string">"{:?} succeeded!"</span>, shader_source_path);
+            shader_sender
                 .send(shader_src_bytes)
                 .expect(<span class="string">"Unable to send updated shader source!"</span>);
         }
@@ -362,30 +353,5 @@
             <span class="macro">log::error!</span>(<span class="string">"{}"</span>, e);
         }
     }
-}
-
-<span class="doccomment">/// Tries to invoke `slangc` on the system PATH to compile a shader file.
-///
-/// If the shader fails to compile, then a descriptive error message is included
-/// in the returned error.
-</span><span class="kw">fn </span>try_compile_shader_file(shader_source_path_str: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
-    <span class="macro">log::info!</span>(<span class="string">"Compiling {}..."</span>, shader_source_path_str);
-    <span class="kw">let </span>output = std::process::Command::new(<span class="string">"slangc"</span>)
-        .args([
-            <span class="string">"-matrix-layout-column-major"</span>, <span class="comment">// compatible with nalgebra
-            </span><span class="string">"-target"</span>,
-            <span class="string">"spirv"</span>,
-            <span class="string">"--"</span>,
-            shader_source_path_str,
-        ])
-        .output()
-        .with_context(<span class="macro">trace!</span>(<span class="string">"Error executing slangc!"</span>))<span class="question-mark">?</span>;
-
-    <span class="kw">if </span>!output.status.success() {
-        <span class="kw">let </span>stderr = String::from_utf8_lossy(<span class="kw-2">&amp;</span>output.stderr);
-        <span class="macro">bail!</span>(<span class="macro">trace!</span>(<span class="string">"Error when compiling shader!\n\n{}"</span>, stderr)());
-    }
-    <span class="macro">log::info!</span>(<span class="string">"{} succeeded!"</span>, shader_source_path_str);
-    <span class="prelude-val">Ok</span>(output.stdout)
 }
 </code></pre></div></section></main></body></html>
