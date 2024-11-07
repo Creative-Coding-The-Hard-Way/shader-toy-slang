@@ -1,6 +1,6 @@
 use {
     crate::{
-        graphics::vulkan::{raii, Device, OwnedBlock},
+        graphics::vulkan::{raii, OwnedBlock, VulkanContext},
         trace,
     },
     anyhow::{bail, Result},
@@ -25,20 +25,20 @@ where
     ///
     /// Total size is count * size_of<DataT>()
     pub fn allocate(
-        device: &Device,
+        cxt: &VulkanContext,
         count: usize,
         usage: vk::BufferUsageFlags,
     ) -> Result<Self> {
         let buffer_size_in_bytes = (count * size_of::<DataT>()) as u64;
 
         let (block, buffer) = OwnedBlock::allocate_buffer(
-            device.allocator.clone(),
+            cxt.allocator.clone(),
             &vk::BufferCreateInfo {
                 size: buffer_size_in_bytes,
                 usage,
                 sharing_mode: vk::SharingMode::EXCLUSIVE,
                 queue_family_index_count: 1,
-                p_queue_family_indices: &device.graphics_queue_family_index,
+                p_queue_family_indices: &cxt.graphics_queue_family_index,
                 ..Default::default()
             },
             vk::MemoryPropertyFlags::HOST_VISIBLE

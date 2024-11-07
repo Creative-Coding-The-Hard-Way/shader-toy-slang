@@ -1,6 +1,6 @@
 use {
     crate::{
-        graphics::vulkan::{raii, CPUBuffer, Device, UniformBuffer},
+        graphics::vulkan::{raii, CPUBuffer, UniformBuffer, VulkanContext},
         trace,
     },
     anyhow::{Context, Result},
@@ -9,7 +9,7 @@ use {
 };
 
 pub fn update_descriptor_sets<T: Copy + Sized, DataT: Copy + Sized>(
-    device: &Device,
+    cxt: &VulkanContext,
     descriptor_sets: &[vk::DescriptorSet],
     particles_buffer: &CPUBuffer<T>,
     frame_data: &UniformBuffer<DataT>,
@@ -63,26 +63,25 @@ pub fn update_descriptor_sets<T: Copy + Sized, DataT: Copy + Sized>(
         })
         .collect::<Vec<_>>();
     unsafe {
-        device.update_descriptor_sets(&writes, &[]);
+        cxt.update_descriptor_sets(&writes, &[]);
     }
     Ok(())
 }
 
 pub fn allocate_descriptor_sets(
-    device: &Device,
+    cxt: &VulkanContext,
     descriptor_pool: &raii::DescriptorPool,
     descriptor_set_layout: &raii::DescriptorSetLayout,
 ) -> Result<Vec<vk::DescriptorSet>> {
     let layouts = [descriptor_set_layout.raw, descriptor_set_layout.raw];
     let descriptor = unsafe {
-        device
-            .allocate_descriptor_sets(&vk::DescriptorSetAllocateInfo {
-                descriptor_pool: descriptor_pool.raw,
-                descriptor_set_count: 2,
-                p_set_layouts: layouts.as_ptr(),
-                ..Default::default()
-            })
-            .with_context(trace!("Unable to allocated descriptor sets!"))?
+        cxt.allocate_descriptor_sets(&vk::DescriptorSetAllocateInfo {
+            descriptor_pool: descriptor_pool.raw,
+            descriptor_set_count: 2,
+            p_set_layouts: layouts.as_ptr(),
+            ..Default::default()
+        })
+        .with_context(trace!("Unable to allocated descriptor sets!"))?
     };
     Ok(descriptor)
 }

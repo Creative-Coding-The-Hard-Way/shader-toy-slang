@@ -1,7 +1,8 @@
 use {
     crate::{
         graphics::vulkan::{
-            raii, AcquireImageStatus, Device, PresentImageStatus, Swapchain,
+            raii, AcquireImageStatus, PresentImageStatus, Swapchain,
+            VulkanContext,
         },
         trace,
     },
@@ -57,18 +58,18 @@ struct FrameSync {
 pub struct FramesInFlight {
     frames: Vec<FrameSync>,
     frame_index: usize,
-    device: Arc<Device>,
+    cxt: Arc<VulkanContext>,
 }
 
 impl FramesInFlight {
-    pub fn new(device: Arc<Device>, frame_count: usize) -> Result<Self> {
+    pub fn new(cxt: Arc<VulkanContext>, frame_count: usize) -> Result<Self> {
         let mut frames = Vec::with_capacity(frame_count);
         for index in 0..frame_count {
             let command_pool = raii::CommandPool::new(
-                device.logical_device.clone(),
+                cxt.device.clone(),
                 &vk::CommandPoolCreateInfo {
                     flags: vk::CommandPoolCreateFlags::TRANSIENT,
-                    queue_family_index: device.graphics_queue_family_index,
+                    queue_family_index: cxt.graphics_queue_family_index,
                     ..Default::default()
                 },
             )
@@ -77,18 +78,16 @@ impl FramesInFlight {
                 index
             ))?;
             let command_buffer = unsafe {
-                device.allocate_command_buffers(
-                    &vk::CommandBufferAllocateInfo {
-                        command_pool: command_pool.raw,
-                        level: vk::CommandBufferLevel::PRIMARY,
-                        command_buffer_count: 1,
-                        ..Default::default()
-                    },
-                )?[0]
+                cxt.allocate_command_buffers(&vk::CommandBufferAllocateInfo {
+                    command_pool: command_pool.raw,
+                    level: vk::CommandBufferLevel::PRIMARY,
+                    command_buffer_count: 1,
+                    ..Default::default()
+                })?[0]
             };
             frames.push(FrameSync {
                 swapchain_image_acquired: raii::Semaphore::new(
-                    device.logical_device.clone(),
+                    cxt.device.clone(),
                     &vk::SemaphoreCreateInfo::default(),
                 )
                 .with_context(trace!(
@@ -96,7 +95,7 @@ impl FramesInFlight {
                     index
                 ))?,
                 color_attachment_written: raii::Semaphore::new(
-                    device.logical_device.clone(),
+                    cxt.device.clone(),
                     &vk::SemaphoreCreateInfo::default(),
                 )
                 .with_context(trace!(
@@ -104,7 +103,7 @@ impl FramesInFlight {
                     index
                 ))?,
                 graphics_commands_complete: raii::Fence::new(
-                    device.logical_device.clone(),
+                    cxt.device.clone(),
                     &vk::FenceCreateInfo {
                         flags: vk::FenceCreateFlags::SIGNALED,
                         ..Default::default()
@@ -121,7 +120,7 @@ impl FramesInFlight {
         Ok(Self {
             frames,
             frame_index: 0,
-            device,
+            cxt,
         })
     }
 
@@ -137,7 +136,7 @@ impl FramesInFlight {
             .map(|frame_sync| frame_sync.graphics_commands_complete.raw)
             .collect::<Vec<vk::Fence>>();
         unsafe {
-            self.device
+            self.cxt
                 .wait_for_fences(&fences, true, u64::MAX)
                 .with_context(trace!(
                     "Error while waiting for all frames to finish rendering!"
@@ -170,7 +169,7 @@ impl FramesInFlight {
         unsafe {
             // Wait for the last frame's submission to complete, if its still
             // running.
-            self.device
+            self.cxt
                 .wait_for_fences(
                     &[frame_sync.graphics_commands_complete.raw],
                     true,
@@ -179,7 +178,7 @@ impl FramesInFlight {
                 .with_context(trace!(
                     "Error while waiting for frame's commands to complete!"
                 ))?;
-            self.device
+            self.cxt
                 .reset_fences(&[frame_sync.graphics_commands_complete.raw])
                 .with_context(trace!(
                     "Error while resetting the frame's fence!"
@@ -201,7 +200,7 @@ impl FramesInFlight {
 
         // Start the Frame's command buffer.
         unsafe {
-            self.device
+            self.cxt
                 .reset_command_pool(
                     frame_sync.command_pool.raw,
                     vk::CommandPoolResetFlags::empty(),
@@ -209,7 +208,7 @@ impl FramesInFlight {
                 .with_context(trace!(
                     "Error while resetting command buffer for frame!"
                 ))?;
-            self.device
+            self.cxt
                 .begin_command_buffer(
                     frame_sync.command_buffer,
                     &vk::CommandBufferBeginInfo {
@@ -236,16 +235,16 @@ impl FramesInFlight {
     ) -> Result<PresentImageStatus> {
         let frame_sync = &self.frames[frame.frame_index()];
         unsafe {
-            self.device
+            self.cxt
                 .end_command_buffer(frame_sync.command_buffer)
                 .with_context(trace!(
                     "Error while ending the command buffer!"
                 ))?;
 
             let wait_stage = vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT;
-            self.device
+            self.cxt
                 .queue_submit(
-                    self.device.graphics_queue,
+                    self.cxt.graphics_queue,
                     &[vk::SubmitInfo {
                         wait_semaphore_count: 1,
                         p_wait_semaphores: &frame_sync
@@ -280,7 +279,7 @@ impl Drop for FramesInFlight {
     fn drop(&mut self) {
         self.wait_for_all_frames_to_complete().unwrap();
         unsafe {
-            self.device.device_wait_idle().unwrap();
+            self.cxt.device_wait_idle().unwrap();
         }
     }
 }

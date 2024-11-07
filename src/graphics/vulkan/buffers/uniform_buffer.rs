@@ -1,6 +1,8 @@
 use {
     crate::{
-        graphics::vulkan::{raii, Device, Frame, FramesInFlight, OwnedBlock},
+        graphics::vulkan::{
+            raii, Frame, FramesInFlight, OwnedBlock, VulkanContext,
+        },
         trace,
     },
     anyhow::{bail, Result},
@@ -25,13 +27,12 @@ where
 {
     /// Allocates a buffer with enough space for count copies of DataT aligned
     /// such that each copy can be bound to a separate descriptor set.
-    pub fn allocate(device: &Device, count: usize) -> Result<Self> {
+    pub fn allocate(cxt: &VulkanContext, count: usize) -> Result<Self> {
         // compute the aligned size for each element in the buffer
         let properties = unsafe {
-            device
-                .instance
+            cxt.instance
                 .ash
-                .get_physical_device_properties(device.physical_device)
+                .get_physical_device_properties(cxt.physical_device)
         };
         let aligned_unit_size: u64 = {
             let count = size_of::<DataT>() as u64
@@ -42,13 +43,13 @@ where
         let buffer_size_in_bytes = aligned_unit_size * count as u64;
 
         let (block, buffer) = OwnedBlock::allocate_buffer(
-            device.allocator.clone(),
+            cxt.allocator.clone(),
             &vk::BufferCreateInfo {
                 size: buffer_size_in_bytes,
                 usage: vk::BufferUsageFlags::UNIFORM_BUFFER,
                 sharing_mode: vk::SharingMode::EXCLUSIVE,
                 queue_family_index_count: 1,
-                p_queue_family_indices: &device.graphics_queue_family_index,
+                p_queue_family_indices: &cxt.graphics_queue_family_index,
                 ..Default::default()
             },
             vk::MemoryPropertyFlags::HOST_VISIBLE
@@ -67,10 +68,10 @@ where
     /// Allocates a new buffer and GPU memory for holding per-frame uniform
     /// data.
     pub fn allocate_per_frame(
-        device: &Device,
+        cxt: &VulkanContext,
         frames_in_flight: &FramesInFlight,
     ) -> Result<Self> {
-        Self::allocate(device, frames_in_flight.frame_count())
+        Self::allocate(cxt, frames_in_flight.frame_count())
     }
 
     /// Returns a non-owning copy of the Vulkan buffer handle.

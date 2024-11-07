@@ -2,7 +2,7 @@ mod settings;
 
 use {
     crate::{
-        graphics::vulkan::{raii, Device},
+        graphics::vulkan::{raii, VulkanContext},
         trace,
     },
     anyhow::{anyhow, Context, Result},
@@ -29,18 +29,18 @@ pub struct Swapchain {
     format: vk::SurfaceFormatKHR,
     images: Vec<vk::Image>,
     image_views: Vec<raii::ImageView>,
-    device: Arc<Device>,
+    cxt: Arc<VulkanContext>,
 }
 
 impl Swapchain {
     /// Creates a new Vulkan swapchain.
     pub fn new(
-        device: Arc<Device>,
+        cxt: Arc<VulkanContext>,
         framebuffer_size: (u32, u32),
         previous_swapchain: Option<vk::SwapchainKHR>,
     ) -> Result<Arc<Self>> {
         let (swapchain, extent, format) = settings::create_swapchain(
-            &device,
+            &cxt,
             framebuffer_size,
             previous_swapchain,
         )
@@ -64,10 +64,8 @@ impl Swapchain {
                 },
                 ..Default::default()
             };
-            image_views.push(raii::ImageView::new(
-                device.logical_device.clone(),
-                &create_info,
-            )?);
+            image_views
+                .push(raii::ImageView::new(cxt.device.clone(), &create_info)?);
         }
 
         Ok(Arc::new(Self {
@@ -76,7 +74,7 @@ impl Swapchain {
             format,
             images,
             image_views,
-            device,
+            cxt,
         }))
     }
 
@@ -160,7 +158,7 @@ impl Swapchain {
         let result = unsafe {
             self.swapchain
                 .ext
-                .queue_present(self.device.graphics_queue, &present_info)
+                .queue_present(self.cxt.graphics_queue, &present_info)
         };
         match result {
             Ok(false) => Ok(PresentImageStatus::Queued),

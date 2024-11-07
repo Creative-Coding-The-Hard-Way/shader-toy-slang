@@ -3,7 +3,7 @@ mod descriptors;
 use {
     crate::{
         graphics::{
-            vulkan::{raii, Device},
+            vulkan::{raii, VulkanContext},
             Texture,
         },
         trace,
@@ -23,9 +23,9 @@ pub struct StaticTextures {
 }
 
 impl StaticTextures {
-    pub fn new(device: &Device, textures: Vec<Texture>) -> Result<Self> {
+    pub fn new(cxt: &VulkanContext, textures: Vec<Texture>) -> Result<Self> {
         let sampler = raii::Sampler::new(
-            device.logical_device.clone(),
+            cxt.device.clone(),
             &vk::SamplerCreateInfo {
                 mag_filter: vk::Filter::LINEAR,
                 min_filter: vk::Filter::LINEAR,
@@ -48,26 +48,25 @@ impl StaticTextures {
         .with_context(trace!("Unable to create sampler!"))?;
 
         let descriptor_set_layout =
-            descriptors::create_descriptor_set_layout(device, &textures)
+            descriptors::create_descriptor_set_layout(cxt, &textures)
                 .with_context(trace!(
                     "Unable to create descriptor set layout!"
                 ))?;
 
-        let descriptor_pool =
-            descriptors::create_descriptor_pool(device, &textures)
-                .with_context(trace!(
-                    "Unable to create the descriptor pool!"
-                ))?;
+        let descriptor_pool = descriptors::create_descriptor_pool(
+            cxt, &textures,
+        )
+        .with_context(trace!("Unable to create the descriptor pool!"))?;
 
         let descriptor_set = descriptors::allocate_descriptor_sets(
-            device,
+            cxt,
             &descriptor_pool,
             &descriptor_set_layout,
         )
         .with_context(trace!("Unable to allocate the descriptor set!"))?;
 
         descriptors::initialize_descriptor_sets(
-            device,
+            cxt,
             descriptor_set,
             &sampler,
             &textures,

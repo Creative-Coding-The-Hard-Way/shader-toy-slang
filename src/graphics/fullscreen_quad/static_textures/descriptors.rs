@@ -1,6 +1,6 @@
 use {
     crate::graphics::{
-        vulkan::{raii, Device},
+        vulkan::{raii, VulkanContext},
         Texture,
     },
     anyhow::Result,
@@ -9,7 +9,7 @@ use {
 
 /// Allocates the descriptor sets.
 pub fn allocate_descriptor_sets(
-    device: &Device,
+    cxt: &VulkanContext,
     pool: &raii::DescriptorPool,
     layout: &raii::DescriptorSetLayout,
 ) -> Result<vk::DescriptorSet> {
@@ -20,14 +20,14 @@ pub fn allocate_descriptor_sets(
             p_set_layouts: &layout.raw,
             ..Default::default()
         };
-        device.allocate_descriptor_sets(&allocate_info)?[0]
+        cxt.allocate_descriptor_sets(&allocate_info)?[0]
     };
     Ok(descriptor_set)
 }
 
 /// Writes textures and samplers to their respective descriptor set bindings.
 pub fn initialize_descriptor_sets(
-    device: &Device,
+    cxt: &VulkanContext,
     descriptor_set: vk::DescriptorSet,
     sampler: &raii::Sampler,
     textures: &[Texture],
@@ -72,13 +72,13 @@ pub fn initialize_descriptor_sets(
     }));
 
     unsafe {
-        device.update_descriptor_sets(&writes, &[]);
+        cxt.update_descriptor_sets(&writes, &[]);
     };
 }
 
 /// Creates a new descriptor pool with capacity for all textures and samplers.
 pub fn create_descriptor_pool(
-    device: &Device,
+    cxt: &VulkanContext,
     textures: &[Texture],
 ) -> Result<raii::DescriptorPool> {
     let mut sizes = vec![vk::DescriptorPoolSize {
@@ -99,12 +99,12 @@ pub fn create_descriptor_pool(
         p_pool_sizes: sizes.as_ptr(),
         ..Default::default()
     };
-    raii::DescriptorPool::new(device.logical_device.clone(), &create_info)
+    raii::DescriptorPool::new(cxt.device.clone(), &create_info)
 }
 
 /// Creates the descriptor layout.
 pub fn create_descriptor_set_layout(
-    device: &Device,
+    cxt: &VulkanContext,
     textures: &[Texture],
 ) -> Result<raii::DescriptorSetLayout> {
     let mut descriptor_set_bindings = vec![vk::DescriptorSetLayoutBinding {
@@ -130,5 +130,5 @@ pub fn create_descriptor_set_layout(
         p_bindings: descriptor_set_bindings.as_ptr(),
         ..Default::default()
     };
-    raii::DescriptorSetLayout::new(device.logical_device.clone(), &create_info)
+    raii::DescriptorSetLayout::new(cxt.device.clone(), &create_info)
 }

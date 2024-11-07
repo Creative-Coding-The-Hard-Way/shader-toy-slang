@@ -1,7 +1,7 @@
 use {
     super::vulkan::raii,
     crate::{
-        graphics::vulkan::{Device, OwnedBlock, SyncCommands},
+        graphics::vulkan::{OwnedBlock, SyncCommands, VulkanContext},
         trace,
     },
     anyhow::{Context, Result},
@@ -20,18 +20,18 @@ use self::transfer_buffer::TransferBuffer;
 pub struct TextureLoader {
     sync_commands: SyncCommands,
     transfer_buffer: TransferBuffer,
-    device: Arc<Device>,
+    cxt: Arc<VulkanContext>,
 }
 
 impl TextureLoader {
     /// Creates the texture loader and underlying resources.
-    pub fn new(device: Arc<Device>) -> Result<Self> {
+    pub fn new(cxt: Arc<VulkanContext>) -> Result<Self> {
         Ok(Self {
-            sync_commands: SyncCommands::new(device.clone())
+            sync_commands: SyncCommands::new(cxt.clone())
                 .with_context(trace!("Unable to create sync commands!"))?,
-            transfer_buffer: TransferBuffer::new(device.clone(), 8)
+            transfer_buffer: TransferBuffer::new(cxt.clone(), 8)
                 .with_context(trace!("Unable to create transfer buffer!"))?,
-            device,
+            cxt,
         })
     }
 
@@ -49,7 +49,7 @@ impl TextureLoader {
         let (width, height) = image_file.dimensions();
 
         let (block, image) = OwnedBlock::allocate_image(
-            self.device.allocator.clone(),
+            self.cxt.allocator.clone(),
             &vk::ImageCreateInfo {
                 flags: vk::ImageCreateFlags::empty(),
                 image_type: vk::ImageType::TYPE_2D,
@@ -67,9 +67,7 @@ impl TextureLoader {
                     | vk::ImageUsageFlags::SAMPLED,
                 sharing_mode: vk::SharingMode::EXCLUSIVE,
                 queue_family_index_count: 1,
-                p_queue_family_indices: &self
-                    .device
-                    .graphics_queue_family_index,
+                p_queue_family_indices: &self.cxt.graphics_queue_family_index,
                 initial_layout: vk::ImageLayout::UNDEFINED,
                 ..Default::default()
             },
@@ -86,11 +84,11 @@ impl TextureLoader {
                 ))?;
         }
 
-        let device = &self.device;
+        let cxt = &self.cxt;
         let transfer_buffer = self.transfer_buffer.buffer();
         self.sync_commands
             .submit_and_wait(|cmd| unsafe {
-                device.cmd_pipeline_barrier(
+                cxt.cmd_pipeline_barrier(
                     cmd,
                     vk::PipelineStageFlags::TOP_OF_PIPE,
                     vk::PipelineStageFlags::TRANSFER,
@@ -103,10 +101,10 @@ impl TextureLoader {
                         old_layout: vk::ImageLayout::UNDEFINED,
                         new_layout: vk::ImageLayout::TRANSFER_DST_OPTIMAL,
                         src_queue_family_index: self
-                            .device
+                            .cxt
                             .graphics_queue_family_index,
                         dst_queue_family_index: self
-                            .device
+                            .cxt
                             .graphics_queue_family_index,
                         image: image.raw,
                         subresource_range: vk::ImageSubresourceRange {
@@ -119,7 +117,7 @@ impl TextureLoader {
                         ..Default::default()
                     }],
                 );
-                device.cmd_copy_buffer_to_image(
+                cxt.cmd_copy_buffer_to_image(
                     cmd,
                     transfer_buffer,
                     image.raw,
@@ -142,7 +140,7 @@ impl TextureLoader {
                         },
                     }],
                 );
-                device.cmd_pipeline_barrier(
+                cxt.cmd_pipeline_barrier(
                     cmd,
                     vk::PipelineStageFlags::TRANSFER,
                     vk::PipelineStageFlags::BOTTOM_OF_PIPE,
@@ -155,10 +153,10 @@ impl TextureLoader {
                         old_layout: vk::ImageLayout::TRANSFER_DST_OPTIMAL,
                         new_layout: vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL,
                         src_queue_family_index: self
-                            .device
+                            .cxt
                             .graphics_queue_family_index,
                         dst_queue_family_index: self
-                            .device
+                            .cxt
                             .graphics_queue_family_index,
                         image: image.raw,
                         subresource_range: vk::ImageSubresourceRange {
@@ -179,7 +177,7 @@ impl TextureLoader {
             ))?;
 
         let image_view = raii::ImageView::new(
-            device.logical_device.clone(),
+            cxt.device.clone(),
             &vk::ImageViewCreateInfo {
                 flags: vk::ImageViewCreateFlags::empty(),
                 image: image.raw,

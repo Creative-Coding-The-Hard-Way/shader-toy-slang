@@ -2,7 +2,9 @@ use {
     crate::{
         graphics::{
             particles::Particle,
-            vulkan::{raii, CPUBuffer, Device, FramesInFlight, UniformBuffer},
+            vulkan::{
+                raii, CPUBuffer, FramesInFlight, UniformBuffer, VulkanContext,
+            },
         },
         trace,
     },
@@ -12,7 +14,7 @@ use {
 };
 
 pub fn update_descriptor_sets<T: Copy + Sized>(
-    device: &Device,
+    cxt: &VulkanContext,
     descriptor_sets: &[vk::DescriptorSet],
     uniform_buffer: &UniformBuffer<T>,
     particles_buffer: &CPUBuffer<Particle>,
@@ -66,13 +68,13 @@ pub fn update_descriptor_sets<T: Copy + Sized>(
         })
         .collect::<Vec<vk::WriteDescriptorSet>>();
     unsafe {
-        device.update_descriptor_sets(&writes, &[]);
+        cxt.update_descriptor_sets(&writes, &[]);
     }
     Ok(())
 }
 
 pub fn allocate_descriptor_sets(
-    device: &Device,
+    cxt: &VulkanContext,
     descriptor_pool: &raii::DescriptorPool,
     descriptor_set_layout: &raii::DescriptorSetLayout,
     frames_in_flight: &FramesInFlight,
@@ -81,14 +83,13 @@ pub fn allocate_descriptor_sets(
         .map(|_| descriptor_set_layout.raw)
         .collect::<Vec<vk::DescriptorSetLayout>>();
     unsafe {
-        device
-            .allocate_descriptor_sets(&vk::DescriptorSetAllocateInfo {
-                descriptor_pool: descriptor_pool.raw,
-                descriptor_set_count: frames_in_flight.frame_count() as u32,
-                p_set_layouts: layouts.as_ptr(),
-                ..Default::default()
-            })
-            .with_context(trace!("Unable to allocated descriptor sets!"))
+        cxt.allocate_descriptor_sets(&vk::DescriptorSetAllocateInfo {
+            descriptor_pool: descriptor_pool.raw,
+            descriptor_set_count: frames_in_flight.frame_count() as u32,
+            p_set_layouts: layouts.as_ptr(),
+            ..Default::default()
+        })
+        .with_context(trace!("Unable to allocated descriptor sets!"))
     }
 }
 

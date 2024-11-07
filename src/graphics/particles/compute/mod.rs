@@ -4,7 +4,7 @@ mod pipeline;
 use {
     crate::graphics::{
         particles::Particle,
-        vulkan::{raii, CPUBuffer, Device, Frame, UniformBuffer},
+        vulkan::{raii, CPUBuffer, Frame, UniformBuffer, VulkanContext},
     },
     anyhow::Result,
     ash::vk,
@@ -24,7 +24,7 @@ pub struct ParticlesCompute<DataT: Copy + Sized> {
     descriptor_sets: Vec<vk::DescriptorSet>,
     _descriptor_pool: raii::DescriptorPool,
     _descriptor_set_layout: raii::DescriptorSetLayout,
-    device: Arc<Device>,
+    cxt: Arc<VulkanContext>,
     pipeline: raii::Pipeline,
     pipeline_layout: raii::PipelineLayout,
     frame_data: UniformBuffer<DataT>,
@@ -35,36 +35,35 @@ pub struct ParticlesCompute<DataT: Copy + Sized> {
 impl<DataT: Copy + Sized> ParticlesCompute<DataT> {
     #[builder]
     pub fn new(
-        device: Arc<Device>,
+        cxt: Arc<VulkanContext>,
         particles_buffer: &CPUBuffer<Particle>,
         kernel_bytes: &[u8],
     ) -> Result<Self> {
-        let frame_data = UniformBuffer::allocate(&device, 2)?;
+        let frame_data = UniformBuffer::allocate(&cxt, 2)?;
 
-        let descriptor_set_layout = descriptors::create_descriptor_set_layout(
-            device.logical_device.clone(),
-        )?;
+        let descriptor_set_layout =
+            descriptors::create_descriptor_set_layout(cxt.device.clone())?;
         let descriptor_pool =
-            descriptors::create_descriptor_pool(device.logical_device.clone())?;
+            descriptors::create_descriptor_pool(cxt.device.clone())?;
         let descriptor_sets = descriptors::allocate_descriptor_sets(
-            &device,
+            &cxt,
             &descriptor_pool,
             &descriptor_set_layout,
         )?;
         descriptors::update_descriptor_sets(
-            &device,
+            &cxt,
             &descriptor_sets,
             particles_buffer,
             &frame_data,
         )?;
 
         let pipeline_layout = pipeline::create_layout(
-            device.logical_device.clone(),
+            cxt.device.clone(),
             &descriptor_set_layout,
         )?;
 
         let pipeline = pipeline::create_pipeline(
-            device.logical_device.clone(),
+            cxt.device.clone(),
             &pipeline_layout,
             kernel_bytes,
         )?;
@@ -73,7 +72,7 @@ impl<DataT: Copy + Sized> ParticlesCompute<DataT> {
             descriptor_sets,
             _descriptor_pool: descriptor_pool,
             _descriptor_set_layout: descriptor_set_layout,
-            device,
+            cxt,
             pipeline_layout,
             pipeline,
             frame_data,
@@ -91,7 +90,7 @@ impl<DataT: Copy + Sized> ParticlesCompute<DataT> {
         kernel_source: &[u8],
     ) -> Result<()> {
         self.pipeline = pipeline::create_pipeline(
-            self.device.logical_device.clone(),
+            self.cxt.device.clone(),
             &self.pipeline_layout,
             kernel_source,
         )?;
@@ -117,12 +116,12 @@ impl<DataT: Copy + Sized> ParticlesCompute<DataT> {
         };
 
         unsafe {
-            self.device.cmd_bind_pipeline(
+            self.cxt.cmd_bind_pipeline(
                 frame.command_buffer(),
                 vk::PipelineBindPoint::COMPUTE,
                 self.pipeline.raw,
             );
-            self.device.cmd_bind_descriptor_sets(
+            self.cxt.cmd_bind_descriptor_sets(
                 frame.command_buffer(),
                 vk::PipelineBindPoint::COMPUTE,
                 self.pipeline_layout.raw,
@@ -130,7 +129,7 @@ impl<DataT: Copy + Sized> ParticlesCompute<DataT> {
                 &[current_descriptor_set],
                 &[],
             );
-            self.device
+            self.cxt
                 .cmd_dispatch(frame.command_buffer(), 320 / 32, 1, 1);
         }
         Ok(())

@@ -14,12 +14,16 @@ use {
 
 pub use self::instance::Instance;
 
-/// The Vulkan device is the logical handle for all Vulkan resource operations.
-pub struct Device {
+/// The Vulkan context is the logical handle for all Vulkan operations within
+/// the app.
+///
+/// It supports finding and using a single logical device along with all
+/// required queues and a device memory allocator.
+pub struct VulkanContext {
     pub instance: Instance,
     pub surface_khr: Arc<raii::Surface>,
     pub physical_device: vk::PhysicalDevice,
-    pub logical_device: Arc<raii::Device>,
+    pub device: Arc<raii::Device>,
 
     /// The queue family index for the graphics + present queue.
     pub graphics_queue_family_index: u32,
@@ -31,7 +35,9 @@ pub struct Device {
     pub allocator: Arc<Allocator>,
 }
 
-impl Device {
+impl VulkanContext {
+    /// Creates a new Vulkan Context for the first suitable device that supports
+    /// presenting to the GLFW window surface.
     pub fn new(window: &glfw::Window) -> Result<Arc<Self>> {
         let instance = Instance::for_window("Shader-Toy-Slang", window)
             .with_context(trace!("Unable to create vulkan instance!"))?;
@@ -69,7 +75,7 @@ impl Device {
             instance,
             surface_khr,
             physical_device,
-            logical_device,
+            device: logical_device,
             graphics_queue_family_index,
             graphics_queue,
             allocator: Arc::new(allocator),
@@ -77,21 +83,21 @@ impl Device {
     }
 }
 
-impl std::ops::Deref for Device {
+impl std::ops::Deref for VulkanContext {
     type Target = ash::Device;
 
     fn deref(&self) -> &Self::Target {
-        &self.logical_device.raw
+        &self.device.raw
     }
 }
 
-impl std::fmt::Debug for Device {
+impl std::fmt::Debug for VulkanContext {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Device")
+        f.debug_struct("VulkanContext")
             .field("instance", &self.instance)
             .field("surface_khr", &self.surface_khr)
             .field("physical_device", &self.physical_device)
-            .field("logical_device", &self.logical_device)
+            .field("device", &self.device)
             .field(
                 "graphics_queue_family_index",
                 &self.graphics_queue_family_index,

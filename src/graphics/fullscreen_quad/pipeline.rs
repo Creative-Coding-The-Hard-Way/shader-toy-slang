@@ -1,6 +1,6 @@
 use {
     crate::{
-        graphics::vulkan::{raii, Device, Swapchain},
+        graphics::vulkan::{raii, Swapchain, VulkanContext},
         trace,
     },
     anyhow::{Context, Result},
@@ -11,7 +11,7 @@ use {
 /// is compatible with the provided render pass, and uses the provided fragment
 /// shader source.
 pub fn create_pipeline(
-    device: &Device,
+    cxt: &VulkanContext,
     swapchain: &Swapchain,
     render_pass: &raii::RenderPass,
     descriptor_set_layouts: &[&raii::DescriptorSetLayout],
@@ -28,10 +28,8 @@ pub fn create_pipeline(
         p_push_constant_ranges: std::ptr::null(),
         ..Default::default()
     };
-    let layout = raii::PipelineLayout::new(
-        device.logical_device.clone(),
-        &layout_create_info,
-    )?;
+    let layout =
+        raii::PipelineLayout::new(cxt.device.clone(), &layout_create_info)?;
 
     let main = std::ffi::CString::new("main")?;
 
@@ -39,7 +37,7 @@ pub fn create_pipeline(
         ash::util::read_spv(&mut std::io::Cursor::new(fragment_shader_source))?;
 
     let fragment_module = raii::ShaderModule::new(
-        device.logical_device.clone(),
+        cxt.device.clone(),
         &vk::ShaderModuleCreateInfo {
             code_size: fragment_shader_words.len() * 4,
             p_code: fragment_shader_words.as_ptr(),
@@ -52,7 +50,7 @@ pub fn create_pipeline(
         include_bytes!("./shaders/fullscreen_quad.vert.spv"),
     ))?;
     let vertex_module = raii::ShaderModule::new(
-        device.logical_device.clone(),
+        cxt.device.clone(),
         &vk::ShaderModuleCreateInfo {
             code_size: vertex_shader_words.len() * 4,
             p_code: vertex_shader_words.as_ptr(),
@@ -158,13 +156,11 @@ pub fn create_pipeline(
         subpass: 0,
         ..Default::default()
     };
-    let pipeline = raii::Pipeline::new_graphics_pipeline(
-        device.logical_device.clone(),
-        &create_info,
-    )
-    .with_context(trace!(
-        "Error while creating graphics pipeline for FullscreenQuad!"
-    ))?;
+    let pipeline =
+        raii::Pipeline::new_graphics_pipeline(cxt.device.clone(), &create_info)
+            .with_context(trace!(
+                "Error while creating graphics pipeline for FullscreenQuad!"
+            ))?;
 
     Ok((pipeline, layout))
 }

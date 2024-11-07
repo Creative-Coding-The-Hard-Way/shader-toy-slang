@@ -8,8 +8,8 @@ use {
         app::{app_main, App},
         graphics::{
             vulkan::{
-                raii, Device, FrameStatus, FramesInFlight, PresentImageStatus,
-                Swapchain,
+                raii, FrameStatus, FramesInFlight, PresentImageStatus,
+                Swapchain, VulkanContext,
             },
             Particles, Recompiler,
         },
@@ -50,7 +50,7 @@ struct LiveParticles {
     kernel_compiler: Recompiler,
     init_compiler: Recompiler,
 
-    device: Arc<Device>,
+    cxt: Arc<VulkanContext>,
 }
 
 impl App for LiveParticles {
@@ -62,28 +62,26 @@ impl App for LiveParticles {
     {
         window.set_all_polling(true);
 
-        let device = Device::new(window)
+        let cxt = VulkanContext::new(window)
             .with_context(trace!("Unable to create device!"))?;
 
         let swapchain = {
             let (w, h) = window.get_framebuffer_size();
-            Swapchain::new(device.clone(), (w as u32, h as u32), None)
+            Swapchain::new(cxt.clone(), (w as u32, h as u32), None)
                 .with_context(trace!("Unable to create swapchain!"))?
         };
 
-        let frames_in_flight = FramesInFlight::new(device.clone(), 2)
+        let frames_in_flight = FramesInFlight::new(cxt.clone(), 2)
             .with_context(trace!("Unable to create frames_in_flight!"))?;
 
         let kernel_compiler = Recompiler::new(&_args.kernel_source, &[])?;
         let init_compiler = Recompiler::new(&_args.init_source, &[])?;
 
-        let renderpass =
-            create_renderpass(device.logical_device.clone(), &swapchain)?;
-        let framebuffers =
-            create_framebuffers(&device, &renderpass, &swapchain)?;
+        let renderpass = create_renderpass(cxt.device.clone(), &swapchain)?;
+        let framebuffers = create_framebuffers(&cxt, &renderpass, &swapchain)?;
 
         let particles = Particles::builder()
-            .device(device.clone())
+            .cxt(cxt.clone())
             .frames_in_flight(&frames_in_flight)
             .swapchain(&swapchain)
             .render_pass(&renderpass)
@@ -104,7 +102,7 @@ impl App for LiveParticles {
             particles,
             kernel_compiler,
             init_compiler,
-            device,
+            cxt,
             renderpass,
         })
     }
@@ -175,7 +173,7 @@ impl App for LiveParticles {
             },
         }];
         unsafe {
-            self.device.cmd_begin_render_pass(
+            self.cxt.cmd_begin_render_pass(
                 frame.command_buffer(),
                 &vk::RenderPassBeginInfo {
                     render_pass: self.renderpass.raw,
@@ -197,7 +195,7 @@ impl App for LiveParticles {
         self.particles.draw(&frame)?;
 
         unsafe {
-            self.device.cmd_end_render_pass(frame.command_buffer());
+            self.cxt.cmd_end_render_pass(frame.command_buffer());
         }
 
         if self
@@ -218,27 +216,22 @@ impl LiveParticles {
 
         unsafe {
             // wait for all pending work to finish
-            self.device.device_wait_idle()?;
+            self.cxt.device_wait_idle()?;
         }
 
         self.swapchain = {
             let (w, h) = window.get_framebuffer_size();
             Swapchain::new(
-                self.device.clone(),
+                self.cxt.clone(),
                 (w as u32, h as u32),
                 Some(self.swapchain.raw()),
             )?
         };
 
-        self.renderpass = create_renderpass(
-            self.device.logical_device.clone(),
-            &self.swapchain,
-        )?;
-        self.framebuffers = create_framebuffers(
-            &self.device,
-            &self.renderpass,
-            &self.swapchain,
-        )?;
+        self.renderpass =
+            create_renderpass(self.cxt.device.clone(), &self.swapchain)?;
+        self.framebuffers =
+            create_framebuffers(&self.cxt, &self.renderpass, &self.swapchain)?;
 
         self.particles
             .swapchain_rebuilt(&self.swapchain, &self.renderpass)?;
@@ -248,7 +241,7 @@ impl LiveParticles {
 }
 
 fn create_renderpass(
-    logical_device: Arc<raii::Device>,
+    device: Arc<raii::Device>,
     swapchain: &Swapchain,
 ) -> Result<raii::RenderPass> {
     let attachments = [vk::AttachmentDescription {
@@ -299,7 +292,7 @@ fn create_renderpass(
         },
     ];
     raii::RenderPass::new(
-        logical_device,
+        device,
         &vk::RenderPassCreateInfo {
             attachment_count: attachments.len() as u32,
             p_attachments: attachments.as_ptr(),
@@ -316,7 +309,7 @@ fn create_renderpass(
 ///
 /// Framebuffers must be replaced when the swapchain is rebuilt.
 fn create_framebuffers(
-    device: &Device,
+    cxt: &VulkanContext,
     render_pass: &raii::RenderPass,
     swapchain: &Swapchain,
 ) -> Result<Vec<raii::Framebuffer>> {
@@ -332,10 +325,8 @@ fn create_framebuffers(
             layers: 1,
             ..Default::default()
         };
-        framebuffers.push(raii::Framebuffer::new(
-            device.logical_device.clone(),
-            &create_info,
-        )?);
+        framebuffers
+            .push(raii::Framebuffer::new(cxt.device.clone(), &create_info)?);
     }
     Ok(framebuffers)
 }

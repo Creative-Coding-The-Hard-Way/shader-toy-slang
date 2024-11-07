@@ -3,7 +3,9 @@ mod view;
 
 use {
     super::vulkan::CPUBuffer,
-    crate::graphics::vulkan::{raii, Device, Frame, FramesInFlight, Swapchain},
+    crate::graphics::vulkan::{
+        raii, Frame, FramesInFlight, Swapchain, VulkanContext,
+    },
     anyhow::Result,
     ash::vk,
     bon::bon,
@@ -28,14 +30,14 @@ pub struct Particles<FrameDataT: Copy + Sized> {
     init: ParticlesCompute<FrameDataT>,
     compute: ParticlesCompute<FrameDataT>,
     init_requested: bool,
-    device: Arc<Device>,
+    cxt: Arc<VulkanContext>,
 }
 
 #[bon]
 impl<FrameDataT: Copy + Sized> Particles<FrameDataT> {
     #[builder]
     pub fn new(
-        device: Arc<Device>,
+        cxt: Arc<VulkanContext>,
         frames_in_flight: &FramesInFlight,
         swapchain: &Swapchain,
         render_pass: &raii::RenderPass,
@@ -43,13 +45,13 @@ impl<FrameDataT: Copy + Sized> Particles<FrameDataT> {
         init_bytes: &[u8],
     ) -> Result<Self> {
         let particles_buffer = CPUBuffer::<Particle>::allocate(
-            &device,
+            &cxt,
             320,
             vk::BufferUsageFlags::STORAGE_BUFFER,
         )?;
 
         let view = ParticlesView::builder()
-            .device(device.clone())
+            .cxt(cxt.clone())
             .frames_in_flight(frames_in_flight)
             .swapchain(swapchain)
             .render_pass(render_pass)
@@ -57,13 +59,13 @@ impl<FrameDataT: Copy + Sized> Particles<FrameDataT> {
             .build()?;
 
         let compute = ParticlesCompute::builder()
-            .device(device.clone())
+            .cxt(cxt.clone())
             .particles_buffer(&particles_buffer)
             .kernel_bytes(kernel_bytes)
             .build()?;
 
         let init = ParticlesCompute::builder()
-            .device(device.clone())
+            .cxt(cxt.clone())
             .particles_buffer(&particles_buffer)
             .kernel_bytes(init_bytes)
             .build()?;
@@ -74,7 +76,7 @@ impl<FrameDataT: Copy + Sized> Particles<FrameDataT> {
             init,
             init_requested: true,
             compute,
-            device,
+            cxt,
         })
     }
 
@@ -100,7 +102,7 @@ impl<FrameDataT: Copy + Sized> Particles<FrameDataT> {
         frame_data: FrameDataT,
     ) -> Result<()> {
         unsafe {
-            self.device.cmd_pipeline_barrier(
+            self.cxt.cmd_pipeline_barrier(
                 frame.command_buffer(),
                 vk::PipelineStageFlags::VERTEX_SHADER,
                 vk::PipelineStageFlags::COMPUTE_SHADER,
@@ -110,10 +112,10 @@ impl<FrameDataT: Copy + Sized> Particles<FrameDataT> {
                     src_access_mask: vk::AccessFlags::SHADER_READ,
                     dst_access_mask: vk::AccessFlags::SHADER_WRITE,
                     src_queue_family_index: self
-                        .device
+                        .cxt
                         .graphics_queue_family_index,
                     dst_queue_family_index: self
-                        .device
+                        .cxt
                         .graphics_queue_family_index,
                     buffer: self.particles_buffer.buffer(),
                     offset: 0,
@@ -130,7 +132,7 @@ impl<FrameDataT: Copy + Sized> Particles<FrameDataT> {
             self.compute.update(frame, frame_data)?;
         }
         unsafe {
-            self.device.cmd_pipeline_barrier(
+            self.cxt.cmd_pipeline_barrier(
                 frame.command_buffer(),
                 vk::PipelineStageFlags::COMPUTE_SHADER,
                 vk::PipelineStageFlags::VERTEX_SHADER,
@@ -140,10 +142,10 @@ impl<FrameDataT: Copy + Sized> Particles<FrameDataT> {
                     src_access_mask: vk::AccessFlags::SHADER_WRITE,
                     dst_access_mask: vk::AccessFlags::SHADER_READ,
                     src_queue_family_index: self
-                        .device
+                        .cxt
                         .graphics_queue_family_index,
                     dst_queue_family_index: self
-                        .device
+                        .cxt
                         .graphics_queue_family_index,
                     buffer: self.particles_buffer.buffer(),
                     offset: 0,

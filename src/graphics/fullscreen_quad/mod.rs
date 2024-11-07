@@ -6,7 +6,7 @@ use {
     self::{frame_data::FrameData, static_textures::StaticTextures},
     crate::{
         graphics::{
-            vulkan::{raii, Device, Frame, FramesInFlight, Swapchain},
+            vulkan::{raii, Frame, FramesInFlight, Swapchain, VulkanContext},
             Texture,
         },
         trace,
@@ -26,7 +26,7 @@ pub struct FullscreenQuad<UserDataT: Sized + Copy + Default> {
     pipeline_layout: raii::PipelineLayout,
     frame_data: FrameData<UserDataT>,
     static_textures: StaticTextures,
-    device: Arc<Device>,
+    cxt: Arc<VulkanContext>,
 }
 
 #[bon]
@@ -38,23 +38,23 @@ where
     /// source.
     #[builder]
     pub fn new(
-        device: Arc<Device>,
+        cxt: Arc<VulkanContext>,
         fragment_shader_source: &[u8],
         frames_in_flight: &FramesInFlight,
         swapchain: &Swapchain,
         render_pass: &raii::RenderPass,
         textures: Vec<Texture>,
     ) -> Result<Self> {
-        let frame_data = FrameData::new(&device, frames_in_flight)
+        let frame_data = FrameData::new(&cxt, frames_in_flight)
             .with_context(trace!("Unable to initialize per-frame data!"))?;
 
-        let static_textures = StaticTextures::new(&device, textures)
+        let static_textures = StaticTextures::new(&cxt, textures)
             .with_context(trace!(
                 "Unable to create static textures resources!"
             ))?;
 
         let (pipeline, pipeline_layout) = pipeline::create_pipeline(
-            &device,
+            &cxt,
             swapchain,
             render_pass,
             &[
@@ -69,7 +69,7 @@ where
             pipeline_layout,
             frame_data,
             static_textures,
-            device,
+            cxt,
         })
     }
 
@@ -87,7 +87,7 @@ where
         fragment_shader_source: &[u8],
     ) -> Result<()> {
         let (pipeline, pipeline_layout) = pipeline::create_pipeline(
-            &self.device,
+            &self.cxt,
             swapchain,
             render_pass,
             &[
@@ -118,12 +118,12 @@ where
         // frames-in-flight which ensures that all graphics commands for
         // this frame are complete
         unsafe {
-            self.device.cmd_bind_pipeline(
+            self.cxt.cmd_bind_pipeline(
                 frame.command_buffer(),
                 vk::PipelineBindPoint::GRAPHICS,
                 self.pipeline.raw,
             );
-            self.device.cmd_bind_descriptor_sets(
+            self.cxt.cmd_bind_descriptor_sets(
                 frame.command_buffer(),
                 vk::PipelineBindPoint::GRAPHICS,
                 self.pipeline_layout.raw,
@@ -134,7 +134,7 @@ where
                 ],
                 &[],
             );
-            self.device.cmd_draw(frame.command_buffer(), 6, 1, 0, 0);
+            self.cxt.cmd_draw(frame.command_buffer(), 6, 1, 0, 0);
         }
 
         Ok(())

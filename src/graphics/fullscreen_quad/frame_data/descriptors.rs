@@ -1,6 +1,6 @@
 use {
     crate::{
-        graphics::vulkan::{raii, Device, UniformBuffer},
+        graphics::vulkan::{raii, UniformBuffer, VulkanContext},
         trace,
     },
     anyhow::{Context, Result},
@@ -9,7 +9,7 @@ use {
 
 /// Allocates the descriptor sets.
 pub fn allocate_descriptor_sets(
-    device: &Device,
+    cxt: &VulkanContext,
     pool: &raii::DescriptorPool,
     layout: &raii::DescriptorSetLayout,
     count: usize,
@@ -25,8 +25,7 @@ pub fn allocate_descriptor_sets(
             p_set_layouts: layouts.as_ptr(),
             ..Default::default()
         };
-        device
-            .allocate_descriptor_sets(&allocate_info)
+        cxt.allocate_descriptor_sets(&allocate_info)
             .with_context(trace!("Error while allocating descriptor sets!"))
     }
 }
@@ -34,7 +33,7 @@ pub fn allocate_descriptor_sets(
 /// Updates each descriptor set to refer to the correct location within the
 /// uniform buffer.
 pub fn initialize_descriptor_sets<UserDataT>(
-    device: &Device,
+    cxt: &VulkanContext,
     descriptor_sets: &[vk::DescriptorSet],
     uniform_buffer: &UniformBuffer<UserDataT>,
 ) where
@@ -67,14 +66,14 @@ pub fn initialize_descriptor_sets<UserDataT>(
                 ..Default::default()
             })
             .collect::<Vec<_>>();
-        device.update_descriptor_sets(&writes, &[]);
+        cxt.update_descriptor_sets(&writes, &[]);
     };
 }
 
 /// Creates a new descriptor pool with capacity for `count` uniform buffer
 /// descriptors. (one for each frame in flight)
 pub fn create_descriptor_pool(
-    device: &Device,
+    cxt: &VulkanContext,
     count: usize,
 ) -> Result<raii::DescriptorPool> {
     let sizes = [vk::DescriptorPoolSize {
@@ -87,13 +86,13 @@ pub fn create_descriptor_pool(
         p_pool_sizes: sizes.as_ptr(),
         ..Default::default()
     };
-    raii::DescriptorPool::new(device.logical_device.clone(), &create_info)
+    raii::DescriptorPool::new(cxt.device.clone(), &create_info)
 }
 
 /// Creates the descriptor layout. Only one is created because the layout is the
 /// same for each frame in flight.
 pub fn create_descriptor_set_layout(
-    device: &Device,
+    cxt: &VulkanContext,
 ) -> Result<raii::DescriptorSetLayout> {
     let descriptor_set_bindings = [vk::DescriptorSetLayoutBinding {
         binding: 0,
@@ -109,5 +108,5 @@ pub fn create_descriptor_set_layout(
         p_bindings: descriptor_set_bindings.as_ptr(),
         ..Default::default()
     };
-    raii::DescriptorSetLayout::new(device.logical_device.clone(), &create_info)
+    raii::DescriptorSetLayout::new(cxt.device.clone(), &create_info)
 }

@@ -3,7 +3,7 @@ mod descriptors;
 use {
     crate::{
         graphics::vulkan::{
-            raii, Device, Frame, FramesInFlight, UniformBuffer,
+            raii, Frame, FramesInFlight, UniformBuffer, VulkanContext,
         },
         trace,
     },
@@ -24,11 +24,11 @@ where
     UserDataT: Sized + Copy + Default,
 {
     pub fn new(
-        device: &Device,
+        cxt: &VulkanContext,
         frames_in_flight: &FramesInFlight,
     ) -> Result<Self> {
         let uniform_buffer = UniformBuffer::<UserDataT>::allocate_per_frame(
-            device,
+            cxt,
             frames_in_flight,
         )
         .with_context(trace!(
@@ -36,18 +36,18 @@ where
         ))?;
 
         let descriptor_set_layout =
-            descriptors::create_descriptor_set_layout(device).with_context(
+            descriptors::create_descriptor_set_layout(cxt).with_context(
                 trace!("Error while creating the descriptor set layout!"),
             )?;
 
         let descriptor_pool = descriptors::create_descriptor_pool(
-            device,
+            cxt,
             frames_in_flight.frame_count(),
         )
         .with_context(trace!("Error while creating the descriptor pool!"))?;
 
         let descriptor_sets = descriptors::allocate_descriptor_sets(
-            device,
+            cxt,
             &descriptor_pool,
             &descriptor_set_layout,
             frames_in_flight.frame_count(),
@@ -55,7 +55,7 @@ where
         .with_context(trace!("Error while allocating descriptor sets!"))?;
 
         descriptors::initialize_descriptor_sets(
-            device,
+            cxt,
             &descriptor_sets,
             &uniform_buffer,
         );

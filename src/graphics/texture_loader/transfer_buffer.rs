@@ -1,6 +1,6 @@
 use {
     crate::{
-        graphics::vulkan::{raii, Device, OwnedBlock},
+        graphics::vulkan::{raii, OwnedBlock, VulkanContext},
         trace,
     },
     anyhow::{Context, Result},
@@ -14,21 +14,21 @@ pub struct TransferBuffer {
     buffer: raii::Buffer,
     block: OwnedBlock,
     capacity: u64,
-    device: Arc<Device>,
+    cxt: Arc<VulkanContext>,
 }
 
 impl TransferBuffer {
     /// Creates a new transfer buffer with an initial capacity specified in
     /// bytes.
-    pub fn new(device: Arc<Device>, capacity: u64) -> Result<Self> {
+    pub fn new(cxt: Arc<VulkanContext>, capacity: u64) -> Result<Self> {
         let (block, buffer) = OwnedBlock::allocate_buffer(
-            device.allocator.clone(),
+            cxt.allocator.clone(),
             &vk::BufferCreateInfo {
                 size: capacity,
                 usage: vk::BufferUsageFlags::TRANSFER_SRC,
                 sharing_mode: vk::SharingMode::EXCLUSIVE,
                 queue_family_index_count: 1,
-                p_queue_family_indices: &device.graphics_queue_family_index,
+                p_queue_family_indices: &cxt.graphics_queue_family_index,
                 ..Default::default()
             },
             vk::MemoryPropertyFlags::HOST_VISIBLE
@@ -38,7 +38,7 @@ impl TransferBuffer {
             buffer,
             block,
             capacity,
-            device,
+            cxt,
         })
     }
 
@@ -89,15 +89,13 @@ impl TransferBuffer {
         }
 
         (self.block, self.buffer) = OwnedBlock::allocate_buffer(
-            self.device.allocator.clone(),
+            self.cxt.allocator.clone(),
             &vk::BufferCreateInfo {
                 size: target_capacity,
                 usage: vk::BufferUsageFlags::TRANSFER_SRC,
                 sharing_mode: vk::SharingMode::EXCLUSIVE,
                 queue_family_index_count: 1,
-                p_queue_family_indices: &self
-                    .device
-                    .graphics_queue_family_index,
+                p_queue_family_indices: &self.cxt.graphics_queue_family_index,
                 ..Default::default()
             },
             vk::MemoryPropertyFlags::HOST_VISIBLE

@@ -15,8 +15,8 @@ use {
         app::{app_main, App, FullscreenToggle},
         graphics::{
             vulkan::{
-                raii, Device, FrameStatus, FramesInFlight, PresentImageStatus,
-                Swapchain,
+                raii, FrameStatus, FramesInFlight, PresentImageStatus,
+                Swapchain, VulkanContext,
             },
             FullscreenQuad, Recompiler, TextureLoader,
         },
@@ -68,7 +68,7 @@ struct LiveReload {
     fragment_shader_compiler: Recompiler,
     fullscreen_toggle: FullscreenToggle,
 
-    device: Arc<Device>,
+    cxt: Arc<VulkanContext>,
 
     frames_in_flight: FramesInFlight,
     swapchain: Arc<Swapchain>,
@@ -95,8 +95,8 @@ impl App for LiveReload {
                 .unwrap_or("shader-toy-slang"),
         );
 
-        let device = Device::new(window)?;
-        log::trace!("Created device: {:#?}", device);
+        let cxt = VulkanContext::new(window)?;
+        log::trace!("Created device: {:#?}", cxt);
 
         let fragment_shader_compiler =
             Recompiler::new(&args.frag_shader, &args.additional_watch_dir)
@@ -106,17 +106,16 @@ impl App for LiveReload {
 
         let (w, h) = window.get_framebuffer_size();
         let swapchain =
-            Swapchain::new(device.clone(), (w as u32, h as u32), None)?;
+            Swapchain::new(cxt.clone(), (w as u32, h as u32), None)?;
         log::trace!("Created swapchain: {:#?}", swapchain);
 
-        let frames_in_flight = FramesInFlight::new(device.clone(), 3)?;
+        let frames_in_flight = FramesInFlight::new(cxt.clone(), 3)?;
 
-        let render_pass = create_renderpass(&device, &swapchain)?;
-        let framebuffers =
-            create_framebuffers(&device, &render_pass, &swapchain)?;
+        let render_pass = create_renderpass(&cxt, &swapchain)?;
+        let framebuffers = create_framebuffers(&cxt, &render_pass, &swapchain)?;
 
         let textures = {
-            let mut loader = TextureLoader::new(device.clone())?;
+            let mut loader = TextureLoader::new(cxt.clone())?;
             let mut textures = vec![];
             for path in &args.texture {
                 let texture = loader.load_texture(path).with_context(
@@ -128,7 +127,7 @@ impl App for LiveReload {
         };
 
         let fullscreen_quad = FullscreenQuad::builder()
-            .device(device.clone())
+            .cxt(cxt.clone())
             .fragment_shader_source(
                 fragment_shader_compiler.current_shader_bytes(),
             )
@@ -144,7 +143,7 @@ impl App for LiveReload {
             fragment_shader_compiler,
             fullscreen_toggle: FullscreenToggle::new(window),
 
-            device,
+            cxt,
 
             frames_in_flight,
             swapchain,
@@ -227,7 +226,7 @@ impl App for LiveReload {
                     float32: [0.0, 0.0, 0.0, 0.0],
                 },
             };
-            self.device.cmd_begin_render_pass(
+            self.cxt.cmd_begin_render_pass(
                 frame.command_buffer(),
                 &vk::RenderPassBeginInfo {
                     render_pass: self.render_pass.raw,
@@ -247,7 +246,7 @@ impl App for LiveReload {
 
             self.fullscreen_quad.draw(&frame, frame_data)?;
 
-            self.device.cmd_end_render_pass(frame.command_buffer());
+            self.cxt.cmd_end_render_pass(frame.command_buffer());
         }
 
         if self
@@ -266,24 +265,21 @@ impl LiveReload {
     fn rebuild_swapchain(&mut self, window: &mut glfw::Window) -> Result<()> {
         unsafe {
             // wait for all pending work to finish
-            self.device.device_wait_idle()?;
+            self.cxt.device_wait_idle()?;
         }
 
         self.framebuffers.clear();
 
         let (w, h) = window.get_framebuffer_size();
         self.swapchain = Swapchain::new(
-            self.device.clone(),
+            self.cxt.clone(),
             (w as u32, h as u32),
             Some(self.swapchain.raw()),
         )?;
 
-        self.render_pass = create_renderpass(&self.device, &self.swapchain)?;
-        self.framebuffers = create_framebuffers(
-            &self.device,
-            &self.render_pass,
-            &self.swapchain,
-        )?;
+        self.render_pass = create_renderpass(&self.cxt, &self.swapchain)?;
+        self.framebuffers =
+            create_framebuffers(&self.cxt, &self.render_pass, &self.swapchain)?;
 
         log::trace!("{:#?}", self.swapchain);
         self.fragment_shader_compiler.check_for_update()?;
@@ -301,7 +297,7 @@ impl LiveReload {
 /// The renderpass has a single subpass with a single color attachment for the
 /// swapchain image.
 fn create_renderpass(
-    device: &Device,
+    cxt: &VulkanContext,
     swapchain: &Swapchain,
 ) -> Result<raii::RenderPass> {
     let attachment_description = vk::AttachmentDescription {
@@ -345,14 +341,14 @@ fn create_renderpass(
         p_dependencies: &subpass_dependency,
         ..Default::default()
     };
-    raii::RenderPass::new(device.logical_device.clone(), &create_info)
+    raii::RenderPass::new(cxt.device.clone(), &create_info)
 }
 
 /// Creates one framebuffer per swapchain image view.
 ///
 /// Framebuffers must be replaced when the swapchain is rebuilt.
 fn create_framebuffers(
-    device: &Device,
+    cxt: &VulkanContext,
     render_pass: &raii::RenderPass,
     swapchain: &Swapchain,
 ) -> Result<Vec<raii::Framebuffer>> {
@@ -368,10 +364,8 @@ fn create_framebuffers(
             layers: 1,
             ..Default::default()
         };
-        framebuffers.push(raii::Framebuffer::new(
-            device.logical_device.clone(),
-            &create_info,
-        )?);
+        framebuffers
+            .push(raii::Framebuffer::new(cxt.device.clone(), &create_info)?);
     }
     Ok(framebuffers)
 }
