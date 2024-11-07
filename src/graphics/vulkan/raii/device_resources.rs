@@ -226,7 +226,7 @@ impl Pipeline {
 
 impl std::fmt::Debug for Pipeline {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct(stringify!($name))
+        f.debug_struct("Pipeline")
             .field("raw", &self.raw)
             .field("device", &self.device)
             .finish()

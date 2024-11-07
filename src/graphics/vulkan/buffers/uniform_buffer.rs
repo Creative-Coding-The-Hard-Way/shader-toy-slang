@@ -31,7 +31,6 @@ where
         // compute the aligned size for each element in the buffer
         let properties = unsafe {
             cxt.instance
-                .ash
                 .get_physical_device_properties(cxt.physical_device)
         };
         let aligned_unit_size: u64 = {

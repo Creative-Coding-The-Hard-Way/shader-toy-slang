@@ -54,7 +54,7 @@ impl VulkanContext {
                     "Error while picking a suitable physical device!"
                 ))?;
 
-        let (logical_device, graphics_queue_family_index) =
+        let (device, graphics_queue_family_index) =
             logical_device::create_logical_device(
                 &instance,
                 &surface_khr,
@@ -62,11 +62,10 @@ impl VulkanContext {
             )
             .with_context(trace!("Error while creating the logical device!"))?;
 
-        let graphics_queue = unsafe {
-            logical_device.get_device_queue(graphics_queue_family_index, 0)
-        };
+        let graphics_queue =
+            unsafe { device.get_device_queue(graphics_queue_family_index, 0) };
 
-        let allocator = Allocator::new(logical_device.clone(), physical_device)
+        let allocator = Allocator::new(device.clone(), physical_device)
             .with_context(trace!(
                 "Error while creating device memory allocator!"
             ))?;
@@ -75,7 +74,7 @@ impl VulkanContext {
             instance,
             surface_khr,
             physical_device,
-            device: logical_device,
+            device,
             graphics_queue_family_index,
             graphics_queue,
             allocator: Arc::new(allocator),

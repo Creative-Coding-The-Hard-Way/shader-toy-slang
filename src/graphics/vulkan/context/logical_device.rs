@@ -16,9 +16,7 @@ pub fn create_logical_device(
     physical_device: vk::PhysicalDevice,
 ) -> Result<(Arc<raii::Device>, u32)> {
     let queue_family_properties = unsafe {
-        instance
-            .ash
-            .get_physical_device_queue_family_properties(physical_device)
+        instance.get_physical_device_queue_family_properties(physical_device)
     };
 
     let (graphics_queue_index, _) = queue_family_properties

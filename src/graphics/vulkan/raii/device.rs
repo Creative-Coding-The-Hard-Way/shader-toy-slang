@@ -3,7 +3,7 @@ use {crate::graphics::vulkan::raii, anyhow::Result, ash::vk, std::sync::Arc};
 /// A RAII wrapper for the Vulkan Logical Device.
 pub struct Device {
     pub raw: ash::Device,
-    pub instance: Arc<raii::Instance>,
+    pub ash: Arc<raii::Instance>,
 }
 
 impl Device {
@@ -17,7 +17,7 @@ impl Device {
                 .raw
                 .create_device(physical_device, create_info, None)?
         };
-        Ok(Arc::new(Self { raw, instance }))
+        Ok(Arc::new(Self { raw, ash: instance }))
     }
 }
 
@@ -31,7 +31,7 @@ impl std::fmt::Debug for Device {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Device")
             .field("raw", &"<raw vulkan device handle>")
-            .field("instance", &self.instance)
+            .field("ash", &self.ash)
             .finish()
     }
 }

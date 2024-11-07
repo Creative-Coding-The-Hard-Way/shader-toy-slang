@@ -1,5 +1,7 @@
 //! RAII wrappers for Vulkan objects.
 //!
+//! # Safety
+//!
 //! Wrappers do not track dependencies. The application is responsible for
 //! dropping Vulkan objects in the correct order and synchronizing to prevent
 //! GPU inconsistencies.

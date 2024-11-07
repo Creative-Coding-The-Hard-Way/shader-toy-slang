@@ -15,7 +15,6 @@ pub fn pick_suitable_device(
 ) -> Result<vk::PhysicalDevice> {
     let physical_devices = unsafe {
         instance
-            .ash
             .enumerate_physical_devices()
             .with_context(trace!("Unable to enumerate physical devices!"))?
     };
@@ -25,9 +24,8 @@ pub fn pick_suitable_device(
     let mut preferred_device = None;
 
     for physical_device in physical_devices {
-        let properties = unsafe {
-            instance.ash.get_physical_device_properties(physical_device)
-        };
+        let properties =
+            unsafe { instance.get_physical_device_properties(physical_device) };
         let name = properties.device_name_as_c_str().unwrap_or_default();
 
         log::trace!("Check device {:?}", name);
@@ -77,9 +75,7 @@ fn has_required_features(
 ) -> bool {
     let mut features = vk::PhysicalDeviceFeatures2::default();
     unsafe {
-        instance
-            .ash
-            .get_physical_device_features2(physical_device, &mut features);
+        instance.get_physical_device_features2(physical_device, &mut features);
     }
     log::trace!("{:#?}", features);
 
@@ -96,9 +92,7 @@ fn has_required_queues(
     physical_device: vk::PhysicalDevice,
 ) -> bool {
     let queue_propertes = unsafe {
-        instance
-            .ash
-            .get_physical_device_queue_family_properties(physical_device)
+        instance.get_physical_device_queue_family_properties(physical_device)
     };
     log::trace!("{:#?}", queue_propertes);
 
@@ -113,7 +107,6 @@ fn has_required_extensions(
 ) -> bool {
     let extension_properties = unsafe {
         instance
-            .ash
             .enumerate_device_extension_properties(physical_device)
             .unwrap_or_default()
     };

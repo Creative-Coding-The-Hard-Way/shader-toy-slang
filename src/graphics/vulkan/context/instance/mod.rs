@@ -98,3 +98,11 @@ impl std::fmt::Debug for Instance {
             .finish()
     }
 }
+
+impl std::ops::Deref for Instance {
+    type Target = ash::Instance;
+
+    fn deref(&self) -> &Self::Target {
+        &self.ash.raw
+    }
+}

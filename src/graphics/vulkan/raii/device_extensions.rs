@@ -62,7 +62,7 @@ impl Swapchain {
         device: Arc<raii::Device>,
         create_info: &vk::SwapchainCreateInfoKHR,
     ) -> Result<Arc<Self>> {
-        let ext = ash::khr::swapchain::Device::new(&device.instance, &device);
+        let ext = ash::khr::swapchain::Device::new(&device.ash, &device);
         let raw = unsafe {
             ext.create_swapchain(create_info, None)
                 .with_context(trace!("Error while creating swapchain!"))?

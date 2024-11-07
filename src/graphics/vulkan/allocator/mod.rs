@@ -58,7 +58,7 @@ impl Allocator {
     ) -> Result<Self> {
         let memory_properties = unsafe {
             logical_device
-                .instance
+                .ash
                 .get_physical_device_memory_properties(physical_device)
         };
         let (handle, client) = Self::spawn_allocator_thread(
