@@ -15,7 +15,7 @@ pub fn create_pipeline(
     swapchain: &Swapchain,
     render_pass: &raii::RenderPass,
     descriptor_set_layouts: &[&raii::DescriptorSetLayout],
-    fragment_shader_source: &[u8],
+    fragment_shader: &raii::ShaderModule,
 ) -> Result<(raii::Pipeline, raii::PipelineLayout)> {
     let set_layouts = descriptor_set_layouts
         .iter()
@@ -32,19 +32,6 @@ pub fn create_pipeline(
         raii::PipelineLayout::new(cxt.device.clone(), &layout_create_info)?;
 
     let main = std::ffi::CString::new("main")?;
-
-    let fragment_shader_words =
-        ash::util::read_spv(&mut std::io::Cursor::new(fragment_shader_source))?;
-
-    let fragment_module = raii::ShaderModule::new(
-        cxt.device.clone(),
-        &vk::ShaderModuleCreateInfo {
-            code_size: fragment_shader_words.len() * 4,
-            p_code: fragment_shader_words.as_ptr(),
-            ..Default::default()
-        },
-    )
-    .with_context(trace!("Error while creating fragment shader module!"))?;
 
     let vertex_shader_words = ash::util::read_spv(&mut std::io::Cursor::new(
         include_bytes!("./shaders/fullscreen_quad.vert.spv"),
@@ -66,7 +53,7 @@ pub fn create_pipeline(
         },
         vk::PipelineShaderStageCreateInfo {
             stage: vk::ShaderStageFlags::FRAGMENT,
-            module: fragment_module.raw,
+            module: fragment_shader.raw,
             p_name: main.as_ptr(),
             ..Default::default()
         },

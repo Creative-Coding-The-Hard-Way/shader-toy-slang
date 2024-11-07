@@ -19,21 +19,8 @@ pub fn create_layout(
 pub fn create_pipeline(
     logical_device: Arc<raii::Device>,
     layout: &raii::PipelineLayout,
-    kernel_bytes: &[u8],
+    kernel: &raii::ShaderModule,
 ) -> Result<raii::Pipeline> {
-    let module = {
-        let shader_words =
-            ash::util::read_spv(&mut std::io::Cursor::new(kernel_bytes))?;
-        raii::ShaderModule::new(
-            logical_device.clone(),
-            &vk::ShaderModuleCreateInfo {
-                code_size: shader_words.len() * 4,
-                p_code: shader_words.as_ptr(),
-                ..Default::default()
-            },
-        )?
-    };
-
     let main = std::ffi::CString::new("main").unwrap();
 
     raii::Pipeline::new_compute_pipeline(
@@ -41,7 +28,7 @@ pub fn create_pipeline(
         &vk::ComputePipelineCreateInfo {
             stage: vk::PipelineShaderStageCreateInfo {
                 stage: vk::ShaderStageFlags::COMPUTE,
-                module: module.raw,
+                module: kernel.raw,
                 p_name: main.as_ptr(),
                 p_specialization_info: std::ptr::null(),
                 ..Default::default()

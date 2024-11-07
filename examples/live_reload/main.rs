@@ -98,11 +98,14 @@ impl App for LiveReload {
         let cxt = VulkanContext::new(window)?;
         log::trace!("Created device: {:#?}", cxt);
 
-        let fragment_shader_compiler =
-            Recompiler::new(&args.frag_shader, &args.additional_watch_dir)
-                .with_context(trace!(
-                    "Unable to start the fragment shader compiler!"
-                ))?;
+        let fragment_shader_compiler = Recompiler::new(
+            cxt.clone(),
+            &args.frag_shader,
+            &args.additional_watch_dir,
+        )
+        .with_context(trace!(
+            "Unable to start the fragment shader compiler!"
+        ))?;
 
         let (w, h) = window.get_framebuffer_size();
         let swapchain =
@@ -128,9 +131,7 @@ impl App for LiveReload {
 
         let fullscreen_quad = FullscreenQuad::builder()
             .cxt(cxt.clone())
-            .fragment_shader_source(
-                fragment_shader_compiler.current_shader_bytes(),
-            )
+            .fragment_shader(fragment_shader_compiler.shader())
             .frames_in_flight(&frames_in_flight)
             .swapchain(&swapchain)
             .render_pass(&render_pass)
@@ -186,7 +187,7 @@ impl App for LiveReload {
             self.fullscreen_quad.rebuild_pipeline(
                 &self.swapchain,
                 &self.render_pass,
-                self.fragment_shader_compiler.current_shader_bytes(),
+                self.fragment_shader_compiler.shader(),
             )?;
         }
 
@@ -286,7 +287,7 @@ impl LiveReload {
         self.fullscreen_quad.rebuild_pipeline(
             &self.swapchain,
             &self.render_pass,
-            self.fragment_shader_compiler.current_shader_bytes(),
+            self.fragment_shader_compiler.shader(),
         )?;
         Ok(())
     }

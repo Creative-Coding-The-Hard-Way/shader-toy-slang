@@ -74,8 +74,10 @@ impl App for LiveParticles {
         let frames_in_flight = FramesInFlight::new(cxt.clone(), 2)
             .with_context(trace!("Unable to create frames_in_flight!"))?;
 
-        let kernel_compiler = Recompiler::new(&_args.kernel_source, &[])?;
-        let init_compiler = Recompiler::new(&_args.init_source, &[])?;
+        let kernel_compiler =
+            Recompiler::new(cxt.clone(), &_args.kernel_source, &[])?;
+        let init_compiler =
+            Recompiler::new(cxt.clone(), &_args.init_source, &[])?;
 
         let renderpass = create_renderpass(cxt.device.clone(), &swapchain)?;
         let framebuffers = create_framebuffers(&cxt, &renderpass, &swapchain)?;
@@ -85,8 +87,8 @@ impl App for LiveParticles {
             .frames_in_flight(&frames_in_flight)
             .swapchain(&swapchain)
             .render_pass(&renderpass)
-            .kernel_bytes(kernel_compiler.current_shader_bytes())
-            .init_bytes(init_compiler.current_shader_bytes())
+            .kernel(kernel_compiler.shader())
+            .init(init_compiler.shader())
             .build()
             .with_context(trace!("Unable to create particles!"))?;
 
@@ -129,8 +131,8 @@ impl App for LiveParticles {
             || self.init_compiler.check_for_update()?
         {
             self.particles.compute_updated(
-                self.kernel_compiler.current_shader_bytes(),
-                self.init_compiler.current_shader_bytes(),
+                self.kernel_compiler.shader(),
+                self.init_compiler.shader(),
                 &self.frames_in_flight,
             )?;
             self.start_time = Instant::now();

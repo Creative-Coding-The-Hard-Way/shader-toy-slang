@@ -1,5 +1,5 @@
 use {
-    crate::graphics::vulkan::{raii, Swapchain},
+    crate::graphics::vulkan::{raii, spirv_words, Swapchain},
     anyhow::Result,
     ash::vk,
     std::sync::Arc,
@@ -27,12 +27,10 @@ pub fn create_pipeline(
     render_pass: &raii::RenderPass,
     pipeline_layout: &raii::PipelineLayout,
 ) -> Result<raii::Pipeline> {
-    let vertex_source = ash::util::read_spv(&mut std::io::Cursor::new(
-        include_bytes!("./shaders/particle.vert.spv"),
-    ))?;
-    let fragment_source = ash::util::read_spv(&mut std::io::Cursor::new(
-        include_bytes!("./shaders/particle.frag.spv"),
-    ))?;
+    let vertex_source =
+        spirv_words(include_bytes!("./shaders/particle.vert.spv"))?;
+    let fragment_source =
+        spirv_words(include_bytes!("./shaders/particle.frag.spv"))?;
 
     let vertex_module = raii::ShaderModule::new(
         logical_device.clone(),

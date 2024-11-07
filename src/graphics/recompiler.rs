@@ -5,8 +5,12 @@
 //! part of the Vulkan SDK.
 
 use {
-    crate::trace,
-    anyhow::{anyhow, bail, Context, Result},
+    super::vulkan::VulkanContext,
+    crate::{
+        graphics::vulkan::{compile_slang, raii},
+        trace,
+    },
+    anyhow::{anyhow, Context, Result},
     notify_debouncer_full::{
         new_debouncer,
         notify::{RecursiveMode, Watcher},
@@ -14,7 +18,10 @@ use {
     },
     std::{
         path::{Path, PathBuf},
-        sync::mpsc::{sync_channel, Receiver, SyncSender, TryRecvError},
+        sync::{
+            mpsc::{sync_channel, Receiver, SyncSender, TryRecvError},
+            Arc,
+        },
         thread::JoinHandle,
         time::Duration,
     },
@@ -25,32 +32,29 @@ use {
 /// Note: the recompiler expects to find `slangc` on the system PATH. `slangc`
 /// is included in the Vulkan SDK.
 pub struct Recompiler {
-    compiled_shader_bytes: Vec<u8>,
+    shader: raii::ShaderModule,
     compile_thread_join_handle: Option<JoinHandle<()>>,
     shutdown_sender: SyncSender<()>,
-    shader_source_receiver: Receiver<Vec<u8>>,
+    shader_receiver: Receiver<raii::ShaderModule>,
 }
 
 impl Recompiler {
     /// Creates a new recompiler that attempts to compile the given shader
     /// source. Returns an error if the initial compilation fails.
     pub fn new(
+        ctx: Arc<VulkanContext>,
         shader_source_path: &Path,
         additional_watch_paths: &[PathBuf],
     ) -> Result<Self> {
-        let shader_source_path_str = shader_source_path
-            .to_str()
-            .with_context(trace!("File path isn't a valid utf8 string!"))?
-            .to_owned();
-
-        let initial_compiled_shader_bytes =
-            try_compile_shader_file(&shader_source_path_str)
-                .with_context(trace!("Initial build for shader failed!"))?;
+        let shader = compile_slang(&ctx, shader_source_path)
+            .with_context(trace!("Initial build for shader failed!"))?;
 
         let (shutdown_sender, shutdown_receiver) = sync_channel::<()>(1);
-        let (source_sender, source_receiver) = sync_channel::<Vec<u8>>(1);
+        let (source_sender, source_receiver) =
+            sync_channel::<raii::ShaderModule>(1);
 
         let compile_thread_join_handle = spawn_compiler_thread(
+            ctx,
             shader_source_path,
             additional_watch_paths,
             source_sender,
@@ -59,16 +63,16 @@ impl Recompiler {
         .with_context(trace!("Error while spawning the compiler thread!"))?;
 
         Ok(Self {
-            compiled_shader_bytes: initial_compiled_shader_bytes,
+            shader,
             compile_thread_join_handle: Some(compile_thread_join_handle),
             shutdown_sender,
-            shader_source_receiver: source_receiver,
+            shader_receiver: source_receiver,
         })
     }
 
     /// Returns the most up-to-date copy of the shader's compiled SPIR-V bytes.
-    pub fn current_shader_bytes(&self) -> &[u8] {
-        &self.compiled_shader_bytes
+    pub fn shader(&self) -> &raii::ShaderModule {
+        &self.shader
     }
 
     /// Checks for an updated copy of the compiled source code.
@@ -78,9 +82,9 @@ impl Recompiler {
     /// - true: when there was an updated version of the source available
     /// - false: there was no pending update
     pub fn check_for_update(&mut self) -> Result<bool> {
-        match self.shader_source_receiver.try_recv() {
-            Ok(new_shader_bytes) => {
-                self.compiled_shader_bytes = new_shader_bytes;
+        match self.shader_receiver.try_recv() {
+            Ok(new_shader) => {
+                self.shader = new_shader;
                 Ok(true)
             }
             Err(TryRecvError::Empty) => Ok(false),
@@ -106,21 +110,23 @@ impl Drop for Recompiler {
 }
 
 fn spawn_compiler_thread(
+    ctx: Arc<VulkanContext>,
     shader_source_path: &Path,
     additional_watch_paths: &[PathBuf],
-    source_sender: SyncSender<Vec<u8>>,
+    shader_sender: SyncSender<raii::ShaderModule>,
     shutdown_receiver: Receiver<()>,
 ) -> Result<JoinHandle<()>> {
     let additional_watch_paths = additional_watch_paths.to_vec();
     let shader_source_path = shader_source_path.to_owned();
-    let shader_source_path_str = shader_source_path.display().to_string();
+    let shader_source_path_clone = shader_source_path.clone();
     let compile_thread_join_handle = std::thread::spawn(move || {
         let mut debouncer =
             new_debouncer(Duration::from_millis(250), None, move |result| {
                 handle_debounced_event_result(
+                    &ctx,
                     result,
-                    &shader_source_path_str,
-                    &source_sender,
+                    &shader_source_path_clone,
+                    &shader_sender,
                 );
             })
             .unwrap();
@@ -148,18 +154,19 @@ fn spawn_compiler_thread(
 /// Handles a set of debounced file change events to conditionally invoke the
 /// compiler.
 fn handle_debounced_event_result(
+    ctx: &VulkanContext,
     result: DebounceEventResult,
-    shader_source_path_str: &str,
-    source_sender: &SyncSender<Vec<u8>>,
+    shader_source_path: &Path,
+    shader_sender: &SyncSender<raii::ShaderModule>,
 ) {
     if let Err(err) = result {
         log::error!("Error receiving file change notifications!\n{:#?}", err);
         return;
     }
 
-    match try_compile_shader_file(shader_source_path_str) {
+    match try_compile_shader_file(ctx, shader_source_path) {
         Ok(shader_src_bytes) => {
-            source_sender
+            shader_sender
                 .send(shader_src_bytes)
                 .expect("Unable to send updated shader source!");
         }
@@ -173,23 +180,14 @@ fn handle_debounced_event_result(
 ///
 /// If the shader fails to compile, then a descriptive error message is included
 /// in the returned error.
-fn try_compile_shader_file(shader_source_path_str: &str) -> Result<Vec<u8>> {
-    log::info!("Compiling {}...", shader_source_path_str);
-    let output = std::process::Command::new("slangc")
-        .args([
-            "-matrix-layout-column-major", // compatible with nalgebra
-            "-target",
-            "spirv",
-            "--",
-            shader_source_path_str,
-        ])
-        .output()
-        .with_context(trace!("Error executing slangc!"))?;
+fn try_compile_shader_file(
+    ctx: &VulkanContext,
+    shader_source_path: &Path,
+) -> Result<raii::ShaderModule> {
+    log::info!("Compiling {:?}...", shader_source_path);
 
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        bail!(trace!("Error when compiling shader!\n\n{}", stderr)());
-    }
-    log::info!("{} succeeded!", shader_source_path_str);
-    Ok(output.stdout)
+    let shader = compile_slang(ctx, shader_source_path)?;
+
+    log::info!("{:?} succeeded!", shader_source_path);
+    Ok(shader)
 }

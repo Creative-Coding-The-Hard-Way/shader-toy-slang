@@ -39,7 +39,7 @@ where
     #[builder]
     pub fn new(
         cxt: Arc<VulkanContext>,
-        fragment_shader_source: &[u8],
+        fragment_shader: &raii::ShaderModule,
         frames_in_flight: &FramesInFlight,
         swapchain: &Swapchain,
         render_pass: &raii::RenderPass,
@@ -61,7 +61,7 @@ where
                 frame_data.descriptor_set_layout(),
                 static_textures.descriptor_set_layout(),
             ],
-            fragment_shader_source,
+            fragment_shader,
         )?;
 
         Ok(Self {
@@ -84,7 +84,7 @@ where
         &mut self,
         swapchain: &Swapchain,
         render_pass: &raii::RenderPass,
-        fragment_shader_source: &[u8],
+        fragment_shader: &raii::ShaderModule,
     ) -> Result<()> {
         let (pipeline, pipeline_layout) = pipeline::create_pipeline(
             &self.cxt,
@@ -94,7 +94,7 @@ where
                 self.frame_data.descriptor_set_layout(),
                 self.static_textures.descriptor_set_layout(),
             ],
-            fragment_shader_source,
+            fragment_shader,
         )
         .with_context(trace!(
             "Error while rebuilding the graphics pipeline!"

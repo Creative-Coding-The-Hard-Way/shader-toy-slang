@@ -9,6 +9,7 @@ mod buffers;
 mod context;
 mod frames_in_flight;
 pub mod raii;
+mod shader_compiler;
 mod swapchain;
 mod sync_commands;
 
@@ -17,6 +18,7 @@ pub use self::{
     buffers::{CPUBuffer, UniformBuffer},
     context::{Instance, VulkanContext},
     frames_in_flight::{Frame, FrameStatus, FramesInFlight},
+    shader_compiler::{compile_slang, spirv_words},
     swapchain::{AcquireImageStatus, PresentImageStatus, Swapchain},
     sync_commands::SyncCommands,
 };

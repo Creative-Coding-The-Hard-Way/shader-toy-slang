@@ -37,7 +37,7 @@ impl<DataT: Copy + Sized> ParticlesCompute<DataT> {
     pub fn new(
         cxt: Arc<VulkanContext>,
         particles_buffer: &CPUBuffer<Particle>,
-        kernel_bytes: &[u8],
+        kernel: &raii::ShaderModule,
     ) -> Result<Self> {
         let frame_data = UniformBuffer::allocate(&cxt, 2)?;
 
@@ -65,7 +65,7 @@ impl<DataT: Copy + Sized> ParticlesCompute<DataT> {
         let pipeline = pipeline::create_pipeline(
             cxt.device.clone(),
             &pipeline_layout,
-            kernel_bytes,
+            kernel,
         )?;
 
         Ok(Self {
@@ -87,12 +87,12 @@ impl<DataT: Copy + Sized> ParticlesCompute<DataT> {
     ///   when this function is called.
     pub unsafe fn rebuild_kernel(
         &mut self,
-        kernel_source: &[u8],
+        kernel: &raii::ShaderModule,
     ) -> Result<()> {
         self.pipeline = pipeline::create_pipeline(
             self.cxt.device.clone(),
             &self.pipeline_layout,
-            kernel_source,
+            kernel,
         )?;
         Ok(())
     }

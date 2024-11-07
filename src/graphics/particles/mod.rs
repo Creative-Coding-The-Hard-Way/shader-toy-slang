@@ -41,8 +41,8 @@ impl<FrameDataT: Copy + Sized> Particles<FrameDataT> {
         frames_in_flight: &FramesInFlight,
         swapchain: &Swapchain,
         render_pass: &raii::RenderPass,
-        kernel_bytes: &[u8],
-        init_bytes: &[u8],
+        kernel: &raii::ShaderModule,
+        init: &raii::ShaderModule,
     ) -> Result<Self> {
         let particles_buffer = CPUBuffer::<Particle>::allocate(
             &cxt,
@@ -61,13 +61,13 @@ impl<FrameDataT: Copy + Sized> Particles<FrameDataT> {
         let compute = ParticlesCompute::builder()
             .cxt(cxt.clone())
             .particles_buffer(&particles_buffer)
-            .kernel_bytes(kernel_bytes)
+            .kernel(kernel)
             .build()?;
 
         let init = ParticlesCompute::builder()
             .cxt(cxt.clone())
             .particles_buffer(&particles_buffer)
-            .kernel_bytes(init_bytes)
+            .kernel(init)
             .build()?;
 
         Ok(Self {
@@ -82,16 +82,16 @@ impl<FrameDataT: Copy + Sized> Particles<FrameDataT> {
 
     pub fn compute_updated(
         &mut self,
-        kernel_bytes: &[u8],
-        init_bytes: &[u8],
+        kernel: &raii::ShaderModule,
+        init: &raii::ShaderModule,
         frames_in_flight: &FramesInFlight,
     ) -> Result<()> {
         self.init_requested = true;
         frames_in_flight.wait_for_all_frames_to_complete()?;
         // safe because all frames are stalled
         unsafe {
-            self.init.rebuild_kernel(init_bytes)?;
-            self.compute.rebuild_kernel(kernel_bytes)?;
+            self.init.rebuild_kernel(init)?;
+            self.compute.rebuild_kernel(kernel)?;
         }
         Ok(())
     }
