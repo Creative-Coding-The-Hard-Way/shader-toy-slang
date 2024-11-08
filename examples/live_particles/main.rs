@@ -1,6 +1,5 @@
 use {
     anyhow::{Context, Result},
-    ash::vk,
     clap::Parser,
     glfw::{Action, Key, Window, WindowEvent},
     std::{path::PathBuf, sync::Arc, time::Instant},
@@ -8,10 +7,10 @@ use {
         app::{app_main, App},
         graphics::{
             vulkan::{
-                raii, FrameStatus, FramesInFlight, PresentImageStatus,
-                Swapchain, VulkanContext,
+                FrameStatus, FramesInFlight, PresentImageStatus, Swapchain,
+                VulkanContext,
             },
-            Particles, Recompiler,
+            Particles, Recompiler, SwapchainColorPass,
         },
         trace,
     },
@@ -40,10 +39,9 @@ struct LiveParticles {
     last_frame: Instant,
 
     frames_in_flight: FramesInFlight,
-    renderpass: raii::RenderPass,
     swapchain: Arc<Swapchain>,
-    framebuffers: Vec<raii::Framebuffer>,
     swapchain_needs_rebuild: bool,
+    color_pass: SwapchainColorPass,
 
     particles: Particles<FrameData>,
 
@@ -79,14 +77,13 @@ impl App for LiveParticles {
         let init_compiler =
             Recompiler::new(cxt.clone(), &_args.init_source, &[])?;
 
-        let renderpass = create_renderpass(cxt.device.clone(), &swapchain)?;
-        let framebuffers = create_framebuffers(&cxt, &renderpass, &swapchain)?;
+        let color_pass = SwapchainColorPass::new(cxt.clone(), &swapchain)?;
 
         let particles = Particles::builder()
             .cxt(cxt.clone())
             .frames_in_flight(&frames_in_flight)
             .swapchain(&swapchain)
-            .render_pass(&renderpass)
+            .render_pass(color_pass.renderpass())
             .kernel(kernel_compiler.shader())
             .init(init_compiler.shader())
             .build()
@@ -98,14 +95,13 @@ impl App for LiveParticles {
             start_time: Instant::now(),
             last_frame: Instant::now(),
             frames_in_flight,
-            framebuffers,
             swapchain,
             swapchain_needs_rebuild: false,
+            color_pass,
             particles,
             kernel_compiler,
             init_compiler,
             cxt,
-            renderpass,
         })
     }
 
@@ -169,36 +165,12 @@ impl App for LiveParticles {
         };
         self.particles.tick(&frame, frame_data)?;
 
-        let clear_colors = [vk::ClearValue {
-            color: vk::ClearColorValue {
-                float32: [0.0, 0.0, 0.0, 0.0],
-            },
-        }];
-        unsafe {
-            self.cxt.cmd_begin_render_pass(
-                frame.command_buffer(),
-                &vk::RenderPassBeginInfo {
-                    render_pass: self.renderpass.raw,
-                    framebuffer: self.framebuffers
-                        [frame.swapchain_image_index() as usize]
-                        .raw,
-                    render_area: vk::Rect2D {
-                        offset: vk::Offset2D { x: 0, y: 0 },
-                        extent: self.swapchain.extent(),
-                    },
-                    clear_value_count: clear_colors.len() as u32,
-                    p_clear_values: clear_colors.as_ptr(),
-                    ..Default::default()
-                },
-                vk::SubpassContents::INLINE,
-            );
-        }
+        self.color_pass
+            .begin_render_pass(&frame, [0.0, 0.0, 0.0, 0.0]);
 
         self.particles.draw(&frame)?;
 
-        unsafe {
-            self.cxt.cmd_end_render_pass(frame.command_buffer());
-        }
+        self.color_pass.end_render_pass(&frame);
 
         if self
             .frames_in_flight
@@ -230,107 +202,14 @@ impl LiveParticles {
             )?
         };
 
-        self.renderpass =
-            create_renderpass(self.cxt.device.clone(), &self.swapchain)?;
-        self.framebuffers =
-            create_framebuffers(&self.cxt, &self.renderpass, &self.swapchain)?;
+        self.color_pass =
+            SwapchainColorPass::new(self.cxt.clone(), &self.swapchain)?;
 
         self.particles
-            .swapchain_rebuilt(&self.swapchain, &self.renderpass)?;
+            .swapchain_rebuilt(&self.swapchain, self.color_pass.renderpass())?;
 
         Ok(())
     }
-}
-
-fn create_renderpass(
-    device: Arc<raii::Device>,
-    swapchain: &Swapchain,
-) -> Result<raii::RenderPass> {
-    let attachments = [vk::AttachmentDescription {
-        format: swapchain.format(),
-        samples: vk::SampleCountFlags::TYPE_1,
-        load_op: vk::AttachmentLoadOp::CLEAR,
-        store_op: vk::AttachmentStoreOp::STORE,
-        stencil_load_op: vk::AttachmentLoadOp::DONT_CARE,
-        stencil_store_op: vk::AttachmentStoreOp::DONT_CARE,
-        initial_layout: vk::ImageLayout::UNDEFINED,
-        final_layout: vk::ImageLayout::PRESENT_SRC_KHR,
-        ..Default::default()
-    }];
-    let color_attachment = [vk::AttachmentReference {
-        attachment: 0,
-        layout: vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL,
-    }];
-    let subpasses = [vk::SubpassDescription {
-        pipeline_bind_point: vk::PipelineBindPoint::GRAPHICS,
-        input_attachment_count: 0,
-        p_input_attachments: std::ptr::null(),
-        color_attachment_count: color_attachment.len() as u32,
-        p_color_attachments: color_attachment.as_ptr(),
-        p_resolve_attachments: std::ptr::null(),
-        p_depth_stencil_attachment: std::ptr::null(),
-        preserve_attachment_count: 0,
-        p_preserve_attachments: std::ptr::null(),
-        ..Default::default()
-    }];
-    let dependencies = [
-        vk::SubpassDependency {
-            src_subpass: vk::SUBPASS_EXTERNAL,
-            dst_subpass: 0,
-            src_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
-            src_access_mask: vk::AccessFlags::empty(),
-            dst_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
-            dst_access_mask: vk::AccessFlags::COLOR_ATTACHMENT_WRITE,
-            dependency_flags: vk::DependencyFlags::empty(),
-        },
-        vk::SubpassDependency {
-            src_subpass: 0,
-            dst_subpass: vk::SUBPASS_EXTERNAL,
-            src_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
-            src_access_mask: vk::AccessFlags::COLOR_ATTACHMENT_WRITE,
-            dst_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
-            dst_access_mask: vk::AccessFlags::empty(),
-            dependency_flags: vk::DependencyFlags::empty(),
-        },
-    ];
-    raii::RenderPass::new(
-        device,
-        &vk::RenderPassCreateInfo {
-            attachment_count: attachments.len() as u32,
-            p_attachments: attachments.as_ptr(),
-            subpass_count: subpasses.len() as u32,
-            p_subpasses: subpasses.as_ptr(),
-            dependency_count: dependencies.len() as u32,
-            p_dependencies: dependencies.as_ptr(),
-            ..Default::default()
-        },
-    )
-}
-
-/// Creates one framebuffer per swapchain image view.
-///
-/// Framebuffers must be replaced when the swapchain is rebuilt.
-fn create_framebuffers(
-    cxt: &VulkanContext,
-    render_pass: &raii::RenderPass,
-    swapchain: &Swapchain,
-) -> Result<Vec<raii::Framebuffer>> {
-    let mut framebuffers = vec![];
-    let vk::Extent2D { width, height } = swapchain.extent();
-    for image_view in swapchain.image_views() {
-        let create_info = vk::FramebufferCreateInfo {
-            render_pass: render_pass.raw,
-            attachment_count: 1,
-            p_attachments: &image_view.raw,
-            width,
-            height,
-            layers: 1,
-            ..Default::default()
-        };
-        framebuffers
-            .push(raii::Framebuffer::new(cxt.device.clone(), &create_info)?);
-    }
-    Ok(framebuffers)
 }
 
 fn main() {
