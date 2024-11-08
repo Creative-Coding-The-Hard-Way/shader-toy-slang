@@ -1,6 +1,7 @@
 mod fullscreen_quad;
 mod particles;
 mod recompiler;
+mod renderpass;
 mod sprites;
 mod texture_loader;
 pub mod vulkan;
@@ -11,6 +12,7 @@ pub use self::{
     fullscreen_quad::FullscreenQuad,
     particles::Particles,
     recompiler::Recompiler,
+    renderpass::SwapchainColorPass,
     sprites::{Sprite, SpriteLayer, StreamingSprites},
     texture_loader::{Texture, TextureLoader},
 };
