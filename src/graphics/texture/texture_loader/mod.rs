@@ -1,7 +1,10 @@
 use {
-    super::vulkan::raii,
+    self::transfer_buffer::TransferBuffer,
     crate::{
-        graphics::vulkan::{OwnedBlock, SyncCommands, VulkanContext},
+        graphics::{
+            vulkan::{SyncCommands, VulkanContext},
+            Texture,
+        },
         trace,
     },
     anyhow::{Context, Result},
@@ -10,13 +13,8 @@ use {
     std::{path::PathBuf, sync::Arc},
 };
 
-mod texture;
 mod transfer_buffer;
 
-pub use self::texture::Texture;
-use self::transfer_buffer::TransferBuffer;
-
-/// Responsible for loading textures from files into usable GPU resources.
 pub struct TextureLoader {
     sync_commands: SyncCommands,
     transfer_buffer: TransferBuffer,
@@ -29,13 +27,13 @@ impl TextureLoader {
         Ok(Self {
             sync_commands: SyncCommands::new(cxt.clone())
                 .with_context(trace!("Unable to create sync commands!"))?,
-            transfer_buffer: TransferBuffer::new(cxt.clone(), 8)
+            transfer_buffer: TransferBuffer::new(cxt.clone())
                 .with_context(trace!("Unable to create transfer buffer!"))?,
             cxt,
         })
     }
 
-    pub fn load_texture(
+    pub fn load_from_file(
         &mut self,
         path: impl Into<PathBuf>,
     ) -> Result<Texture> {
@@ -48,32 +46,17 @@ impl TextureLoader {
             .to_rgba8();
         let (width, height) = image_file.dimensions();
 
-        let (block, image) = OwnedBlock::allocate_image(
-            self.cxt.allocator.clone(),
-            &vk::ImageCreateInfo {
-                flags: vk::ImageCreateFlags::empty(),
-                image_type: vk::ImageType::TYPE_2D,
-                format: vk::Format::R8G8B8A8_SRGB,
-                extent: vk::Extent3D {
-                    width,
-                    height,
-                    depth: 1,
-                },
-                mip_levels: 1,
-                array_layers: 1,
-                samples: vk::SampleCountFlags::TYPE_1,
-                tiling: vk::ImageTiling::OPTIMAL,
-                usage: vk::ImageUsageFlags::TRANSFER_DST
+        let texture = Texture::builder()
+            .ctx(&self.cxt)
+            .name(path.as_os_str().to_string_lossy().to_string())
+            .dimensions(image_file.dimensions())
+            .format(vk::Format::R8G8B8A8_SRGB)
+            .usage(
+                vk::ImageUsageFlags::TRANSFER_DST
                     | vk::ImageUsageFlags::SAMPLED,
-                sharing_mode: vk::SharingMode::EXCLUSIVE,
-                queue_family_index_count: 1,
-                p_queue_family_indices: &self.cxt.graphics_queue_family_index,
-                initial_layout: vk::ImageLayout::UNDEFINED,
-                ..Default::default()
-            },
-            vk::MemoryPropertyFlags::DEVICE_LOCAL,
-        )
-        .with_context(trace!("Error while creating image for {:?}", path))?;
+            )
+            .memory_property_flags(vk::MemoryPropertyFlags::DEVICE_LOCAL)
+            .build()?;
 
         unsafe {
             // SAFE: because the transfer buffer is not in use
@@ -106,7 +89,7 @@ impl TextureLoader {
                         dst_queue_family_index: self
                             .cxt
                             .graphics_queue_family_index,
-                        image: image.raw,
+                        image: texture.image(),
                         subresource_range: vk::ImageSubresourceRange {
                             aspect_mask: vk::ImageAspectFlags::COLOR,
                             base_mip_level: 0,
@@ -120,7 +103,7 @@ impl TextureLoader {
                 cxt.cmd_copy_buffer_to_image(
                     cmd,
                     transfer_buffer,
-                    image.raw,
+                    texture.image(),
                     vk::ImageLayout::TRANSFER_DST_OPTIMAL,
                     &[vk::BufferImageCopy {
                         buffer_offset: 0,
@@ -158,7 +141,7 @@ impl TextureLoader {
                         dst_queue_family_index: self
                             .cxt
                             .graphics_queue_family_index,
-                        image: image.raw,
+                        image: texture.image(),
                         subresource_range: vk::ImageSubresourceRange {
                             aspect_mask: vk::ImageAspectFlags::COLOR,
                             base_mip_level: 0,
@@ -176,33 +159,6 @@ impl TextureLoader {
                 "Error while copying data to image memory!"
             ))?;
 
-        let image_view = raii::ImageView::new(
-            cxt.device.clone(),
-            &vk::ImageViewCreateInfo {
-                flags: vk::ImageViewCreateFlags::empty(),
-                image: image.raw,
-                view_type: vk::ImageViewType::TYPE_2D,
-                format: vk::Format::R8G8B8A8_SRGB,
-                components: vk::ComponentMapping::default(),
-                subresource_range: vk::ImageSubresourceRange {
-                    aspect_mask: vk::ImageAspectFlags::COLOR,
-                    base_mip_level: 0,
-                    level_count: 1,
-                    base_array_layer: 0,
-                    layer_count: 1,
-                },
-                ..Default::default()
-            },
-        )
-        .with_context(trace!("Unable to create image view!"))?;
-
-        Ok(Texture::builder()
-            .path(path)
-            .width(width)
-            .height(height)
-            .image_view(image_view)
-            .image(image)
-            .block(block)
-            .build())
+        Ok(texture)
     }
 }

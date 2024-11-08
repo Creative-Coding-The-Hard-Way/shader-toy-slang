@@ -29,7 +29,7 @@ struct Sprite {
     float2 uv_size;
     float4 tint;
     float angle;
-    uint32_t texture;
+    int32_t texture;
 }
 
 struct Layer {
@@ -46,19 +46,20 @@ struct VertexStageOutput {
     float4 sv_position : SV_Position;
     float4 tint: Sprite_Tint;
     float2 uv: Sprite_UV;
+    int32_t texture: Sprite_Texture;
 };
 
 [shader("vertex")]
 VertexStageOutput main(int vertex_id: SV_VertexID, int sprite_id: SV_InstanceID) {
-    // TODO: rotation and tint
+    // TODO: rotation
     let sprite = sprites[sprite_id];
     let pos = sprite.pos + sprite.size * vertices[vertex_id];
-
 
     VertexStageOutput output;
     output.sv_position = mul(layer.projection, float4(pos, 0.0, 1.0));
     output.tint = sprite.tint;
     output.uv = sprite.uv_pos + sprite.uv_size * uvs[vertex_id];
+    output.texture = sprite.texture;
     return output;
 }
 

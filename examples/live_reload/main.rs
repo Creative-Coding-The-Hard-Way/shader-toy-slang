@@ -117,7 +117,7 @@ impl App for LiveReload {
             let mut loader = TextureLoader::new(cxt.clone())?;
             let mut textures = vec![];
             for path in &args.texture {
-                let texture = loader.load_texture(path).with_context(
+                let texture = loader.load_from_file(path).with_context(
                     trace!("Error while loading texture {:?}", path),
                 )?;
                 textures.push(texture);

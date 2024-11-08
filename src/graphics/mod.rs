@@ -3,7 +3,7 @@ mod particles;
 mod recompiler;
 mod renderpass;
 mod sprites;
-mod texture_loader;
+mod texture;
 pub mod vulkan;
 
 use nalgebra::Matrix4;
@@ -14,7 +14,7 @@ pub use self::{
     recompiler::Recompiler,
     renderpass::SwapchainColorPass,
     sprites::{Sprite, SpriteLayer, StreamingSprites},
-    texture_loader::{Texture, TextureLoader},
+    texture::{texture_loader::TextureLoader, Texture},
 };
 
 pub fn ortho_projection(aspect: f32, height: f32) -> Matrix4<f32> {
