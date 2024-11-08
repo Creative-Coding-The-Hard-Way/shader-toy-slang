@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["ortho_projection"],"mod":["vulkan"],"struct":["FullscreenQuad","Particles","Recompiler","Texture","TextureLoader"]};
+window.SIDEBAR_ITEMS = {"fn":["ortho_projection"],"mod":["vulkan"],"struct":["FullscreenQuad","Particles","Recompiler","Sprite","SpriteLayer","StreamingSprites","Texture","TextureLoader"]};

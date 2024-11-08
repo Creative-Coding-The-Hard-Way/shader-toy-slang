@@ -175,6 +175,14 @@
 <a href="#175" id="175">175</a>
 <a href="#176" id="176">176</a>
 <a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>allocation_requirements;
 <span class="kw">pub mod </span>block;
 <span class="kw">mod </span>composable_allocator;
@@ -214,13 +222,21 @@
     </span>ShutDown,
 }
 
-<span class="doccomment">/// A Vulkan device memory allocator.
+<span class="doccomment">/// The Vulkan device memory allocator.
 ///
-/// # Ownership
+/// # Performance
 ///
-/// The owner of the Allocator is responsible for ensuring that the phisacal
-/// device, the ash library instance, and the Vulkan logical device all outlive
-/// the Allocator.
+/// All Vulkan allocations are serialized into a single queue served by a
+/// background thread. This is to simplify the allocator implementation (it's
+/// single-threaded) but it means that allocating tons of memory from many
+/// threads could cause bottlenecks. In practice, this doesn't seem to matter
+/// because device allocations are typically fairly long-lived.
+///
+/// # Device Memory Usage
+///
+/// The allocator implementation attempts to only allocate large blocks of
+/// Device memory, then subdivide them to fit individual allocation requests.
+/// This logic is hosted in the private composable_allocator module.
 </span><span class="kw">pub struct </span>Allocator {
     logical_device: Arc&lt;raii::Device&gt;,
     client: Sender&lt;Request&gt;,

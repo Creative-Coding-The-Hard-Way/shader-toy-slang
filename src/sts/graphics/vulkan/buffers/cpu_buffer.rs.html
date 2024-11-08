@@ -91,6 +91,11 @@
 <a href="#91" id="91">91</a>
 <a href="#92" id="92">92</a>
 <a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">crate</span>::{
         graphics::vulkan::{raii, OwnedBlock, VulkanContext},
@@ -154,6 +159,11 @@
     <span class="doccomment">/// The size of the buffer in bytes.
     </span><span class="kw">pub fn </span>size_in_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
         (<span class="self">self</span>.count * size_of::&lt;DataT&gt;()) <span class="kw">as </span>u64
+    }
+
+    <span class="doccomment">/// The maximum number of items that can be saved in this buffer.
+    </span><span class="kw">pub fn </span>capacity(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.count
     }
 
     <span class="doccomment">/// Writes data into the GPU memory at the given index.

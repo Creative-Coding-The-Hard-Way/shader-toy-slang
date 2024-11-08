@@ -22,6 +22,8 @@
 <a href="#22" id="22">22</a>
 <a href="#23" id="23">23</a>
 <a href="#24" id="24">24</a>
+<a href="#25" id="25">25</a>
+<a href="#26" id="26">26</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! This module defines traits, structs, and functions to interact with a Vulkan
 //! device.
 //!
@@ -31,6 +33,7 @@
 </span><span class="kw">mod </span>allocator;
 <span class="kw">mod </span>buffers;
 <span class="kw">mod </span>context;
+<span class="kw">mod </span>descriptors;
 <span class="kw">mod </span>frames_in_flight;
 <span class="kw">pub mod </span>raii;
 <span class="kw">mod </span>shader_compiler;
@@ -41,8 +44,9 @@
     allocator::{block::Block, owned_block::OwnedBlock, Allocator},
     buffers::{CPUBuffer, UniformBuffer},
     context::{Instance, VulkanContext},
+    descriptors::{DescriptorBumpAllocator, PoolRatio},
     frames_in_flight::{Frame, FrameStatus, FramesInFlight},
-    shader_compiler::{compile_slang, spirv_words},
+    shader_compiler::{compile_slang, spirv_module, spirv_words},
     swapchain::{AcquireImageStatus, PresentImageStatus, Swapchain},
     sync_commands::SyncCommands,
 };
