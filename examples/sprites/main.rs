@@ -9,10 +9,10 @@ use {
         graphics::{
             ortho_projection,
             vulkan::{
-                raii, CPUBuffer, FrameStatus, FramesInFlight,
-                PresentImageStatus, Swapchain, VulkanContext,
+                raii, FrameStatus, FramesInFlight, PresentImageStatus,
+                Swapchain, VulkanContext,
             },
-            Sprite, SpriteLayer,
+            Sprite, SpriteLayer, StreamingSprites,
         },
         trace,
     },
@@ -24,7 +24,7 @@ struct Args {}
 /// A sprites demo.
 struct Sprites {
     world_layer: SpriteLayer,
-    sprites: CPUBuffer<Sprite>,
+    sprites: StreamingSprites,
 
     // Vulkan resources
     frames_in_flight: FramesInFlight,
@@ -65,24 +65,7 @@ impl App for Sprites {
             .projection(ortho_projection(w as f32 / h as f32, 10.0))
             .build()?;
 
-        let mut sprites =
-            CPUBuffer::allocate(&ctx, 1, vk::BufferUsageFlags::STORAGE_BUFFER)?;
-
-        unsafe {
-            // SAFE: because the data is not being used yet
-            sprites.write_data(
-                0,
-                &[Sprite {
-                    pos: [0.0, 0.0],
-                    size: [1.0, 1.0],
-                    uv_pos: [0.0, 0.0],
-                    uv_size: [1.0, 1.0],
-                    tint: [1.0, 1.0, 1.0, 1.0],
-                    angle: 0.0,
-                    texture: 0,
-                }],
-            )?;
-        };
+        let sprites = StreamingSprites::new(ctx.clone(), &frames_in_flight)?;
 
         Ok(Self {
             world_layer,
@@ -156,8 +139,22 @@ impl App for Sprites {
             );
         }
 
-        SpriteLayer::begin(&mut self.world_layer, &frame)?
-            .draw((self.sprites.buffer(), 1))?
+        self.sprites
+            .add(Sprite {
+                pos: [0.0, 0.0],
+                ..Default::default()
+            })
+            .add(Sprite {
+                pos: [3.0, 0.0],
+                size: [0.5, 1.0],
+                tint: [0.2, 0.5, 0.2, 1.0],
+                ..Default::default()
+            })
+            .flush(&frame)?;
+
+        self.world_layer
+            .begin_frame_commands(&frame)?
+            .draw(&self.sprites)?
             .finish();
 
         unsafe {

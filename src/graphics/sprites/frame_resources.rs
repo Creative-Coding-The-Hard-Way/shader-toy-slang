@@ -63,12 +63,12 @@ impl FrameResources {
 
     pub fn get_batch_descriptor(
         &mut self,
-        batch: &SpriteBatch,
+        batch: &impl SpriteBatch,
         descriptor_allocator: &mut DescriptorBumpAllocator,
         batch_descriptor_set_layout: &raii::DescriptorSetLayout,
     ) -> Result<vk::DescriptorSet> {
         if let Some(&descriptor_set) =
-            self.cached_batch_descriptors.get(&batch.buffer)
+            self.cached_batch_descriptors.get(&batch.buffer())
         {
             return Ok(descriptor_set);
         }
@@ -77,9 +77,9 @@ impl FrameResources {
             .allocate_descriptor_set(batch_descriptor_set_layout)?;
 
         let buffer_info = vk::DescriptorBufferInfo {
-            buffer: batch.buffer,
+            buffer: batch.buffer(),
             offset: 0,
-            range: batch.count as u64 * size_of::<Sprite>() as u64,
+            range: batch.count() as u64 * size_of::<Sprite>() as u64,
         };
         unsafe {
             self.ctx.update_descriptor_sets(
@@ -99,7 +99,7 @@ impl FrameResources {
         }
 
         self.cached_batch_descriptors
-            .insert(batch.buffer, batch_descriptor);
+            .insert(batch.buffer(), batch_descriptor);
 
         Ok(batch_descriptor)
     }

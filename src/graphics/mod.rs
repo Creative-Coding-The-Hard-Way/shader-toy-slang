@@ -11,7 +11,7 @@ pub use self::{
     fullscreen_quad::FullscreenQuad,
     particles::Particles,
     recompiler::Recompiler,
-    sprites::{Sprite, SpriteLayer},
+    sprites::{Sprite, SpriteLayer, StreamingSprites},
     texture_loader::{Texture, TextureLoader},
 };
 

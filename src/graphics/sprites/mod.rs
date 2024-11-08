@@ -1,6 +1,7 @@
 mod descriptors;
 mod frame_resources;
 mod pipeline;
+mod sprite_batch;
 
 use {
     self::frame_resources::FrameResources,
@@ -16,6 +17,8 @@ use {
     std::sync::Arc,
 };
 
+pub use self::sprite_batch::{SpriteBatch, StreamingSprites};
+
 #[derive(Copy, Clone, Debug)]
 #[repr(C, packed)]
 pub struct Sprite {
@@ -26,6 +29,22 @@ pub struct Sprite {
     pub tint: [f32; 4],
     pub angle: f32,
     pub texture: u32,
+    pub padding: [f32; 2],
+}
+
+impl Default for Sprite {
+    fn default() -> Self {
+        Self {
+            pos: [0.0, 0.0],
+            size: [1.0, 1.0],
+            uv_pos: [0.0, 0.0],
+            uv_size: [1.0, 1.0],
+            tint: [1.0, 1.0, 1.0, 1.0],
+            angle: 0.0,
+            texture: 0,
+            padding: Default::default(),
+        }
+    }
 }
 
 /// Layer data provided to the graphics pipeline.
@@ -35,28 +54,11 @@ pub struct LayerData {
     pub projection: [[f32; 4]; 4],
 }
 
-pub struct SpriteBatch {
-    buffer: vk::Buffer,
-    count: u32,
-}
+pub struct SpriteLayerCommands<'a, 'b>(&'a mut SpriteLayer, &'b Frame);
 
-impl From<(vk::Buffer, u32)> for SpriteBatch {
-    fn from((buffer, count): (vk::Buffer, u32)) -> Self {
-        Self { buffer, count }
-    }
-}
-
-impl From<(u32, vk::Buffer)> for SpriteBatch {
-    fn from((count, buffer): (u32, vk::Buffer)) -> Self {
-        Self { buffer, count }
-    }
-}
-
-pub struct SpriteLayerDispatch<'a, 'b>(&'a mut SpriteLayer, &'b Frame);
-
-impl SpriteLayerDispatch<'_, '_> {
+impl SpriteLayerCommands<'_, '_> {
     /// Draw a batch of sprites.
-    pub fn draw(self, batch: impl Into<SpriteBatch>) -> Result<Self> {
+    pub fn draw(self, batch: &impl SpriteBatch) -> Result<Self> {
         let Self(layer, frame) = self;
         layer.draw_batch(frame, batch)?;
         Ok(Self(layer, frame))
@@ -68,6 +70,7 @@ impl SpriteLayerDispatch<'_, '_> {
     }
 }
 
+/// A pipeline + resources for rendering sprites.
 pub struct SpriteLayer {
     layer_descriptor_set_layout: raii::DescriptorSetLayout,
     batch_descriptor_set_layout: raii::DescriptorSetLayout,
@@ -143,12 +146,12 @@ impl SpriteLayer {
     }
 
     /// Begin rendering a layer to the frame.
-    pub fn begin<'a, 'b>(
-        layer: &'a mut Self,
+    pub fn begin_frame_commands<'a, 'b>(
+        &'a mut self,
         frame: &'b Frame,
-    ) -> Result<SpriteLayerDispatch<'a, 'b>> {
-        layer.bind_pipeline(frame)?;
-        Ok(SpriteLayerDispatch(layer, frame))
+    ) -> Result<SpriteLayerCommands<'a, 'b>> {
+        self.bind_pipeline(frame)?;
+        Ok(SpriteLayerCommands(self, frame))
     }
 
     /// Reset the Sprite Layer's internal resources.
@@ -240,12 +243,16 @@ impl SpriteLayer {
     fn draw_batch(
         &mut self,
         frame: &Frame,
-        batch: impl Into<SpriteBatch>,
+        batch: &impl SpriteBatch,
     ) -> Result<()> {
-        let batch: SpriteBatch = batch.into();
+        if batch.count() == 0 {
+            // no-op for empty batches
+            return Ok(());
+        }
+
         let resources = &mut self.frames[frame.frame_index()];
         let batch_descriptor = resources.get_batch_descriptor(
-            &batch,
+            batch,
             &mut self.descriptor_allocator,
             &self.batch_descriptor_set_layout,
         )?;
@@ -259,7 +266,7 @@ impl SpriteLayer {
                 &[],
             );
             self.ctx
-                .cmd_draw(frame.command_buffer(), 6, batch.count, 0, 0);
+                .cmd_draw(frame.command_buffer(), 6, batch.count(), 0, 0);
         }
         Ok(())
     }

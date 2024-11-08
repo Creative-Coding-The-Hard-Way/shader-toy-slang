@@ -63,6 +63,11 @@ where
         (self.count * size_of::<DataT>()) as u64
     }
 
+    /// The maximum number of items that can be saved in this buffer.
+    pub fn capacity(&self) -> usize {
+        self.count
+    }
+
     /// Writes data into the GPU memory at the given index.
     ///
     /// # Safety
