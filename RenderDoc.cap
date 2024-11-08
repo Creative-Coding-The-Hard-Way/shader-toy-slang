@@ -2,12 +2,12 @@
     "rdocCaptureSettings": 1,
     "settings": {
         "autoStart": true,
-        "commandLine": "@demos\\03_fractal_brownian_noise/args --texture .\\demos\\04_texture\\temple-of-the-sun.jpg",
+        "commandLine": "",
         "environment": [
         ],
-        "executable": "C:\\Users\\Bradley\\Documents\\shader-toy-slang\\target\\debug\\examples\\live_reload.exe",
+        "executable": "C:\\Users\\Bradley\\Documents\\shader-toy-slang\\target\\debug\\examples\\sprites.exe",
         "inject": false,
-        "numQueuedFrames": 3,
+        "numQueuedFrames": 2,
         "options": {
             "allowFullscreen": true,
             "allowVSync": true,

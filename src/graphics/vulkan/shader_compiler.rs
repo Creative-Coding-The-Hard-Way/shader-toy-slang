@@ -8,6 +8,25 @@ use {
     std::path::Path,
 };
 
+/// Creates a Vulkan shader module from the provided SPIR-V code.
+///
+/// SPIR-V is expected to be a valid array of u32 words. If the provided bytes
+/// cannot be reinterpreted as words, this method will return an error.
+pub fn spirv_module(
+    ctx: &VulkanContext,
+    shader_bytes: &[u8],
+) -> Result<raii::ShaderModule> {
+    let words = spirv_words(shader_bytes)?;
+    raii::ShaderModule::new(
+        ctx.device.clone(),
+        &vk::ShaderModuleCreateInfo {
+            code_size: words.len() * 4,
+            p_code: words.as_ptr(),
+            ..Default::default()
+        },
+    )
+}
+
 /// Convert an unaligned slice of bytes into an aligned chunk of u32 words.
 ///
 /// This is needed because SPIRV is expected to always take the form of 32
@@ -60,17 +79,8 @@ pub fn compile_slang(
         bail!(trace!("Error when compiling shader!\n\n{}", stderr)());
     }
 
-    let words = spirv_words(&output.stdout).with_context(trace!(
-        "Error after compiling shader {:?}",
+    spirv_module(ctx, &output.stdout).with_context(trace!(
+        "Error creating shader module for {:?}",
         shader_path_str
-    ))?;
-
-    raii::ShaderModule::new(
-        ctx.device.clone(),
-        &vk::ShaderModuleCreateInfo {
-            code_size: words.len() * 4,
-            p_code: words.as_ptr(),
-            ..Default::default()
-        },
-    )
+    ))
 }
