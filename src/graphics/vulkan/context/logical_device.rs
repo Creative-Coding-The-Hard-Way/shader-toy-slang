@@ -48,18 +48,25 @@ pub fn create_logical_device(
         ..Default::default()
     }];
     let extensions = [ash::khr::swapchain::NAME.as_ptr()];
-    let features = vk::PhysicalDeviceFeatures {
-        geometry_shader: vk::TRUE,
+
+    let mut descriptor_indexing_features =
+        vk::PhysicalDeviceDescriptorIndexingFeatures {
+            shader_sampled_image_array_non_uniform_indexing: vk::TRUE,
+            ..Default::default()
+        };
+    let mut features = vk::PhysicalDeviceFeatures2 {
         ..Default::default()
-    };
+    }
+    .push_next(&mut descriptor_indexing_features);
     let create_info = vk::DeviceCreateInfo {
         queue_create_info_count: queue_create_infos.len() as u32,
         p_queue_create_infos: queue_create_infos.as_ptr(),
         enabled_extension_count: extensions.len() as u32,
         pp_enabled_extension_names: extensions.as_ptr(),
-        p_enabled_features: &features,
+        p_enabled_features: std::ptr::null(), // use physical device features2
         ..Default::default()
-    };
+    }
+    .push_next(&mut features);
     let logical_device =
         raii::Device::new(instance.ash.clone(), physical_device, &create_info)?;
 

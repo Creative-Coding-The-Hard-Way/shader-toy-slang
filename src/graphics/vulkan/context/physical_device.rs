@@ -73,14 +73,22 @@ fn has_required_features(
     instance: &Instance,
     physical_device: vk::PhysicalDevice,
 ) -> bool {
-    let mut features = vk::PhysicalDeviceFeatures2::default();
-    unsafe {
+    let mut descriptor_indexing =
+        vk::PhysicalDeviceDescriptorIndexingFeatures::default();
+    let features = unsafe {
+        let mut features = vk::PhysicalDeviceFeatures2::default()
+            .push_next(&mut descriptor_indexing);
         instance.get_physical_device_features2(physical_device, &mut features);
-    }
-    log::trace!("{:#?}", features);
+        features.features
+    };
+    log::trace!("{:#?}\n{:#?}", features, descriptor_indexing);
 
-    if features.features.geometry_shader != vk::TRUE {
-        log::warn!("Physical Device does not support geometry shaders!");
+    if descriptor_indexing.shader_sampled_image_array_non_uniform_indexing
+        != vk::TRUE
+    {
+        log::warn!(
+            "shader_sampled_image_array_non_uniform_indexing not supported!"
+        );
         return false;
     }
 
