@@ -271,6 +271,13 @@
 <a href="#271" id="271">271</a>
 <a href="#272" id="272">272</a>
 <a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>descriptors;
 <span class="kw">mod </span>frame_resources;
 <span class="kw">mod </span>pipeline;
@@ -301,8 +308,9 @@
     <span class="kw">pub </span>uv_size: [f32; <span class="number">2</span>],
     <span class="kw">pub </span>tint: [f32; <span class="number">4</span>],
     <span class="kw">pub </span>angle: f32,
-    <span class="kw">pub </span>texture: u32,
-    <span class="kw">pub </span>padding: [f32; <span class="number">2</span>],
+    <span class="kw">pub </span>texture: i32,
+    <span class="kw">pub </span>sampler: u32,
+    <span class="kw">pub </span>padding: f32,
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>Sprite {
@@ -314,7 +322,8 @@
             uv_size: [<span class="number">1.0</span>, <span class="number">1.0</span>],
             tint: [<span class="number">1.0</span>, <span class="number">1.0</span>, <span class="number">1.0</span>, <span class="number">1.0</span>],
             angle: <span class="number">0.0</span>,
-            texture: <span class="number">0</span>,
+            texture: -<span class="number">1</span>,
+            sampler: <span class="number">0</span>,
             padding: Default::default(),
         }
     }
@@ -368,6 +377,7 @@
         render_pass: <span class="kw-2">&amp;</span>raii::RenderPass,
         swapchain: <span class="kw-2">&amp;</span>Swapchain,
         projection: Matrix4&lt;f32&gt;,
+        texture_atlas_layout: <span class="kw-2">&amp;</span>raii::DescriptorSetLayout,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>layer_descriptor_set_layout =
             descriptors::create_layer_descriptor_set_layout(<span class="kw-2">&amp;</span>ctx)<span class="question-mark">?</span>;
@@ -378,7 +388,11 @@
 
         <span class="kw">let </span>pipeline_layout = pipeline::create_pipeline_layout(
             <span class="kw-2">&amp;</span>ctx,
-            <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>layer_descriptor_set_layout, <span class="kw-2">&amp;</span>batch_descriptor_set_layout],
+            <span class="kw-2">&amp;</span>[
+                texture_atlas_layout,
+                <span class="kw-2">&amp;</span>layer_descriptor_set_layout,
+                <span class="kw-2">&amp;</span>batch_descriptor_set_layout,
+            ],
         )<span class="question-mark">?</span>;
         <span class="kw">let </span>pipeline = pipeline::create_pipeline(
             <span class="kw-2">&amp;</span>ctx,
@@ -502,7 +516,7 @@
                 frame.command_buffer(),
                 vk::PipelineBindPoint::GRAPHICS,
                 <span class="self">self</span>.pipeline_layout.raw,
-                <span class="number">0</span>,
+                <span class="number">1</span>,
                 <span class="kw-2">&amp;</span>[resources.get_layer_descriptor()],
                 <span class="kw-2">&amp;</span>[],
             );
@@ -534,7 +548,7 @@
                 frame.command_buffer(),
                 vk::PipelineBindPoint::GRAPHICS,
                 <span class="self">self</span>.pipeline_layout.raw,
-                <span class="number">1</span>,
+                <span class="number">2</span>,
                 <span class="kw-2">&amp;</span>[batch_descriptor],
                 <span class="kw-2">&amp;</span>[],
             );

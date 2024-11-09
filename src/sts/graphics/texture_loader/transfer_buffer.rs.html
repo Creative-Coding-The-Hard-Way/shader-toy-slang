@@ -108,9 +108,11 @@
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
 <a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">crate</span>::{
-        graphics::vulkan::{raii, OwnedBlock, VulkanContext},
+        graphics::vulkan::{raii, Device, OwnedBlock},
         trace,
     },
     anyhow::{Context, <span class="prelude-ty">Result</span>},
@@ -124,21 +126,21 @@
     buffer: raii::Buffer,
     block: OwnedBlock,
     capacity: u64,
-    cxt: Arc&lt;VulkanContext&gt;,
+    device: Arc&lt;Device&gt;,
 }
 
 <span class="kw">impl </span>TransferBuffer {
     <span class="doccomment">/// Creates a new transfer buffer with an initial capacity specified in
     /// bytes.
-    </span><span class="kw">pub fn </span>new(cxt: Arc&lt;VulkanContext&gt;, capacity: u64) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+    </span><span class="kw">pub fn </span>new(device: Arc&lt;Device&gt;, capacity: u64) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>(block, buffer) = OwnedBlock::allocate_buffer(
-            cxt.allocator.clone(),
+            device.allocator.clone(),
             <span class="kw-2">&amp;</span>vk::BufferCreateInfo {
                 size: capacity,
                 usage: vk::BufferUsageFlags::TRANSFER_SRC,
                 sharing_mode: vk::SharingMode::EXCLUSIVE,
                 queue_family_index_count: <span class="number">1</span>,
-                p_queue_family_indices: <span class="kw-2">&amp;</span>cxt.graphics_queue_family_index,
+                p_queue_family_indices: <span class="kw-2">&amp;</span>device.graphics_queue_family_index,
                 ..Default::default()
             },
             vk::MemoryPropertyFlags::HOST_VISIBLE
@@ -148,7 +150,7 @@
             buffer,
             block,
             capacity,
-            cxt,
+            device,
         })
     }
 
@@ -199,13 +201,15 @@
         }
 
         (<span class="self">self</span>.block, <span class="self">self</span>.buffer) = OwnedBlock::allocate_buffer(
-            <span class="self">self</span>.cxt.allocator.clone(),
+            <span class="self">self</span>.device.allocator.clone(),
             <span class="kw-2">&amp;</span>vk::BufferCreateInfo {
                 size: target_capacity,
                 usage: vk::BufferUsageFlags::TRANSFER_SRC,
                 sharing_mode: vk::SharingMode::EXCLUSIVE,
                 queue_family_index_count: <span class="number">1</span>,
-                p_queue_family_indices: <span class="kw-2">&amp;</span><span class="self">self</span>.cxt.graphics_queue_family_index,
+                p_queue_family_indices: <span class="kw-2">&amp;</span><span class="self">self
+                    </span>.device
+                    .graphics_queue_family_index,
                 ..Default::default()
             },
             vk::MemoryPropertyFlags::HOST_VISIBLE

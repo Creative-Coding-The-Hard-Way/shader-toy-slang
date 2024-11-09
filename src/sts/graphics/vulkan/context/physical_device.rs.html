@@ -140,6 +140,24 @@
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
 <a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">crate</span>::{
         graphics::vulkan::{raii, Instance},
@@ -215,16 +233,34 @@
     instance: <span class="kw-2">&amp;</span>Instance,
     physical_device: vk::PhysicalDevice,
 ) -&gt; bool {
-    <span class="kw">let </span><span class="kw-2">mut </span>features = vk::PhysicalDeviceFeatures2::default();
-    <span class="kw">unsafe </span>{
+    <span class="kw">let </span><span class="kw-2">mut </span>features12 = vk::PhysicalDeviceVulkan12Features::default();
+    <span class="kw">let </span>features = <span class="kw">unsafe </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>features =
+            vk::PhysicalDeviceFeatures2::default().push_next(<span class="kw-2">&amp;mut </span>features12);
         instance.get_physical_device_features2(physical_device, <span class="kw-2">&amp;mut </span>features);
-    }
-    <span class="macro">log::trace!</span>(<span class="string">"{:#?}"</span>, features);
+        features.features
+    };
 
-    <span class="kw">if </span>features.features.geometry_shader != vk::TRUE {
-        <span class="macro">log::warn!</span>(<span class="string">"Physical Device does not support geometry shaders!"</span>);
-        <span class="kw">return </span><span class="bool-val">false</span>;
+    <span class="macro">macro_rules!</span> check_feature12 {
+        (<span class="macro-nonterminal">$name</span>:ident) =&gt; {
+            <span class="kw">if </span>features12.<span class="macro-nonterminal">$name </span>!= vk::TRUE {
+                <span class="macro">log::warn!</span>(<span class="string">"{} not supported!"</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$name</span>));
+                <span class="kw">return </span><span class="bool-val">false</span>;
+            }
+        };
     }
+    <span class="macro">macro_rules!</span> check_feature {
+        (<span class="macro-nonterminal">$name</span>:ident) =&gt; {
+            <span class="kw">if </span>features.<span class="macro-nonterminal">$name </span>!= vk::TRUE {
+                <span class="macro">log::warn!</span>(<span class="string">"{} not supported!"</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$name</span>));
+                <span class="kw">return </span><span class="bool-val">false</span>;
+            }
+        };
+    }
+    <span class="macro">check_feature!</span>(sampler_anisotropy);
+    <span class="macro">check_feature12!</span>(shader_sampled_image_array_non_uniform_indexing);
+    <span class="macro">check_feature12!</span>(descriptor_binding_partially_bound);
+    <span class="macro">check_feature12!</span>(runtime_descriptor_array);
 
     <span class="bool-val">true
 </span>}

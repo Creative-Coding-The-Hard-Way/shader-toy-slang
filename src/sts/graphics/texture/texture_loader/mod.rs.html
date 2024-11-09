@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/graphics/texture_loader/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="sts" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/graphics/texture/texture_loader/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="sts" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -161,57 +161,13 @@
 <a href="#161" id="161">161</a>
 <a href="#162" id="162">162</a>
 <a href="#163" id="163">163</a>
-<a href="#164" id="164">164</a>
-<a href="#165" id="165">165</a>
-<a href="#166" id="166">166</a>
-<a href="#167" id="167">167</a>
-<a href="#168" id="168">168</a>
-<a href="#169" id="169">169</a>
-<a href="#170" id="170">170</a>
-<a href="#171" id="171">171</a>
-<a href="#172" id="172">172</a>
-<a href="#173" id="173">173</a>
-<a href="#174" id="174">174</a>
-<a href="#175" id="175">175</a>
-<a href="#176" id="176">176</a>
-<a href="#177" id="177">177</a>
-<a href="#178" id="178">178</a>
-<a href="#179" id="179">179</a>
-<a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
-<a href="#183" id="183">183</a>
-<a href="#184" id="184">184</a>
-<a href="#185" id="185">185</a>
-<a href="#186" id="186">186</a>
-<a href="#187" id="187">187</a>
-<a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
-<a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
-<a href="#206" id="206">206</a>
-<a href="#207" id="207">207</a>
-<a href="#208" id="208">208</a>
-<a href="#209" id="209">209</a>
-<a href="#210" id="210">210</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
-    <span class="kw">super</span>::vulkan::raii,
+    <span class="self">self</span>::transfer_buffer::TransferBuffer,
     <span class="kw">crate</span>::{
-        graphics::vulkan::{Device, OwnedBlock, SyncCommands},
+        graphics::{
+            vulkan::{SyncCommands, VulkanContext},
+            Texture,
+        },
         trace,
     },
     anyhow::{Context, <span class="prelude-ty">Result</span>},
@@ -220,32 +176,27 @@
     std::{path::PathBuf, sync::Arc},
 };
 
-<span class="kw">mod </span>texture;
 <span class="kw">mod </span>transfer_buffer;
 
-<span class="kw">pub use </span><span class="self">self</span>::texture::Texture;
-<span class="kw">use </span><span class="self">self</span>::transfer_buffer::TransferBuffer;
-
-<span class="doccomment">/// Responsible for loading textures from files into usable GPU resources.
-</span><span class="kw">pub struct </span>TextureLoader {
+<span class="kw">pub struct </span>TextureLoader {
     sync_commands: SyncCommands,
     transfer_buffer: TransferBuffer,
-    device: Arc&lt;Device&gt;,
+    cxt: Arc&lt;VulkanContext&gt;,
 }
 
 <span class="kw">impl </span>TextureLoader {
     <span class="doccomment">/// Creates the texture loader and underlying resources.
-    </span><span class="kw">pub fn </span>new(device: Arc&lt;Device&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+    </span><span class="kw">pub fn </span>new(cxt: Arc&lt;VulkanContext&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
-            sync_commands: SyncCommands::new(device.clone())
+            sync_commands: SyncCommands::new(cxt.clone())
                 .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to create sync commands!"</span>))<span class="question-mark">?</span>,
-            transfer_buffer: TransferBuffer::new(device.clone(), <span class="number">8</span>)
+            transfer_buffer: TransferBuffer::new(cxt.clone())
                 .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to create transfer buffer!"</span>))<span class="question-mark">?</span>,
-            device,
+            cxt,
         })
     }
 
-    <span class="kw">pub fn </span>load_texture(
+    <span class="kw">pub fn </span>load_from_file(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         path: <span class="kw">impl </span>Into&lt;PathBuf&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Texture&gt; {
@@ -258,34 +209,16 @@
             </span>.to_rgba8();
         <span class="kw">let </span>(width, height) = image_file.dimensions();
 
-        <span class="kw">let </span>(block, image) = OwnedBlock::allocate_image(
-            <span class="self">self</span>.device.allocator.clone(),
-            <span class="kw-2">&amp;</span>vk::ImageCreateInfo {
-                flags: vk::ImageCreateFlags::empty(),
-                image_type: vk::ImageType::TYPE_2D,
-                format: vk::Format::R8G8B8A8_SRGB,
-                extent: vk::Extent3D {
-                    width,
-                    height,
-                    depth: <span class="number">1</span>,
-                },
-                mip_levels: <span class="number">1</span>,
-                array_layers: <span class="number">1</span>,
-                samples: vk::SampleCountFlags::TYPE_1,
-                tiling: vk::ImageTiling::OPTIMAL,
-                usage: vk::ImageUsageFlags::TRANSFER_DST
+        <span class="kw">let </span>texture = Texture::builder()
+            .ctx(<span class="kw-2">&amp;</span><span class="self">self</span>.cxt)
+            .dimensions(image_file.dimensions())
+            .format(vk::Format::R8G8B8A8_SRGB)
+            .usage(
+                vk::ImageUsageFlags::TRANSFER_DST
                     | vk::ImageUsageFlags::SAMPLED,
-                sharing_mode: vk::SharingMode::EXCLUSIVE,
-                queue_family_index_count: <span class="number">1</span>,
-                p_queue_family_indices: <span class="kw-2">&amp;</span><span class="self">self
-                    </span>.device
-                    .graphics_queue_family_index,
-                initial_layout: vk::ImageLayout::UNDEFINED,
-                ..Default::default()
-            },
-            vk::MemoryPropertyFlags::DEVICE_LOCAL,
-        )
-        .with_context(<span class="macro">trace!</span>(<span class="string">"Error while creating image for {:?}"</span>, path))<span class="question-mark">?</span>;
+            )
+            .memory_property_flags(vk::MemoryPropertyFlags::DEVICE_LOCAL)
+            .build()<span class="question-mark">?</span>;
 
         <span class="kw">unsafe </span>{
             <span class="comment">// SAFE: because the transfer buffer is not in use
@@ -296,11 +229,11 @@
                 </span>))<span class="question-mark">?</span>;
         }
 
-        <span class="kw">let </span>device = <span class="kw-2">&amp;</span><span class="self">self</span>.device;
+        <span class="kw">let </span>cxt = <span class="kw-2">&amp;</span><span class="self">self</span>.cxt;
         <span class="kw">let </span>transfer_buffer = <span class="self">self</span>.transfer_buffer.buffer();
         <span class="self">self</span>.sync_commands
             .submit_and_wait(|cmd| <span class="kw">unsafe </span>{
-                device.cmd_pipeline_barrier(
+                cxt.cmd_pipeline_barrier(
                     cmd,
                     vk::PipelineStageFlags::TOP_OF_PIPE,
                     vk::PipelineStageFlags::TRANSFER,
@@ -313,12 +246,12 @@
                         old_layout: vk::ImageLayout::UNDEFINED,
                         new_layout: vk::ImageLayout::TRANSFER_DST_OPTIMAL,
                         src_queue_family_index: <span class="self">self
-                            </span>.device
+                            </span>.cxt
                             .graphics_queue_family_index,
                         dst_queue_family_index: <span class="self">self
-                            </span>.device
+                            </span>.cxt
                             .graphics_queue_family_index,
-                        image: image.raw,
+                        image: texture.image(),
                         subresource_range: vk::ImageSubresourceRange {
                             aspect_mask: vk::ImageAspectFlags::COLOR,
                             base_mip_level: <span class="number">0</span>,
@@ -329,10 +262,10 @@
                         ..Default::default()
                     }],
                 );
-                device.cmd_copy_buffer_to_image(
+                cxt.cmd_copy_buffer_to_image(
                     cmd,
                     transfer_buffer,
-                    image.raw,
+                    texture.image(),
                     vk::ImageLayout::TRANSFER_DST_OPTIMAL,
                     <span class="kw-2">&amp;</span>[vk::BufferImageCopy {
                         buffer_offset: <span class="number">0</span>,
@@ -352,7 +285,7 @@
                         },
                     }],
                 );
-                device.cmd_pipeline_barrier(
+                cxt.cmd_pipeline_barrier(
                     cmd,
                     vk::PipelineStageFlags::TRANSFER,
                     vk::PipelineStageFlags::BOTTOM_OF_PIPE,
@@ -365,12 +298,12 @@
                         old_layout: vk::ImageLayout::TRANSFER_DST_OPTIMAL,
                         new_layout: vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL,
                         src_queue_family_index: <span class="self">self
-                            </span>.device
+                            </span>.cxt
                             .graphics_queue_family_index,
                         dst_queue_family_index: <span class="self">self
-                            </span>.device
+                            </span>.cxt
                             .graphics_queue_family_index,
-                        image: image.raw,
+                        image: texture.image(),
                         subresource_range: vk::ImageSubresourceRange {
                             aspect_mask: vk::ImageAspectFlags::COLOR,
                             base_mip_level: <span class="number">0</span>,
@@ -388,34 +321,7 @@
                 <span class="string">"Error while copying data to image memory!"
             </span>))<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>image_view = raii::ImageView::new(
-            device.logical_device.clone(),
-            <span class="kw-2">&amp;</span>vk::ImageViewCreateInfo {
-                flags: vk::ImageViewCreateFlags::empty(),
-                image: image.raw,
-                view_type: vk::ImageViewType::TYPE_2D,
-                format: vk::Format::R8G8B8A8_SRGB,
-                components: vk::ComponentMapping::default(),
-                subresource_range: vk::ImageSubresourceRange {
-                    aspect_mask: vk::ImageAspectFlags::COLOR,
-                    base_mip_level: <span class="number">0</span>,
-                    level_count: <span class="number">1</span>,
-                    base_array_layer: <span class="number">0</span>,
-                    layer_count: <span class="number">1</span>,
-                },
-                ..Default::default()
-            },
-        )
-        .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to create image view!"</span>))<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(Texture::builder()
-            .path(path)
-            .width(width)
-            .height(height)
-            .image_view(image_view)
-            .image(image)
-            .block(block)
-            .build())
+        <span class="prelude-val">Ok</span>(texture)
     }
 }
 </code></pre></div></section></main></body></html>

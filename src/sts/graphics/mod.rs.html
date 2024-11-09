@@ -27,11 +27,16 @@
 <a href="#27" id="27">27</a>
 <a href="#28" id="28">28</a>
 <a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>fullscreen_quad;
 <span class="kw">mod </span>particles;
 <span class="kw">mod </span>recompiler;
+<span class="kw">mod </span>renderpass;
 <span class="kw">mod </span>sprites;
-<span class="kw">mod </span>texture_loader;
+<span class="kw">mod </span>texture;
 <span class="kw">pub mod </span>vulkan;
 
 <span class="kw">use </span>nalgebra::Matrix4;
@@ -40,8 +45,11 @@
     fullscreen_quad::FullscreenQuad,
     particles::Particles,
     recompiler::Recompiler,
+    renderpass::SwapchainColorPass,
     sprites::{Sprite, SpriteLayer, StreamingSprites},
-    texture_loader::{Texture, TextureLoader},
+    texture::{
+        bindless::BindlessTextureAtlas, texture_loader::TextureLoader, Texture,
+    },
 };
 
 <span class="kw">pub fn </span>ortho_projection(aspect: f32, height: f32) -&gt; Matrix4&lt;f32&gt; {
