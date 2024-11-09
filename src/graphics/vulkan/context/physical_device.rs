@@ -73,16 +73,22 @@ fn has_required_features(
     instance: &Instance,
     physical_device: vk::PhysicalDevice,
 ) -> bool {
-    let mut descriptor_indexing =
-        vk::PhysicalDeviceDescriptorIndexingFeatures::default();
+    let mut features12 = vk::PhysicalDeviceVulkan12Features::default();
     let features = unsafe {
-        let mut features = vk::PhysicalDeviceFeatures2::default()
-            .push_next(&mut descriptor_indexing);
+        let mut features =
+            vk::PhysicalDeviceFeatures2::default().push_next(&mut features12);
         instance.get_physical_device_features2(physical_device, &mut features);
         features.features
     };
-    log::trace!("{:#?}\n{:#?}", features, descriptor_indexing);
 
+    macro_rules! check_feature12 {
+        ($name:ident) => {
+            if features12.$name != vk::TRUE {
+                log::warn!("{} not supported!", stringify!($name));
+                return false;
+            }
+        };
+    }
     macro_rules! check_feature {
         ($name:ident) => {
             if features.$name != vk::TRUE {
@@ -91,17 +97,10 @@ fn has_required_features(
             }
         };
     }
-    macro_rules! check_indexing_feature {
-        ($name:ident) => {
-            if descriptor_indexing.$name != vk::TRUE {
-                log::warn!("{} not supported!", stringify!($name));
-                return false;
-            }
-        };
-    }
-    check_indexing_feature!(shader_sampled_image_array_non_uniform_indexing);
-    check_indexing_feature!(descriptor_binding_partially_bound);
     check_feature!(sampler_anisotropy);
+    check_feature12!(shader_sampled_image_array_non_uniform_indexing);
+    check_feature12!(descriptor_binding_partially_bound);
+    check_feature12!(runtime_descriptor_array);
 
     true
 }

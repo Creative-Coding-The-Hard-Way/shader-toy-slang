@@ -28,8 +28,9 @@ pub struct Sprite {
     pub uv_size: [f32; 2],
     pub tint: [f32; 4],
     pub angle: f32,
-    pub texture: u32,
-    pub padding: [f32; 2],
+    pub texture: i32,
+    pub sampler: u32,
+    pub padding: f32,
 }
 
 impl Default for Sprite {
@@ -41,7 +42,8 @@ impl Default for Sprite {
             uv_size: [1.0, 1.0],
             tint: [1.0, 1.0, 1.0, 1.0],
             angle: 0.0,
-            texture: 0,
+            texture: -1,
+            sampler: 0,
             padding: Default::default(),
         }
     }
@@ -95,6 +97,7 @@ impl SpriteLayer {
         render_pass: &raii::RenderPass,
         swapchain: &Swapchain,
         projection: Matrix4<f32>,
+        texture_atlas_layout: &raii::DescriptorSetLayout,
     ) -> Result<Self> {
         let layer_descriptor_set_layout =
             descriptors::create_layer_descriptor_set_layout(&ctx)?;
@@ -105,7 +108,11 @@ impl SpriteLayer {
 
         let pipeline_layout = pipeline::create_pipeline_layout(
             &ctx,
-            &[&layer_descriptor_set_layout, &batch_descriptor_set_layout],
+            &[
+                texture_atlas_layout,
+                &layer_descriptor_set_layout,
+                &batch_descriptor_set_layout,
+            ],
         )?;
         let pipeline = pipeline::create_pipeline(
             &ctx,
@@ -229,7 +236,7 @@ impl SpriteLayer {
                 frame.command_buffer(),
                 vk::PipelineBindPoint::GRAPHICS,
                 self.pipeline_layout.raw,
-                0,
+                1,
                 &[resources.get_layer_descriptor()],
                 &[],
             );
@@ -261,7 +268,7 @@ impl SpriteLayer {
                 frame.command_buffer(),
                 vk::PipelineBindPoint::GRAPHICS,
                 self.pipeline_layout.raw,
-                1,
+                2,
                 &[batch_descriptor],
                 &[],
             );

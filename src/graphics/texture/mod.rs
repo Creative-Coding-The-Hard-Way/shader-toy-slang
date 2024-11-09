@@ -20,7 +20,6 @@ use {
 /// before allowing it to drop.
 #[derive(Debug)]
 pub struct Texture {
-    _name: String,
     width: u32,
     height: u32,
     image_view: raii::ImageView,
@@ -37,7 +36,6 @@ impl Texture {
     #[builder]
     pub fn new(
         ctx: &VulkanContext,
-        name: String,
         dimensions: (u32, u32),
         format: vk::Format,
         usage: vk::ImageUsageFlags,
@@ -68,7 +66,7 @@ impl Texture {
             },
             memory_property_flags,
         )
-        .with_context(trace!("Error while creating image for {:?}", name))?;
+        .with_context(trace!("Error while creating image"))?;
 
         let image_view = raii::ImageView::new(
             ctx.device.clone(),
@@ -91,7 +89,6 @@ impl Texture {
         .with_context(trace!("Unable to create image view!"))?;
 
         Ok(Self {
-            _name: name,
             width,
             height,
             image_view,

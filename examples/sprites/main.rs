@@ -12,7 +12,7 @@ use {
                 VulkanContext,
             },
             BindlessTextureAtlas, Sprite, SpriteLayer, StreamingSprites,
-            SwapchainColorPass,
+            SwapchainColorPass, TextureLoader,
         },
         trace,
     },
@@ -56,17 +56,25 @@ impl App for Sprites {
 
         let color_pass = SwapchainColorPass::new(ctx.clone(), &swapchain)?;
 
+        let mut atlas =
+            BindlessTextureAtlas::new(ctx.clone(), 1024, &frames_in_flight)?;
+
+        let mut loader = TextureLoader::new(ctx.clone())?;
+        let sprite_texture =
+            Arc::new(loader.load_from_file("./examples/sprites/sprite.jpg")?);
+
+        atlas.add_texture(sprite_texture);
+
         let world_layer = SpriteLayer::builder()
             .ctx(ctx.clone())
             .frames_in_flight(&frames_in_flight)
+            .texture_atlas_layout(atlas.descriptor_set_layout())
             .render_pass(color_pass.renderpass())
             .swapchain(&swapchain)
             .projection(ortho_projection(w as f32 / h as f32, 10.0))
             .build()?;
 
         let sprites = StreamingSprites::new(ctx.clone(), &frames_in_flight)?;
-
-        let atlas = BindlessTextureAtlas::new(ctx.clone(), 1024)?;
 
         Ok(Self {
             world_layer,
@@ -118,15 +126,20 @@ impl App for Sprites {
         self.color_pass
             .begin_render_pass(&frame, [0.0, 0.0, 0.0, 0.0]);
 
+        self.atlas.bind_frame_descriptor(&frame)?;
+
         self.sprites
             .add(Sprite {
                 pos: [0.0, 0.0],
+                texture: 0,
+                sampler: 0,
                 ..Default::default()
             })
             .add(Sprite {
                 pos: [3.0, 0.0],
                 size: [0.5, 1.0],
                 tint: [0.2, 0.5, 0.2, 1.0],
+                texture: 0,
                 ..Default::default()
             })
             .flush(&frame)?;

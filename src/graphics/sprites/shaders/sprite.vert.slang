@@ -30,23 +30,27 @@ struct Sprite {
     float4 tint;
     float angle;
     int32_t texture;
+    uint32_t sampler;
 }
 
 struct Layer {
     float4x4 projection;
 }
 
-/// binding = 0, set = 0
-[vk_binding(0, 0)] Layer layer;
+// set = 0 - texture atlas used in fragment shader
 
 /// binding = 0, set = 1
-[vk_binding(0, 1)] StructuredBuffer<Sprite, Std430DataLayout> sprites;
+[vk_binding(0, 1)] ConstantBuffer<Layer> layer;
+
+/// binding = 0, set = 2
+[vk_binding(0, 2)] StructuredBuffer<Sprite, Std430DataLayout> sprites;
 
 struct VertexStageOutput {
     float4 sv_position : SV_Position;
     float4 tint: Sprite_Tint;
     float2 uv: Sprite_UV;
     int32_t texture: Sprite_Texture;
+    int32_t sampler_index: Sprite_Sampler;
 };
 
 [shader("vertex")]
@@ -60,6 +64,7 @@ VertexStageOutput main(int vertex_id: SV_VertexID, int sprite_id: SV_InstanceID)
     output.tint = sprite.tint;
     output.uv = sprite.uv_pos + sprite.uv_size * uvs[vertex_id];
     output.texture = sprite.texture;
+    output.sampler_index = sprite.sampler;
     return output;
 }
 

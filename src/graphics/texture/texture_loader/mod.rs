@@ -48,7 +48,6 @@ impl TextureLoader {
 
         let texture = Texture::builder()
             .ctx(&self.cxt)
-            .name(path.as_os_str().to_string_lossy().to_string())
             .dimensions(image_file.dimensions())
             .format(vk::Format::R8G8B8A8_SRGB)
             .usage(

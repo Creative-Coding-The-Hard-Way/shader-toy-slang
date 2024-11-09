@@ -21,6 +21,10 @@ pub struct Block {
 /// pointer.
 unsafe impl Send for Block {}
 
+/// It is generally safe to share blocks between threads. The application is
+/// responsible for synchronizing access to device memory.
+unsafe impl Sync for Block {}
+
 impl Block {
     /// Creates a new block.
     pub(super) fn new(
