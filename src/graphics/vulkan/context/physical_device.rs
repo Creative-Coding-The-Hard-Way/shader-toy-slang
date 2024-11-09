@@ -83,14 +83,25 @@ fn has_required_features(
     };
     log::trace!("{:#?}\n{:#?}", features, descriptor_indexing);
 
-    if descriptor_indexing.shader_sampled_image_array_non_uniform_indexing
-        != vk::TRUE
-    {
-        log::warn!(
-            "shader_sampled_image_array_non_uniform_indexing not supported!"
-        );
-        return false;
+    macro_rules! check_feature {
+        ($name:ident) => {
+            if features.$name != vk::TRUE {
+                log::warn!("{} not supported!", stringify!($name));
+                return false;
+            }
+        };
     }
+    macro_rules! check_indexing_feature {
+        ($name:ident) => {
+            if descriptor_indexing.$name != vk::TRUE {
+                log::warn!("{} not supported!", stringify!($name));
+                return false;
+            }
+        };
+    }
+    check_indexing_feature!(shader_sampled_image_array_non_uniform_indexing);
+    check_indexing_feature!(descriptor_binding_partially_bound);
+    check_feature!(sampler_anisotropy);
 
     true
 }

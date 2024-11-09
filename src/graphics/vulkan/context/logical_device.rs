@@ -52,9 +52,14 @@ pub fn create_logical_device(
     let mut descriptor_indexing_features =
         vk::PhysicalDeviceDescriptorIndexingFeatures {
             shader_sampled_image_array_non_uniform_indexing: vk::TRUE,
+            descriptor_binding_partially_bound: vk::TRUE,
             ..Default::default()
         };
     let mut features = vk::PhysicalDeviceFeatures2 {
+        features: vk::PhysicalDeviceFeatures {
+            sampler_anisotropy: vk::TRUE,
+            ..Default::default()
+        },
         ..Default::default()
     }
     .push_next(&mut descriptor_indexing_features);

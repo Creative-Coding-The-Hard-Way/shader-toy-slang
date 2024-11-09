@@ -14,7 +14,9 @@ pub use self::{
     recompiler::Recompiler,
     renderpass::SwapchainColorPass,
     sprites::{Sprite, SpriteLayer, StreamingSprites},
-    texture::{texture_loader::TextureLoader, Texture},
+    texture::{
+        bindless::BindlessTextureAtlas, texture_loader::TextureLoader, Texture,
+    },
 };
 
 pub fn ortho_projection(aspect: f32, height: f32) -> Matrix4<f32> {

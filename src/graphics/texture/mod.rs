@@ -1,3 +1,4 @@
+pub mod bindless;
 pub mod texture_loader;
 
 use {

@@ -11,7 +11,8 @@ use {
                 FrameStatus, FramesInFlight, PresentImageStatus, Swapchain,
                 VulkanContext,
             },
-            Sprite, SpriteLayer, StreamingSprites, SwapchainColorPass,
+            BindlessTextureAtlas, Sprite, SpriteLayer, StreamingSprites,
+            SwapchainColorPass,
         },
         trace,
     },
@@ -24,6 +25,7 @@ struct Args {}
 struct Sprites {
     world_layer: SpriteLayer,
     sprites: StreamingSprites,
+    atlas: BindlessTextureAtlas,
 
     // Vulkan resources
     frames_in_flight: FramesInFlight,
@@ -64,9 +66,12 @@ impl App for Sprites {
 
         let sprites = StreamingSprites::new(ctx.clone(), &frames_in_flight)?;
 
+        let atlas = BindlessTextureAtlas::new(ctx.clone(), 1024)?;
+
         Ok(Self {
             world_layer,
             sprites,
+            atlas,
             frames_in_flight,
             color_pass,
             swapchain,
