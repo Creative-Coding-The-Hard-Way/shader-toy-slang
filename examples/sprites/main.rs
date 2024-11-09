@@ -56,8 +56,11 @@ impl App for Sprites {
 
         let color_pass = SwapchainColorPass::new(ctx.clone(), &swapchain)?;
 
-        let mut atlas =
-            BindlessTextureAtlas::new(ctx.clone(), 1024, &frames_in_flight)?;
+        let mut atlas = BindlessTextureAtlas::new(
+            ctx.clone(),
+            1024 * 10,
+            &frames_in_flight,
+        )?;
 
         let mut loader = TextureLoader::new(ctx.clone())?;
         let sprite_texture =
@@ -167,10 +170,8 @@ impl Sprites {
     fn rebuild_swapchain(&mut self, window: &mut Window) -> Result<()> {
         self.swapchain_needs_rebuild = false;
 
-        unsafe {
-            // wait for all pending work to finish
-            self.ctx.device_wait_idle()?;
-        }
+        // wait for all pending work to finish
+        self.frames_in_flight.wait_for_all_frames_to_complete()?;
 
         self.swapchain = {
             let (w, h) = window.get_framebuffer_size();
