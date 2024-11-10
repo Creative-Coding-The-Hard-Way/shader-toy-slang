@@ -1,5 +1,4 @@
 mod fullscreen_quad;
-mod particles;
 mod recompiler;
 mod renderpass;
 mod sprites;
@@ -10,7 +9,6 @@ use nalgebra::Matrix4;
 
 pub use self::{
     fullscreen_quad::FullscreenQuad,
-    particles::Particles,
     recompiler::Recompiler,
     renderpass::SwapchainColorPass,
     sprites::{Sprite, SpriteLayer, StreamingSprites},

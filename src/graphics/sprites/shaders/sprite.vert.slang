@@ -23,14 +23,25 @@ static const float2 uvs[] = {
 };
 
 struct Sprite {
-    float2 pos;
-    float2 size;
-    float2 uv_pos;
-    float2 uv_size;
+    float transform_and_uv_pos[8];
     float4 tint;
-    float angle;
+    float2 uv_size;
     int32_t texture;
     uint32_t sampler;
+
+    /// Unpacks the sprite's transforms.
+    float3x3 unpack_transform() {
+        return float3x3(
+            transform_and_uv_pos[0], transform_and_uv_pos[2], transform_and_uv_pos[4], // row 1
+            transform_and_uv_pos[1], transform_and_uv_pos[3], transform_and_uv_pos[5], // row 2
+            0, 0, 1, // row 3
+        );
+    }
+
+    /// Unpacks the sprite's UV position
+    float2 unpack_uv_position() {
+        return float2(transform_and_uv_pos[6], transform_and_uv_pos[7]);
+    }
 }
 
 struct Layer {
@@ -55,14 +66,17 @@ struct VertexStageOutput {
 
 [shader("vertex")]
 VertexStageOutput main(int vertex_id: SV_VertexID, int sprite_id: SV_InstanceID) {
-    // TODO: rotation
     let sprite = sprites[sprite_id];
-    let pos = sprite.pos + sprite.size * vertices[vertex_id];
+
+    let pos = mul(
+        sprite.unpack_transform(),
+        float3(vertices[vertex_id], 1.0)
+    ).xy;
 
     VertexStageOutput output;
     output.sv_position = mul(layer.projection, float4(pos, 0.0, 1.0));
     output.tint = sprite.tint;
-    output.uv = sprite.uv_pos + sprite.uv_size * uvs[vertex_id];
+    output.uv = sprite.unpack_uv_position() + sprite.uv_size * uvs[vertex_id];
     output.texture = sprite.texture;
     output.sampler_index = sprite.sampler;
     return output;

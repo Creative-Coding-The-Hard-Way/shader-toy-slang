@@ -1,8 +1,10 @@
 use {
     anyhow::{Context, Result},
     clap::Parser,
+    core::f32,
     glfw::{Action, Key, Window, WindowEvent},
-    std::sync::Arc,
+    nalgebra::Similarity2,
+    std::{sync::Arc, time::Instant},
     sts::{
         app::{app_main, App},
         graphics::{
@@ -23,6 +25,9 @@ struct Args {}
 
 /// A sprites demo.
 struct Sprites {
+    start_time: Instant,
+    last_frame: Instant,
+
     world_layer: SpriteLayer,
     sprites: StreamingSprites,
     atlas: BindlessTextureAtlas,
@@ -80,6 +85,8 @@ impl App for Sprites {
         let sprites = StreamingSprites::new(ctx.clone(), &frames_in_flight)?;
 
         Ok(Self {
+            start_time: Instant::now(),
+            last_frame: Instant::now(),
             world_layer,
             sprites,
             atlas,
@@ -118,6 +125,28 @@ impl App for Sprites {
                 .set_projection(&ortho_projection(w as f32 / h as f32, 10.0));
         }
 
+        let (_dt, t) = {
+            let now = Instant::now();
+            let dt = now.duration_since(self.last_frame).as_secs_f32();
+            self.last_frame = now;
+            (dt, now.duration_since(self.start_time).as_secs_f32())
+        };
+
+        let max = 1_000;
+        for i in 0..max {
+            let angle = t + f32::consts::TAU * i as f32 / max as f32;
+            self.sprites.add(
+                Sprite::new()
+                    .with_texture(0)
+                    .with_sampler(0)
+                    .with_similarity(&Similarity2::new(
+                        [4.0 * angle.cos(), 4.0 * (angle * 3.1).sin()].into(),
+                        0.0,
+                        0.05,
+                    )),
+            );
+        }
+
         let frame = match self.frames_in_flight.start_frame(&self.swapchain)? {
             FrameStatus::FrameStarted(frame) => frame,
             FrameStatus::SwapchainNeedsRebuild => {
@@ -130,23 +159,7 @@ impl App for Sprites {
             .begin_render_pass(&frame, [0.0, 0.0, 0.0, 0.0]);
 
         self.atlas.bind_frame_descriptor(&frame)?;
-
-        self.sprites
-            .add(Sprite {
-                pos: [0.0, 0.0],
-                texture: 0,
-                sampler: 0,
-                ..Default::default()
-            })
-            .add(Sprite {
-                pos: [3.0, 0.0],
-                size: [0.5, 1.0],
-                tint: [0.2, 0.5, 0.2, 1.0],
-                texture: 0,
-                ..Default::default()
-            })
-            .flush(&frame)?;
-
+        self.sprites.flush(&frame)?;
         self.world_layer
             .begin_frame_commands(&frame)?
             .draw(&self.sprites)?

@@ -1,6 +1,7 @@
 mod descriptors;
 mod frame_resources;
 mod pipeline;
+mod sprite;
 mod sprite_batch;
 
 use {
@@ -17,37 +18,10 @@ use {
     std::sync::Arc,
 };
 
-pub use self::sprite_batch::{SpriteBatch, StreamingSprites};
-
-#[derive(Copy, Clone, Debug)]
-#[repr(C, packed)]
-pub struct Sprite {
-    pub pos: [f32; 2],
-    pub size: [f32; 2],
-    pub uv_pos: [f32; 2],
-    pub uv_size: [f32; 2],
-    pub tint: [f32; 4],
-    pub angle: f32,
-    pub texture: i32,
-    pub sampler: u32,
-    pub padding: f32,
-}
-
-impl Default for Sprite {
-    fn default() -> Self {
-        Self {
-            pos: [0.0, 0.0],
-            size: [1.0, 1.0],
-            uv_pos: [0.0, 0.0],
-            uv_size: [1.0, 1.0],
-            tint: [1.0, 1.0, 1.0, 1.0],
-            angle: 0.0,
-            texture: -1,
-            sampler: 0,
-            padding: Default::default(),
-        }
-    }
-}
+pub use self::{
+    sprite::Sprite,
+    sprite_batch::{SpriteBatch, StreamingSprites},
+};
 
 /// Layer data provided to the graphics pipeline.
 #[derive(Copy, Clone, Debug)]
@@ -72,7 +46,11 @@ impl SpriteLayerCommands<'_, '_> {
     }
 }
 
-/// A pipeline + resources for rendering sprites.
+/// A sprite layer contains all of the resources to render batches of Sprites.
+///
+/// Multiple layers can be used for batches of sprites with different
+/// perspective transforms. (a scene layer and a ui layer, for example).
+/// Additionally, layers can be used to employ unique sprite shaders.
 pub struct SpriteLayer {
     layer_descriptor_set_layout: raii::DescriptorSetLayout,
     batch_descriptor_set_layout: raii::DescriptorSetLayout,
