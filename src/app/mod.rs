@@ -19,6 +19,7 @@ pub use self::fullscreen_toggle::FullscreenToggle;
 /// window.
 pub trait App {
     type Args: Sized + Parser;
+    const FRAME_COUNT: usize = 3;
 
     /// Creates a new instance of the application.
     /// The application is allowed to modify the window based on its own
