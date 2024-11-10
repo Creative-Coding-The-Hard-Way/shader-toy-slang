@@ -103,59 +103,9 @@
 <a href="#103" id="103">103</a>
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
-<a href="#106" id="106">106</a>
-<a href="#107" id="107">107</a>
-<a href="#108" id="108">108</a>
-<a href="#109" id="109">109</a>
-<a href="#110" id="110">110</a>
-<a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
-<a href="#115" id="115">115</a>
-<a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
-<a href="#119" id="119">119</a>
-<a href="#120" id="120">120</a>
-<a href="#121" id="121">121</a>
-<a href="#122" id="122">122</a>
-<a href="#123" id="123">123</a>
-<a href="#124" id="124">124</a>
-<a href="#125" id="125">125</a>
-<a href="#126" id="126">126</a>
-<a href="#127" id="127">127</a>
-<a href="#128" id="128">128</a>
-<a href="#129" id="129">129</a>
-<a href="#130" id="130">130</a>
-<a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
-<a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">crate</span>::{
-        graphics::{
-            particles::Particle,
-            vulkan::{
-                raii, CPUBuffer, FramesInFlight, UniformBuffer, VulkanContext,
-            },
-        },
+        graphics::vulkan::{raii, Device, FramesInFlight, UniformBuffer},
         trace,
     },
     anyhow::{Context, <span class="prelude-ty">Result</span>},
@@ -164,19 +114,10 @@
 };
 
 <span class="kw">pub fn </span>update_descriptor_sets&lt;T: Copy + Sized&gt;(
-    cxt: <span class="kw-2">&amp;</span>VulkanContext,
+    device: <span class="kw-2">&amp;</span>Device,
     descriptor_sets: <span class="kw-2">&amp;</span>[vk::DescriptorSet],
     uniform_buffer: <span class="kw-2">&amp;</span>UniformBuffer&lt;T&gt;,
-    particles_buffer: <span class="kw-2">&amp;</span>CPUBuffer&lt;Particle&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">let </span>particles_buffer_info = descriptor_sets
-        .iter()
-        .map(|<span class="kw">_</span>| vk::DescriptorBufferInfo {
-            buffer: particles_buffer.buffer(),
-            offset: <span class="number">0</span>,
-            range: particles_buffer.size_in_bytes(),
-        })
-        .collect::&lt;Vec&lt;vk::DescriptorBufferInfo&gt;&gt;();
     <span class="kw">let </span>buffer_infos = descriptor_sets
         .iter()
         .enumerate()
@@ -188,43 +129,27 @@
         .collect::&lt;Vec&lt;vk::DescriptorBufferInfo&gt;&gt;();
     <span class="kw">let </span>writes = buffer_infos
         .iter()
-        .zip(particles_buffer_info.iter())
         .zip(descriptor_sets)
-        .flat_map(|((buffer_info, particles_buffer_info), <span class="kw-2">&amp;</span>descriptor_set)| {
-            [
-                vk::WriteDescriptorSet {
-                    dst_set: descriptor_set,
-                    dst_binding: <span class="number">0</span>,
-                    dst_array_element: <span class="number">0</span>,
-                    descriptor_count: <span class="number">1</span>,
-                    descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
-                    p_image_info: std::ptr::null(),
-                    p_buffer_info: buffer_info,
-                    p_texel_buffer_view: std::ptr::null(),
-                    ..Default::default()
-                },
-                vk::WriteDescriptorSet {
-                    dst_set: descriptor_set,
-                    dst_binding: <span class="number">1</span>,
-                    dst_array_element: <span class="number">0</span>,
-                    descriptor_count: <span class="number">1</span>,
-                    descriptor_type: vk::DescriptorType::STORAGE_BUFFER,
-                    p_image_info: std::ptr::null(),
-                    p_buffer_info: particles_buffer_info,
-                    p_texel_buffer_view: std::ptr::null(),
-                    ..Default::default()
-                },
-            ]
+        .map(|(buffer_info, <span class="kw-2">&amp;</span>descriptor_set)| vk::WriteDescriptorSet {
+            dst_set: descriptor_set,
+            dst_binding: <span class="number">0</span>,
+            dst_array_element: <span class="number">0</span>,
+            descriptor_count: <span class="number">1</span>,
+            descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
+            p_image_info: std::ptr::null(),
+            p_buffer_info: buffer_info,
+            p_texel_buffer_view: std::ptr::null(),
+            ..Default::default()
         })
         .collect::&lt;Vec&lt;vk::WriteDescriptorSet&gt;&gt;();
     <span class="kw">unsafe </span>{
-        cxt.update_descriptor_sets(<span class="kw-2">&amp;</span>writes, <span class="kw-2">&amp;</span>[]);
+        device.update_descriptor_sets(<span class="kw-2">&amp;</span>writes, <span class="kw-2">&amp;</span>[]);
     }
     <span class="prelude-val">Ok</span>(())
 }
 
 <span class="kw">pub fn </span>allocate_descriptor_sets(
-    cxt: <span class="kw-2">&amp;</span>VulkanContext,
+    device: <span class="kw-2">&amp;</span>Device,
     descriptor_pool: <span class="kw-2">&amp;</span>raii::DescriptorPool,
     descriptor_set_layout: <span class="kw-2">&amp;</span>raii::DescriptorSetLayout,
     frames_in_flight: <span class="kw-2">&amp;</span>FramesInFlight,
@@ -233,13 +158,14 @@
         .map(|<span class="kw">_</span>| descriptor_set_layout.raw)
         .collect::&lt;Vec&lt;vk::DescriptorSetLayout&gt;&gt;();
     <span class="kw">unsafe </span>{
-        cxt.allocate_descriptor_sets(<span class="kw-2">&amp;</span>vk::DescriptorSetAllocateInfo {
-            descriptor_pool: descriptor_pool.raw,
-            descriptor_set_count: frames_in_flight.frame_count() <span class="kw">as </span>u32,
-            p_set_layouts: layouts.as_ptr(),
-            ..Default::default()
-        })
-        .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to allocated descriptor sets!"</span>))
+        device
+            .allocate_descriptor_sets(<span class="kw-2">&amp;</span>vk::DescriptorSetAllocateInfo {
+                descriptor_pool: descriptor_pool.raw,
+                descriptor_set_count: frames_in_flight.frame_count() <span class="kw">as </span>u32,
+                p_set_layouts: layouts.as_ptr(),
+                ..Default::default()
+            })
+            .with_context(<span class="macro">trace!</span>(<span class="string">"Unable to allocated descriptor sets!"</span>))
     }
 }
 
@@ -247,16 +173,10 @@
     logical_device: Arc&lt;raii::Device&gt;,
     frames_in_flight: <span class="kw-2">&amp;</span>FramesInFlight,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;raii::DescriptorPool&gt; {
-    <span class="kw">let </span>pool_sizes = [
-        vk::DescriptorPoolSize {
-            ty: vk::DescriptorType::UNIFORM_BUFFER,
-            descriptor_count: frames_in_flight.frame_count() <span class="kw">as </span>u32,
-        },
-        vk::DescriptorPoolSize {
-            ty: vk::DescriptorType::STORAGE_BUFFER,
-            descriptor_count: frames_in_flight.frame_count() <span class="kw">as </span>u32,
-        },
-    ];
+    <span class="kw">let </span>pool_sizes = [vk::DescriptorPoolSize {
+        ty: vk::DescriptorType::UNIFORM_BUFFER,
+        descriptor_count: frames_in_flight.frame_count() <span class="kw">as </span>u32,
+    }];
     raii::DescriptorPool::new(
         logical_device,
         <span class="kw-2">&amp;</span>vk::DescriptorPoolCreateInfo {
@@ -271,24 +191,14 @@
 <span class="kw">pub fn </span>create_descriptor_set_layout(
     logical_device: Arc&lt;raii::Device&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;raii::DescriptorSetLayout&gt; {
-    <span class="kw">let </span>bindings = [
-        vk::DescriptorSetLayoutBinding {
-            binding: <span class="number">0</span>,
-            descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
-            descriptor_count: <span class="number">1</span>,
-            stage_flags: vk::ShaderStageFlags::VERTEX,
-            p_immutable_samplers: std::ptr::null(),
-            ..Default::default()
-        },
-        vk::DescriptorSetLayoutBinding {
-            binding: <span class="number">1</span>,
-            descriptor_type: vk::DescriptorType::STORAGE_BUFFER,
-            descriptor_count: <span class="number">1</span>,
-            stage_flags: vk::ShaderStageFlags::VERTEX,
-            p_immutable_samplers: std::ptr::null(),
-            ..Default::default()
-        },
-    ];
+    <span class="kw">let </span>bindings = [vk::DescriptorSetLayoutBinding {
+        binding: <span class="number">0</span>,
+        descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
+        descriptor_count: <span class="number">1</span>,
+        stage_flags: vk::ShaderStageFlags::VERTEX,
+        p_immutable_samplers: std::ptr::null(),
+        ..Default::default()
+    }];
     raii::DescriptorSetLayout::new(
         logical_device,
         <span class="kw-2">&amp;</span>vk::DescriptorSetLayoutCreateInfo {

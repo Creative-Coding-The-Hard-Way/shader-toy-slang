@@ -131,6 +131,7 @@
 <a href="#131" id="131">131</a>
 <a href="#132" id="132">132</a>
 <a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! The GLFW application implementation.
 //!
 //! This module defines the traits and functions required for managing the
@@ -152,6 +153,7 @@
 /// window.
 </span><span class="kw">pub trait </span>App {
     <span class="kw">type </span>Args: Sized + Parser;
+    <span class="kw">const </span>FRAME_COUNT: usize = <span class="number">3</span>;
 
     <span class="doccomment">/// Creates a new instance of the application.
     /// The application is allowed to modify the window based on its own
