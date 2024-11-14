@@ -24,6 +24,7 @@ ctrlc = "*"
 image = "*"
 bon = "*"
 nalgebra = "*"
+demo_vk = { git = "https://github.com/creative-coding-the-hard-way/demo-vk" }
 
 [dependencies.glfw]
 version = "*"

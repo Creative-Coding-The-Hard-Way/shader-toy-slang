@@ -473,6 +473,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "demo_vk"
+version = "0.1.0"
+source = "git+https://github.com/creative-coding-the-hard-way/demo-vk#11b7c1e392aef1a66352328c4d85845f265e7dbf"
+dependencies = [
+ "anyhow",
+ "argfile",
+ "ash",
+ "bon",
+ "clap",
+ "ctrlc",
+ "flexi_logger",
+ "glfw",
+ "glob",
+ "image",
+ "indoc",
+ "log",
+ "nalgebra",
+ "notify-debouncer-full",
+ "regex",
+ "spin_sleep_util",
+ "textwrap",
+]
+
+[[package]]
 name = "either"
 version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1609,6 +1633,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "spin_sleep"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "64bd7227d85bfd1b8df51e0d83da36d9baaee85eb75730386ef8e3ab6f2a2ea3"
+dependencies = [
+ "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "spin_sleep_util"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f0a8402dff6fc447faddc8bebac9bc3645e5addde1d2293cfd2919d1a8e7efd"
+dependencies = [
+ "spin_sleep",
+]
+
+[[package]]
 name = "strsim"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1624,6 +1666,7 @@ dependencies = [
  "bon",
  "clap",
  "ctrlc",
+ "demo_vk",
  "flexi_logger",
  "glfw",
  "glob",
