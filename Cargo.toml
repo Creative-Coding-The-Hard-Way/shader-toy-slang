@@ -7,29 +7,14 @@ edition = "2021"
 opt-level = 1
 
 [build-dependencies]
-glob = "*"
-anyhow = "*"
+anyhow = "1.0.93"
+glob = "0.3.1"
 
 [dependencies]
-ash = "*"
-log = "*"
-anyhow = "*"
-regex = "*"
-flexi_logger = {version = "*", features = ["async"]}
-indoc = "*"
-clap = { version = "*", features = ["derive", "wrap_help"]}
-notify-debouncer-full = "*"
-argfile = "*"
-ctrlc = "*"
-image = "*"
-bon = "*"
-nalgebra = "*"
+anyhow = "1.0.93"
+ash = "0.38.0"
+clap = { version="4.5.21", features = ["derive", "wrap_help"]}
+bon = "3.0.0"
 demo_vk = { git = "https://github.com/creative-coding-the-hard-way/demo-vk" }
+glfw = { version="0.58.0", features = ["vulkan"] }
 
-[dependencies.glfw]
-version = "*"
-features = ["vulkan"]
-
-[dependencies.textwrap]
-features = ["terminal_size"]
-version = "*"
