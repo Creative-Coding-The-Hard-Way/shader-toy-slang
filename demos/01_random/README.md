@@ -1,7 +1,7 @@
 # Random
 
 ```shell
-cargo run --example live_reload -- @demos/01_random/args
+cargo run -- @demos/01_random/args
 ```
 
 ![screenshot](./screenshot.jpg)

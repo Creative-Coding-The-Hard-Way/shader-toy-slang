@@ -5,14 +5,16 @@ struct FrameData {
     float time;
 };
 
-// Per-frame data is provided in descriptor set 0
-[vk_binding(0, 0)] ConstantBuffer<FrameData> frame;
+[vk_binding(0, 0)] SamplerState samplers[3];
+[vk_binding(1, 0)] texture2D textures[];
 
-// samplers and textures are provided in descriptor set 1
-[vk_binding(0, 1)] SamplerState sampler;
-[vk_binding(1, 1)] texture2D background;
-[vk_binding(2, 1)] texture2D brush;
+[vk_binding(0, 1)] ConstantBuffer<FrameData> frame;
 
+// background is 0 because it is listed first in the cli args
+const static int background_index = 0;
+
+// brush is 1 because it is listed second in the cli args
+const static int brush_index = 1;
 
 [shader("fragment")]
 float4 main(
@@ -23,9 +25,9 @@ float4 main(
 
     uv = float2(uv.x, 1.0 - uv.y);
 
-    let b = background.Sample(sampler, uv);
-    let c = brush.Sample(sampler, uv);
-    let c2 = brush.Sample(sampler, (uv * 0.5));
+    let b = textures[background_index].Sample(samplers[0], uv);
+    let c = textures[brush_index].Sample(samplers[0], uv);
+    let c2 = textures[brush_index].Sample(samplers[0], (uv * 0.5));
 
     let c3 = c2 * c / d;
 

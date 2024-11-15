@@ -1,7 +1,7 @@
 # Fractal Brownian Noise
 
 ```shell
-cargo run --example live_reload -- @demos/03_fractal_brownian_noise/args
+cargo run -- @demos/03_fractal_brownian_noise/args
 ```
 
 ![screenshot](./screenshot.jpg)

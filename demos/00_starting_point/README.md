@@ -1,7 +1,7 @@
 # Starting Point
 
 ```shell
-cargo run --example live_reload -- @demos/00_starting_point/args
+cargo -- @demos/00_starting_point/args
 ```
 
 ![screenshot](./screenshot.jpg)

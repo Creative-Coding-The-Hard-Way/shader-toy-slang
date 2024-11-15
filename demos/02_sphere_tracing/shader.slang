@@ -21,8 +21,10 @@ struct FrameData {
     float time;
 };
 
-[[vk_binding(0, 0)]]
-ConstantBuffer<FrameData> frame;
+[vk_binding(0, 0)] SamplerState samplers[3];
+[vk_binding(1, 0)] texture2D textures[];
+
+[vk_binding(0, 1)] ConstantBuffer<FrameData> frame;
 
 
 

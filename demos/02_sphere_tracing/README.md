@@ -1,7 +1,7 @@
 # Sphere Tracing
 
 ```shell
-cargo run --example live_reload -- @demos/02_sphere_tracing/args
+cargo run -- @demos/02_sphere_tracing/args
 ```
 
 ![screenshot](./screenshot.jpg)
