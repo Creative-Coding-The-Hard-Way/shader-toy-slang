@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/file-id-0.2.1/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="file_id" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/file-id-0.2.2/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="file_id" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -196,11 +196,11 @@
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
 <a href="#198" id="198">198</a>
-</pre></div><pre class="rust"><code><span class="doccomment">//! Utility for reading inode numbers (Linux, MacOS) and file ids (Windows) that uniquely identify a file on a single computer.
+</pre></div><pre class="rust"><code><span class="doccomment">//! Utility for reading inode numbers (Linux, macOS) and file ids (Windows) that uniquely identify a file on a single computer.
 //!
-//! Modern file systems assign a unique ID to each file. On Linux and MacOS it is called an `inode number`,
+//! Modern file systems assign a unique ID to each file. On Linux and macOS it is called an `inode number`,
 //! on Windows it is called a `file id` or `file index`.
-//! Together with the `device id` (Linux, MacOS) or the `volume serial number` (Windows),
+//! Together with the `device id` (Linux, macOS) or the `volume serial number` (Windows),
 //! a file or directory can be uniquely identified on a single computer at a given time.
 //!
 //! Keep in mind though, that IDs may be re-used at some point.
@@ -234,7 +234,7 @@
 </span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = <span class="string">"serde"</span>, derive(Serialize, Deserialize))]
 </span><span class="kw">pub enum </span>FileId {
-    <span class="doccomment">/// Inode number, available on Linux and MacOS.
+    <span class="doccomment">/// Inode number, available on Linux and macOS.
     </span><span class="attr">#[cfg_attr(feature = <span class="string">"serde"</span>, serde(rename = <span class="string">"inode"</span>))]
     </span>Inode {
         <span class="doccomment">/// Device ID
@@ -252,7 +252,7 @@
     ///
     /// On Windows, the low resolution variant can be requested explicitly with the `get_low_res_file_id` function.
     ///
-    /// Details: https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getfileinformationbyhandle.
+    /// Details: &lt;https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getfileinformationbyhandle&gt;.
     </span><span class="attr">#[cfg_attr(feature = <span class="string">"serde"</span>, serde(rename = <span class="string">"lowres"</span>))]
     </span>LowRes {
         <span class="doccomment">/// Volume serial number
@@ -268,7 +268,7 @@
     ///
     /// On Windows, the high resolution variant can be requested explicitly with the `get_high_res_file_id` function.
     ///
-    /// Details: https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getfileinformationbyhandleex.
+    /// Details: &lt;https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getfileinformationbyhandleex&gt;.
     </span><span class="attr">#[cfg_attr(feature = <span class="string">"serde"</span>, serde(rename = <span class="string">"highres"</span>))]
     </span>HighRes {
         <span class="doccomment">/// Volume serial number
@@ -327,7 +327,7 @@
 </span><span class="kw">pub fn </span>get_low_res_file_id(path: <span class="kw">impl </span>AsRef&lt;Path&gt;) -&gt; io::Result&lt;FileId&gt; {
     <span class="kw">let </span>file = open_file(path)<span class="question-mark">?</span>;
 
-    <span class="kw">unsafe </span>{ get_file_info_ex(<span class="kw-2">&amp;</span>file) }
+    <span class="kw">unsafe </span>{ get_file_info(<span class="kw-2">&amp;</span>file) }
 }
 
 <span class="doccomment">/// Get the `FileId` with the high resolution variant for the file or directory at `path`
@@ -335,7 +335,7 @@
 </span><span class="kw">pub fn </span>get_high_res_file_id(path: <span class="kw">impl </span>AsRef&lt;Path&gt;) -&gt; io::Result&lt;FileId&gt; {
     <span class="kw">let </span>file = open_file(path)<span class="question-mark">?</span>;
 
-    <span class="kw">unsafe </span>{ get_file_info(<span class="kw-2">&amp;</span>file) }
+    <span class="kw">unsafe </span>{ get_file_info_ex(<span class="kw-2">&amp;</span>file) }
 }
 
 <span class="attr">#[cfg(target_family = <span class="string">"windows"</span>)]
@@ -390,7 +390,7 @@
     <span class="kw">use </span>windows_sys::Win32::Storage::FileSystem::FILE_FLAG_BACKUP_SEMANTICS;
 
     OpenOptions::new()
-        .read(<span class="bool-val">true</span>)
+        .access_mode(<span class="number">0</span>)
         .custom_flags(FILE_FLAG_BACKUP_SEMANTICS)
         .open(path)
 }

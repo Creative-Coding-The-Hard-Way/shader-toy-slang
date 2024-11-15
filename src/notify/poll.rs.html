@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/notify-6.1.1/src/poll.rs`."><title>poll.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="notify" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/notify-7.0.0/src/poll.rs`."><title>poll.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="notify" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -637,7 +637,6 @@
 <a href="#637" id="637">637</a>
 <a href="#638" id="638">638</a>
 <a href="#639" id="639">639</a>
-<a href="#640" id="640">640</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Generic Watcher implementation based on polling
 //!
 //! Checks the `watch`ed paths periodically to detect changes. This implementation only uses
@@ -655,11 +654,11 @@
     time::Duration,
 };
 
-<span class="doccomment">/// Event send for registered handler on initial directory scans
+<span class="doccomment">/// Event sent for registered handlers on initial directory scans
 </span><span class="kw">pub type </span>ScanEvent = <span class="kw">crate</span>::Result&lt;PathBuf&gt;;
 
-<span class="doccomment">/// Handler trait for receivers of ScanEvent.  
-/// Very much the same as [EventHandler], but including the Result.
+<span class="doccomment">/// Handler trait for receivers of [`ScanEvent`].
+/// Very much the same as [`EventHandler`], but including the Result.
 ///
 /// See the full example for more information.
 </span><span class="kw">pub trait </span>ScanEventHandler: Send + <span class="lifetime">'static </span>{
@@ -822,7 +821,7 @@
             // FIXME: Can we always allow to watch a path, even file not
             // found at this path?
             </span><span class="kw">if let </span><span class="prelude-val">Err</span>(e) = fs::metadata(<span class="kw-2">&amp;</span>root) {
-                data_builder.emitter.emit_io_err(e, <span class="kw-2">&amp;</span>root);
+                data_builder.emitter.emit_io_err(e, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>root));
                 <span class="kw">return </span><span class="prelude-val">None</span>;
             }
 
@@ -899,25 +898,19 @@
                 .follow_links(<span class="bool-val">true</span>)
                 .max_depth(<span class="self">Self</span>::dir_scan_depth(is_recursive))
                 .into_iter()
-                <span class="comment">//
-                // QUESTION: should we ignore IO Error?
-                //
-                // current implementation ignore some IO error, e.g.,
-                //
-                // - `.filter_map(|entry| entry.ok())`
-                // - all read error when hashing
-                //
-                // but the code also interest with `fs::metadata()` error and
-                // propagate to event handler. It may not consistent.
-                //
-                // FIXME: Should we emit all IO error events? Or ignore them all?
-                </span>.filter_map(|entry_res| <span class="kw">match </span>entry_res {
+                .filter_map(|entry_res| <span class="kw">match </span>entry_res {
                     <span class="prelude-val">Ok</span>(entry) =&gt; <span class="prelude-val">Some</span>(entry),
                     <span class="prelude-val">Err</span>(err) =&gt; {
                         <span class="macro">log::warn!</span>(<span class="string">"walkdir error scanning {err:?}"</span>);
-                        <span class="kw">let </span>crate_err =
-                            <span class="kw">crate</span>::Error::new(<span class="kw">crate</span>::ErrorKind::Generic(err.to_string()));
-                        data_builder.emitter.emit(<span class="prelude-val">Err</span>(crate_err));
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(io_error) = err.io_error() {
+                            <span class="comment">// clone an io::Error, so we have to create a new one.
+                            </span><span class="kw">let </span>new_io_error = io::Error::new(io_error.kind(), err.to_string());
+                            data_builder.emitter.emit_io_err(new_io_error, err.path());
+                        } <span class="kw">else </span>{
+                            <span class="kw">let </span>crate_err =
+                                <span class="kw">crate</span>::Error::new(<span class="kw">crate</span>::ErrorKind::Generic(err.to_string()));
+                            data_builder.emitter.emit(<span class="prelude-val">Err</span>(crate_err));
+                        }
                         <span class="prelude-val">None
                     </span>}
                 })
@@ -938,7 +931,7 @@
                     <span class="prelude-val">Err</span>(e) =&gt; {
                         <span class="comment">// emit event.
                         </span><span class="kw">let </span>path = entry.into_path();
-                        data_builder.emitter.emit_io_err(e, path);
+                        data_builder.emitter.emit_io_err(e, <span class="prelude-val">Some</span>(path));
 
                         <span class="prelude-val">None
                     </span>}
@@ -947,7 +940,7 @@
 
         <span class="kw">fn </span>dir_scan_depth(is_recursive: bool) -&gt; usize {
             <span class="kw">if </span>is_recursive {
-                usize::max_value()
+                usize::MAX
             } <span class="kw">else </span>{
                 <span class="number">1
             </span>}
@@ -1095,12 +1088,17 @@
         }
 
         <span class="doccomment">/// Emit io error event.
-        </span><span class="kw">fn </span>emit_io_err&lt;E, P&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, err: E, path: P)
+        </span><span class="kw">fn </span>emit_io_err&lt;E, P&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, err: E, path: <span class="prelude-ty">Option</span>&lt;P&gt;)
         <span class="kw">where
             </span>E: Into&lt;io::Error&gt;,
             P: Into&lt;PathBuf&gt;,
         {
-            <span class="self">self</span>.emit(<span class="prelude-val">Err</span>(<span class="kw">crate</span>::Error::io(err.into()).add_path(path.into())))
+            <span class="kw">let </span>e = <span class="kw">crate</span>::Error::io(err.into());
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(path) = path {
+                <span class="self">self</span>.emit(<span class="prelude-val">Err</span>(e.add_path(path.into())));
+            } <span class="kw">else </span>{
+                <span class="self">self</span>.emit(<span class="prelude-val">Err</span>(e));
+            }
         }
     }
 }
@@ -1116,14 +1114,14 @@
     watches: Arc&lt;Mutex&lt;HashMap&lt;PathBuf, WatchData&gt;&gt;&gt;,
     data_builder: Arc&lt;Mutex&lt;DataBuilder&gt;&gt;,
     want_to_stop: Arc&lt;AtomicBool&gt;,
-    <span class="doccomment">/// channel to the poll loop  
+    <span class="doccomment">/// channel to the poll loop
     /// currently used only for manual polling
     </span>message_channel: Sender&lt;()&gt;,
     delay: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
 }
 
 <span class="kw">impl </span>PollWatcher {
-    <span class="doccomment">/// Create a new [PollWatcher], configured as needed.
+    <span class="doccomment">/// Create a new [`PollWatcher`], configured as needed.
     </span><span class="kw">pub fn </span>new&lt;F: EventHandler&gt;(event_handler: F, config: Config) -&gt; <span class="kw">crate</span>::Result&lt;PollWatcher&gt; {
         <span class="self">Self</span>::with_opt::&lt;<span class="kw">_</span>, ()&gt;(event_handler, config, <span class="prelude-val">None</span>)
     }
@@ -1136,7 +1134,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Create a new [PollWatcher] with an scan event handler.
+    <span class="doccomment">/// Create a new [`PollWatcher`] with an scan event handler.
     ///
     /// `scan_fallback` is called on the initial scan with all files seen by the pollwatcher.
     </span><span class="kw">pub fn </span>with_initial_scan&lt;F: EventHandler, G: ScanEventHandler&gt;(
@@ -1147,7 +1145,7 @@
         <span class="self">Self</span>::with_opt(event_handler, config, <span class="prelude-val">Some</span>(scan_callback))
     }
 
-    <span class="doccomment">/// create a new PollWatcher with all options
+    <span class="doccomment">/// create a new [`PollWatcher`] with all options.
     </span><span class="kw">fn </span>with_opt&lt;F: EventHandler, G: ScanEventHandler&gt;(
         event_handler: F,
         config: Config,
@@ -1162,7 +1160,7 @@
             watches: Default::default(),
             data_builder: Arc::new(Mutex::new(data_builder)),
             want_to_stop: Arc::new(AtomicBool::new(<span class="bool-val">false</span>)),
-            delay: config.poll_interval_v2(),
+            delay: config.poll_interval(),
             message_channel: tx,
         };
 
@@ -1247,7 +1245,7 @@
 }
 
 <span class="kw">impl </span>Watcher <span class="kw">for </span>PollWatcher {
-    <span class="doccomment">/// Create a new [PollWatcher].
+    <span class="doccomment">/// Create a new [`PollWatcher`].
     </span><span class="kw">fn </span>new&lt;F: EventHandler&gt;(event_handler: F, config: Config) -&gt; <span class="kw">crate</span>::Result&lt;<span class="self">Self</span>&gt; {
         <span class="self">Self</span>::new(event_handler, config)
     }

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/notify-debouncer-full-0.3.2/src/cache.rs`."><title>cache.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="notify_debouncer_full" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/notify-debouncer-full-0.4.0/src/cache.rs`."><title>cache.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="notify_debouncer_full" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -116,28 +116,6 @@
 <a href="#116" id="116">116</a>
 <a href="#117" id="117">117</a>
 <a href="#118" id="118">118</a>
-<a href="#119" id="119">119</a>
-<a href="#120" id="120">120</a>
-<a href="#121" id="121">121</a>
-<a href="#122" id="122">122</a>
-<a href="#123" id="123">123</a>
-<a href="#124" id="124">124</a>
-<a href="#125" id="125">125</a>
-<a href="#126" id="126">126</a>
-<a href="#127" id="127">127</a>
-<a href="#128" id="128">128</a>
-<a href="#129" id="129">129</a>
-<a href="#130" id="130">130</a>
-<a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     collections::HashMap,
     path::{Path, PathBuf},
@@ -159,7 +137,7 @@
     <span class="doccomment">/// Add a new path to the cache or update its value.
     ///
     /// This will be called if a new file or directory is created or if an existing file is overridden.
-    </span><span class="kw">fn </span>add_path(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path);
+    </span><span class="kw">fn </span>add_path(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path, recursive_mode: RecursiveMode);
 
     <span class="doccomment">/// Remove a path from the cache.
     ///
@@ -169,7 +147,11 @@
     <span class="doccomment">/// Re-scan all paths.
     ///
     /// This will be called if the notification back-end has dropped events.
-    </span><span class="kw">fn </span>rescan(<span class="kw-2">&amp;mut </span><span class="self">self</span>);
+    </span><span class="kw">fn </span>rescan(<span class="kw-2">&amp;mut </span><span class="self">self</span>, roots: <span class="kw-2">&amp;</span>[(PathBuf, RecursiveMode)]) {
+        <span class="kw">for </span>(root, recursive_mode) <span class="kw">in </span>roots {
+            <span class="self">self</span>.add_path(root, <span class="kw-2">*</span>recursive_mode);
+        }
+    }
 }
 
 <span class="doccomment">/// A cache to hold the file system IDs of all watched files.
@@ -179,7 +161,6 @@
 </span><span class="attr">#[derive(Debug, Clone, Default)]
 </span><span class="kw">pub struct </span>FileIdMap {
     paths: HashMap&lt;PathBuf, FileId&gt;,
-    roots: Vec&lt;(PathBuf, RecursiveMode)&gt;,
 }
 
 <span class="kw">impl </span>FileIdMap {
@@ -188,31 +169,9 @@
         Default::default()
     }
 
-    <span class="doccomment">/// Add a path to the cache.
-    ///
-    /// If `recursive_mode` is `Recursive`, all children will be added to the cache as well
-    /// and all paths will be kept up-to-date in case of changes like new files being added,
-    /// files being removed or renamed.
-    </span><span class="kw">pub fn </span>add_root(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: <span class="kw">impl </span>Into&lt;PathBuf&gt;, recursive_mode: RecursiveMode) {
-        <span class="kw">let </span>path = path.into();
-
-        <span class="self">self</span>.roots.push((path.clone(), recursive_mode));
-
-        <span class="self">self</span>.add_path(<span class="kw-2">&amp;</span>path);
-    }
-
-    <span class="doccomment">/// Remove a path form the cache.
-    ///
-    /// If the path was added with `Recursive` mode, all children will also be removed from the cache.
-    </span><span class="kw">pub fn </span>remove_root(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: <span class="kw">impl </span>AsRef&lt;Path&gt;) {
-        <span class="self">self</span>.roots.retain(|(root, <span class="kw">_</span>)| !root.starts_with(<span class="kw-2">&amp;</span>path));
-
-        <span class="self">self</span>.remove_path(path.as_ref());
-    }
-
     <span class="kw">fn </span>dir_scan_depth(is_recursive: bool) -&gt; usize {
         <span class="kw">if </span>is_recursive {
-            usize::max_value()
+            usize::MAX
         } <span class="kw">else </span>{
             <span class="number">1
         </span>}
@@ -224,18 +183,8 @@
         <span class="self">self</span>.paths.get(path)
     }
 
-    <span class="kw">fn </span>add_path(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path) {
-        <span class="kw">let </span>is_recursive = <span class="self">self
-            </span>.roots
-            .iter()
-            .find_map(|(root, recursive_mode)| {
-                <span class="kw">if </span>path.starts_with(root) {
-                    <span class="prelude-val">Some</span>(<span class="kw-2">*</span>recursive_mode == RecursiveMode::Recursive)
-                } <span class="kw">else </span>{
-                    <span class="prelude-val">None
-                </span>}
-            })
-            .unwrap_or_default();
+    <span class="kw">fn </span>add_path(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path, recursive_mode: RecursiveMode) {
+        <span class="kw">let </span>is_recursive = recursive_mode == RecursiveMode::Recursive;
 
         <span class="kw">for </span>(path, file_id) <span class="kw">in </span>WalkDir::new(path)
             .follow_links(<span class="bool-val">true</span>)
@@ -254,28 +203,35 @@
     <span class="kw">fn </span>remove_path(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path) {
         <span class="self">self</span>.paths.retain(|p, <span class="kw">_</span>| !p.starts_with(path));
     }
-
-    <span class="kw">fn </span>rescan(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">for </span>(root, <span class="kw">_</span>) <span class="kw">in </span><span class="self">self</span>.roots.clone() {
-            <span class="self">self</span>.add_path(<span class="kw-2">&amp;</span>root);
-        }
-    }
 }
 
 <span class="doccomment">/// An implementation of the `FileIdCache` trait that doesn't hold any data.
 ///
 /// This pseudo cache can be used to disable the file tracking using file system IDs.
+</span><span class="attr">#[derive(Debug, Clone, Default)]
 </span><span class="kw">pub struct </span>NoCache;
+
+<span class="kw">impl </span>NoCache {
+    <span class="doccomment">/// Construct an empty cache.
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        Default::default()
+    }
+}
 
 <span class="kw">impl </span>FileIdCache <span class="kw">for </span>NoCache {
     <span class="kw">fn </span>cached_file_id(<span class="kw-2">&amp;</span><span class="self">self</span>, _path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>FileId&gt; {
         <span class="prelude-val">None
     </span>}
 
-    <span class="kw">fn </span>add_path(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _path: <span class="kw-2">&amp;</span>Path) {}
+    <span class="kw">fn </span>add_path(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _path: <span class="kw-2">&amp;</span>Path, _recursive_mode: RecursiveMode) {}
 
     <span class="kw">fn </span>remove_path(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _path: <span class="kw-2">&amp;</span>Path) {}
-
-    <span class="kw">fn </span>rescan(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {}
 }
+
+<span class="doccomment">/// The recommended file ID cache implementation for the current platform
+</span><span class="attr">#[cfg(any(target_os = <span class="string">"linux"</span>, target_os = <span class="string">"android"</span>))]
+</span><span class="kw">pub type </span>RecommendedCache = NoCache;
+<span class="doccomment">/// The recommended file ID cache implementation for the current platform
+</span><span class="attr">#[cfg(not(any(target_os = <span class="string">"linux"</span>, target_os = <span class="string">"android"</span>)))]
+</span><span class="kw">pub type </span>RecommendedCache = FileIdMap;
 </code></pre></div></section></main></body></html>

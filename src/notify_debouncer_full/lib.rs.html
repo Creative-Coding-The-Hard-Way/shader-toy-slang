@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/notify-debouncer-full-0.3.2/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="notify_debouncer_full" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/notify-debouncer-full-0.4.0/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="notify_debouncer_full" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -828,12 +828,95 @@
 <a href="#828" id="828">828</a>
 <a href="#829" id="829">829</a>
 <a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
+<a href="#835" id="835">835</a>
+<a href="#836" id="836">836</a>
+<a href="#837" id="837">837</a>
+<a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
+<a href="#840" id="840">840</a>
+<a href="#841" id="841">841</a>
+<a href="#842" id="842">842</a>
+<a href="#843" id="843">843</a>
+<a href="#844" id="844">844</a>
+<a href="#845" id="845">845</a>
+<a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
+<a href="#851" id="851">851</a>
+<a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
+<a href="#856" id="856">856</a>
+<a href="#857" id="857">857</a>
+<a href="#858" id="858">858</a>
+<a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
+<a href="#861" id="861">861</a>
+<a href="#862" id="862">862</a>
+<a href="#863" id="863">863</a>
+<a href="#864" id="864">864</a>
+<a href="#865" id="865">865</a>
+<a href="#866" id="866">866</a>
+<a href="#867" id="867">867</a>
+<a href="#868" id="868">868</a>
+<a href="#869" id="869">869</a>
+<a href="#870" id="870">870</a>
+<a href="#871" id="871">871</a>
+<a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
+<a href="#874" id="874">874</a>
+<a href="#875" id="875">875</a>
+<a href="#876" id="876">876</a>
+<a href="#877" id="877">877</a>
+<a href="#878" id="878">878</a>
+<a href="#879" id="879">879</a>
+<a href="#880" id="880">880</a>
+<a href="#881" id="881">881</a>
+<a href="#882" id="882">882</a>
+<a href="#883" id="883">883</a>
+<a href="#884" id="884">884</a>
+<a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
+<a href="#887" id="887">887</a>
+<a href="#888" id="888">888</a>
+<a href="#889" id="889">889</a>
+<a href="#890" id="890">890</a>
+<a href="#891" id="891">891</a>
+<a href="#892" id="892">892</a>
+<a href="#893" id="893">893</a>
+<a href="#894" id="894">894</a>
+<a href="#895" id="895">895</a>
+<a href="#896" id="896">896</a>
+<a href="#897" id="897">897</a>
+<a href="#898" id="898">898</a>
+<a href="#899" id="899">899</a>
+<a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A debouncer for [notify] that is optimized for ease of use.
 //!
 //! * Only emits a single `Rename` event if the rename `From` and `To` events can be matched
 //! * Merges multiple `Rename` events
 //! * Takes `Rename` events into account and updates paths for events that occurred before the rename event, but which haven't been emitted, yet
-//! * Optionally keeps track of the file system IDs all files and stiches rename events together (FSevents, Windows)
+//! * Optionally keeps track of the file system IDs all files and stitches rename events together (macOS FS Events, Windows)
 //! * Emits only one `Remove` event when deleting a directory (inotify)
 //! * Doesn't emit duplicate create events
 //! * Doesn't emit `Modify` events after a `Create` event
@@ -853,7 +936,7 @@
 //! notify-debouncer-full = "0.3.1"
 //! notify = { version = "..", features = [".."] }
 //! ```
-//!  
+//!
 //! # Examples
 //!
 //! ```rust,no_run
@@ -872,28 +955,22 @@
 //!
 //! // Add a path to be watched. All files and directories at that path and
 //! // below will be monitored for changes.
-//! debouncer.watcher().watch(Path::new("."), RecursiveMode::Recursive).unwrap();
-//!
-//! // Add the same path to the file ID cache. The cache uses unique file IDs
-//! // provided by the file system and is used to stich together rename events
-//! // in case the notification back-end doesn't emit rename cookies.
-//! debouncer.cache().add_root(Path::new("."), RecursiveMode::Recursive);
+//! debouncer.watch(".", RecursiveMode::Recursive).unwrap();
 //! ```
 //!
 //! # Features
 //!
 //! The following crate features can be turned on or off in your cargo dependency config:
 //!
-//! - `crossbeam` enabled by default, adds [`DebounceEventHandler`](DebounceEventHandler) support for crossbeam channels.
-//!   Also enables crossbeam-channel in the re-exported notify. You may want to disable this when using the tokio async runtime.
-//! - `serde` enables serde support for events.
+//! - `crossbeam-channel` passed down to notify, off by default
+//! - `serialization-compat-6` passed down to notify, off by default
 //!
 //! # Caveats
 //!
 //! As all file events are sourced from notify, the [known problems](https://docs.rs/notify/latest/notify/#known-problems) section applies here too.
 
 </span><span class="kw">mod </span>cache;
-<span class="kw">mod </span>debounced_event;
+<span class="kw">mod </span>time;
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>testing;
@@ -901,32 +978,27 @@
 <span class="kw">use </span>std::{
     cmp::Reverse,
     collections::{BinaryHeap, HashMap, VecDeque},
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{
         atomic::{AtomicBool, Ordering},
-        Arc,
+        Arc, Mutex,
     },
-    time::Duration,
+    time::{Duration, Instant},
 };
 
-<span class="kw">pub use </span>cache::{FileIdCache, FileIdMap, NoCache};
-<span class="kw">pub use </span>debounced_event::DebouncedEvent;
+<span class="kw">use </span>time::now;
+
+<span class="kw">pub use </span>cache::{FileIdCache, FileIdMap, NoCache, RecommendedCache};
 
 <span class="kw">pub use </span>file_id;
 <span class="kw">pub use </span>notify;
+<span class="kw">pub use </span>notify_types::debouncer_full::DebouncedEvent;
 
 <span class="kw">use </span>file_id::FileId;
 <span class="kw">use </span>notify::{
     event::{ModifyKind, RemoveKind, RenameMode},
-    Error, ErrorKind, Event, EventKind, RecommendedWatcher, Watcher,
+    Error, ErrorKind, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher, WatcherKind,
 };
-<span class="kw">use </span>parking_lot::{MappedMutexGuard, Mutex, MutexGuard};
-
-<span class="attr">#[cfg(test)]
-</span><span class="kw">use </span>mock_instant::Instant;
-
-<span class="attr">#[cfg(not(test))]
-</span><span class="kw">use </span>std::time::Instant;
 
 <span class="doccomment">/// The set of requirements for watcher debounce event handling functions.
 ///
@@ -962,7 +1034,7 @@
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">"crossbeam"</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"crossbeam-channel"</span>)]
 </span><span class="kw">impl </span>DebounceEventHandler <span class="kw">for </span>crossbeam_channel::Sender&lt;DebounceEventResult&gt; {
     <span class="kw">fn </span>handle_event(<span class="kw-2">&amp;mut </span><span class="self">self</span>, event: DebounceEventResult) {
         <span class="kw">let _ </span>= <span class="self">self</span>.send(event);
@@ -1013,6 +1085,7 @@
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>DebounceDataInner&lt;T&gt; {
     queues: HashMap&lt;PathBuf, Queue&gt;,
+    roots: Vec&lt;(PathBuf, RecursiveMode)&gt;,
     cache: T,
     rename_event: <span class="prelude-ty">Option</span>&lt;(DebouncedEvent, <span class="prelude-ty">Option</span>&lt;FileId&gt;)&gt;,
     rescan_event: <span class="prelude-ty">Option</span>&lt;DebouncedEvent&gt;,
@@ -1024,6 +1097,7 @@
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(cache: T, timeout: Duration) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             queues: HashMap::new(),
+            roots: Vec::new(),
             cache,
             rename_event: <span class="prelude-val">None</span>,
             rescan_event: <span class="prelude-val">None</span>,
@@ -1034,7 +1108,7 @@
 
     <span class="doccomment">/// Retrieve a vec of debounced events, removing them if not continuous
     </span><span class="kw">pub fn </span>debounced_events(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Vec&lt;DebouncedEvent&gt; {
-        <span class="kw">let </span>now = Instant::now();
+        <span class="kw">let </span>now = now();
         <span class="kw">let </span><span class="kw-2">mut </span>events_expired = Vec::with_capacity(<span class="self">self</span>.queues.len());
         <span class="kw">let </span><span class="kw-2">mut </span>queues_remaining = HashMap::with_capacity(<span class="self">self</span>.queues.len());
 
@@ -1047,7 +1121,8 @@
             }
         }
 
-        <span class="comment">// TODO: perfect fit for drain_filter https://github.com/rust-lang/rust/issues/59618
+        <span class="comment">// drain the entire queue, then process the expired events and re-add the rest
+        // TODO: perfect fit for drain_filter https://github.com/rust-lang/rust/issues/59618
         </span><span class="kw">for </span>(path, <span class="kw-2">mut </span>queue) <span class="kw">in </span><span class="self">self</span>.queues.drain() {
             <span class="kw">let </span><span class="kw-2">mut </span>kind_index = HashMap::new();
 
@@ -1085,13 +1160,13 @@
 
     <span class="doccomment">/// Returns all currently stored errors
     </span><span class="kw">pub fn </span>errors(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Vec&lt;Error&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>v = Vec::new();
-        std::mem::swap(<span class="kw-2">&amp;mut </span>v, <span class="kw-2">&amp;mut </span><span class="self">self</span>.errors);
-        v
+        std::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.errors)
     }
 
     <span class="doccomment">/// Add an error entry to re-send later on
     </span><span class="kw">pub fn </span>add_error(<span class="kw-2">&amp;mut </span><span class="self">self</span>, error: Error) {
+        <span class="macro">log::trace!</span>(<span class="string">"raw error: {error:?}"</span>);
+
         <span class="self">self</span>.errors.push(error);
     }
 
@@ -1100,8 +1175,8 @@
         <span class="macro">log::trace!</span>(<span class="string">"raw event: {event:?}"</span>);
 
         <span class="kw">if </span>event.need_rescan() {
-            <span class="self">self</span>.cache.rescan();
-            <span class="self">self</span>.rescan_event = <span class="prelude-val">Some</span>(event.into());
+            <span class="self">self</span>.cache.rescan(<span class="kw-2">&amp;</span><span class="self">self</span>.roots);
+            <span class="self">self</span>.rescan_event = <span class="prelude-val">Some</span>(DebouncedEvent { event, time: now() });
             <span class="kw">return</span>;
         }
 
@@ -1109,9 +1184,11 @@
 
         <span class="kw">match </span><span class="kw-2">&amp;</span>event.kind {
             EventKind::Create(<span class="kw">_</span>) =&gt; {
-                <span class="self">self</span>.cache.add_path(path);
+                <span class="kw">let </span>recursive_mode = <span class="self">self</span>.recursive_mode(path);
 
-                <span class="self">self</span>.push_event(event, Instant::now());
+                <span class="self">self</span>.cache.add_path(path, recursive_mode);
+
+                <span class="self">self</span>.push_event(event, now());
             }
             EventKind::Modify(ModifyKind::Name(rename_mode)) =&gt; {
                 <span class="kw">match </span>rename_mode {
@@ -1137,23 +1214,38 @@
                 }
             }
             EventKind::Remove(<span class="kw">_</span>) =&gt; {
-                <span class="self">self</span>.push_remove_event(event, Instant::now());
+                <span class="self">self</span>.push_remove_event(event, now());
             }
             EventKind::Other =&gt; {
                 <span class="comment">// ignore meta events
             </span>}
             <span class="kw">_ </span>=&gt; {
                 <span class="kw">if </span><span class="self">self</span>.cache.cached_file_id(path).is_none() {
-                    <span class="self">self</span>.cache.add_path(path);
+                    <span class="kw">let </span>recursive_mode = <span class="self">self</span>.recursive_mode(path);
+
+                    <span class="self">self</span>.cache.add_path(path, recursive_mode);
                 }
 
-                <span class="self">self</span>.push_event(event, Instant::now());
+                <span class="self">self</span>.push_event(event, now());
             }
         }
     }
 
+    <span class="kw">fn </span>recursive_mode(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path) -&gt; RecursiveMode {
+        <span class="self">self</span>.roots
+            .iter()
+            .find_map(|(root, recursive_mode)| {
+                <span class="kw">if </span>path.starts_with(root) {
+                    <span class="prelude-val">Some</span>(<span class="kw-2">*</span>recursive_mode)
+                } <span class="kw">else </span>{
+                    <span class="prelude-val">None
+                </span>}
+            })
+            .unwrap_or(RecursiveMode::NonRecursive)
+    }
+
     <span class="kw">fn </span>handle_rename_from(<span class="kw-2">&amp;mut </span><span class="self">self</span>, event: Event) {
-        <span class="kw">let </span>time = Instant::now();
+        <span class="kw">let </span>time = now();
         <span class="kw">let </span>path = <span class="kw-2">&amp;</span>event.paths[<span class="number">0</span>];
 
         <span class="comment">// store event
@@ -1166,7 +1258,9 @@
     }
 
     <span class="kw">fn </span>handle_rename_to(<span class="kw-2">&amp;mut </span><span class="self">self</span>, event: Event) {
-        <span class="self">self</span>.cache.add_path(<span class="kw-2">&amp;</span>event.paths[<span class="number">0</span>]);
+        <span class="kw">let </span>recursive_mode = <span class="self">self</span>.recursive_mode(<span class="kw-2">&amp;</span>event.paths[<span class="number">0</span>]);
+
+        <span class="self">self</span>.cache.add_path(<span class="kw-2">&amp;</span>event.paths[<span class="number">0</span>], recursive_mode);
 
         <span class="kw">let </span>trackers_match = <span class="self">self
             </span>.rename_event
@@ -1199,7 +1293,7 @@
             <span class="self">self</span>.push_rename_event(path, event, time);
         } <span class="kw">else </span>{
             <span class="comment">// move in
-            </span><span class="self">self</span>.push_event(event, Instant::now());
+            </span><span class="self">self</span>.push_event(event, now());
         }
 
         <span class="self">self</span>.rename_event = <span class="prelude-val">None</span>;
@@ -1340,7 +1434,7 @@
 
 <span class="kw">impl</span>&lt;T: Watcher, C: FileIdCache&gt; Debouncer&lt;T, C&gt; {
     <span class="doccomment">/// Stop the debouncer, waits for the event thread to finish.
-    /// May block for the duration of one tick_rate.
+    /// May block for the duration of one `tick_rate`.
     </span><span class="kw">pub fn </span>stop(<span class="kw-2">mut </span><span class="self">self</span>) {
         <span class="self">self</span>.set_stop();
         <span class="kw">if let </span><span class="prelude-val">Some</span>(t) = <span class="self">self</span>.debouncer_thread.take() {
@@ -1357,14 +1451,60 @@
         <span class="self">self</span>.stop.store(<span class="bool-val">true</span>, Ordering::Relaxed);
     }
 
-    <span class="doccomment">/// Access to the internally used notify Watcher backend
-    </span><span class="kw">pub fn </span>watcher(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>T {
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>.watcher
+    <span class="attr">#[deprecated = <span class="string">"`Debouncer` provides all methods from `Watcher` itself now. Remove `.watcher()` and use those methods directly."</span>]
+    </span><span class="kw">pub fn </span>watcher(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {}
+
+    <span class="attr">#[deprecated = <span class="string">"`Debouncer` now manages root paths automatically. Remove all calls to `add_root` and `remove_root`."</span>]
+    </span><span class="kw">pub fn </span>cache(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {}
+
+    <span class="kw">fn </span>add_root(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: <span class="kw">impl </span>Into&lt;PathBuf&gt;, recursive_mode: RecursiveMode) {
+        <span class="kw">let </span>path = path.into();
+
+        <span class="kw">let </span><span class="kw-2">mut </span>data = <span class="self">self</span>.data.lock().unwrap();
+
+        <span class="comment">// skip, if the root has already been added
+        </span><span class="kw">if </span>data.roots.iter().any(|(p, <span class="kw">_</span>)| p == <span class="kw-2">&amp;</span>path) {
+            <span class="kw">return</span>;
+        }
+
+        data.roots.push((path.clone(), recursive_mode));
+
+        data.cache.add_path(<span class="kw-2">&amp;</span>path, recursive_mode);
     }
 
-    <span class="doccomment">/// Access to the internally used notify Watcher backend
-    </span><span class="kw">pub fn </span>cache(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; MappedMutexGuard&lt;C&gt; {
-        MutexGuard::map(<span class="self">self</span>.data.lock(), |data| <span class="kw-2">&amp;mut </span>data.cache)
+    <span class="kw">fn </span>remove_root(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: <span class="kw">impl </span>AsRef&lt;Path&gt;) {
+        <span class="kw">let </span><span class="kw-2">mut </span>data = <span class="self">self</span>.data.lock().unwrap();
+
+        data.roots.retain(|(root, <span class="kw">_</span>)| !root.starts_with(<span class="kw-2">&amp;</span>path));
+
+        data.cache.remove_path(path.as_ref());
+    }
+
+    <span class="kw">pub fn </span>watch(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        path: <span class="kw">impl </span>AsRef&lt;Path&gt;,
+        recursive_mode: RecursiveMode,
+    ) -&gt; notify::Result&lt;()&gt; {
+        <span class="self">self</span>.watcher.watch(path.as_ref(), recursive_mode)<span class="question-mark">?</span>;
+        <span class="self">self</span>.add_root(path.as_ref(), recursive_mode);
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">pub fn </span>unwatch(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: <span class="kw">impl </span>AsRef&lt;Path&gt;) -&gt; notify::Result&lt;()&gt; {
+        <span class="self">self</span>.watcher.unwatch(path.as_ref())<span class="question-mark">?</span>;
+        <span class="self">self</span>.remove_root(path);
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">pub fn </span>configure(<span class="kw-2">&amp;mut </span><span class="self">self</span>, option: notify::Config) -&gt; notify::Result&lt;bool&gt; {
+        <span class="self">self</span>.watcher.configure(option)
+    }
+
+    <span class="kw">pub fn </span>kind() -&gt; WatcherKind
+    <span class="kw">where
+        </span><span class="self">Self</span>: Sized,
+    {
+        T::kind()
     }
 }
 
@@ -1378,7 +1518,7 @@
 ///
 /// Timeout is the amount of time after which a debounced event is emitted.
 ///
-/// If tick_rate is None, notify will select a tick rate that is 1/4 of the provided timeout.
+/// If `tick_rate` is `None`, notify will select a tick rate that is 1/4 of the provided timeout.
 </span><span class="kw">pub fn </span>new_debouncer_opt&lt;F: DebounceEventHandler, T: Watcher, C: FileIdCache + Send + <span class="lifetime">'static</span>&gt;(
     timeout: Duration,
     tick_rate: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
@@ -1420,7 +1560,7 @@
             <span class="kw">let </span>send_data;
             <span class="kw">let </span>errors;
             {
-                <span class="kw">let </span><span class="kw-2">mut </span>lock = data_c.lock();
+                <span class="kw">let </span><span class="kw-2">mut </span>lock = data_c.lock().unwrap();
                 send_data = lock.debounced_events();
                 errors = lock.errors();
             }
@@ -1435,7 +1575,7 @@
     <span class="kw">let </span>data_c = data.clone();
     <span class="kw">let </span>watcher = T::new(
         <span class="kw">move </span>|e: <span class="prelude-ty">Result</span>&lt;Event, Error&gt;| {
-            <span class="kw">let </span><span class="kw-2">mut </span>lock = data_c.lock();
+            <span class="kw">let </span><span class="kw-2">mut </span>lock = data_c.lock().unwrap();
 
             <span class="kw">match </span>e {
                 <span class="prelude-val">Ok</span>(e) =&gt; lock.add_event(e),
@@ -1460,17 +1600,17 @@
 ///
 /// Timeout is the amount of time after which a debounced event is emitted.
 ///
-/// If tick_rate is None, notify will select a tick rate that is 1/4 of the provided timeout.
+/// If `tick_rate` is `None`, notify will select a tick rate that is 1/4 of the provided timeout.
 </span><span class="kw">pub fn </span>new_debouncer&lt;F: DebounceEventHandler&gt;(
     timeout: Duration,
     tick_rate: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
     event_handler: F,
-) -&gt; <span class="prelude-ty">Result</span>&lt;Debouncer&lt;RecommendedWatcher, FileIdMap&gt;, Error&gt; {
-    new_debouncer_opt::&lt;F, RecommendedWatcher, FileIdMap&gt;(
+) -&gt; <span class="prelude-ty">Result</span>&lt;Debouncer&lt;RecommendedWatcher, RecommendedCache&gt;, Error&gt; {
+    new_debouncer_opt::&lt;F, RecommendedWatcher, RecommendedCache&gt;(
         timeout,
         tick_rate,
         event_handler,
-        FileIdMap::new(),
+        RecommendedCache::new(),
         notify::Config::default(),
     )
 }
@@ -1501,8 +1641,8 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>push_next = <span class="bool-val">false</span>;
 
-        <span class="kw">while </span>events.front().map_or(<span class="bool-val">false</span>, |event| event.time &lt;= min_time) {
-            <span class="comment">// unwrap is safe beause `pop_front` mus return some in order to enter the loop
+        <span class="kw">while </span>events.front().is_some_and(|event| event.time &lt;= min_time) {
+            <span class="comment">// unwrap is safe because `pop_front` mus return some in order to enter the loop
             </span><span class="kw">let </span>event = events.pop_front().unwrap();
             sorted.push(event);
             push_next = <span class="bool-val">true</span>;
@@ -1524,10 +1664,11 @@
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="kw">use </span>mock_instant::MockClock;
     <span class="kw">use </span>pretty_assertions::assert_eq;
     <span class="kw">use </span>rstest::rstest;
+    <span class="kw">use </span>tempfile::tempdir;
     <span class="kw">use </span>testing::TestCase;
+    <span class="kw">use </span>time::MockTime;
 
     <span class="attr">#[rstest]
     </span><span class="kw">fn </span>state(
@@ -1576,21 +1717,25 @@
             fs::read_to_string(Path::new(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"./test_cases/{file_name}.hjson"</span>))).unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>test_case = deser_hjson::from_str::&lt;TestCase&gt;(<span class="kw-2">&amp;</span>file_content).unwrap();
 
-        MockClock::set_time(Duration::default());
-
-        <span class="kw">let </span>time = Instant::now();
+        <span class="kw">let </span>time = now();
+        MockTime::set_time(time);
 
         <span class="kw">let </span><span class="kw-2">mut </span>state = test_case.state.into_debounce_data_inner(time);
+        state.roots = <span class="macro">vec!</span>[(PathBuf::from(<span class="string">"/"</span>), RecursiveMode::Recursive)];
+
+        <span class="kw">let </span><span class="kw-2">mut </span>prev_event_time = Duration::default();
 
         <span class="kw">for </span>event <span class="kw">in </span>test_case.events {
+            <span class="kw">let </span>event_time = Duration::from_millis(event.time);
             <span class="kw">let </span>event = event.into_debounced_event(time, <span class="prelude-val">None</span>);
-            MockClock::set_time(event.time - time);
+            MockTime::advance(event_time - prev_event_time);
+            prev_event_time = event_time;
             state.add_event(event.event);
         }
 
         <span class="kw">for </span>error <span class="kw">in </span>test_case.errors {
-            <span class="kw">let </span>e = error.into_notify_error();
-            state.add_error(e);
+            <span class="kw">let </span>error = error.into_notify_error();
+            state.add_error(error);
         }
 
         <span class="kw">let </span>expected_errors = std::mem::take(<span class="kw-2">&amp;mut </span>test_case.expected.errors);
@@ -1626,21 +1771,20 @@
             <span class="string">"errors not as expected"
         </span>);
 
-        <span class="kw">let </span>backup_time = Instant::now().duration_since(time);
+        <span class="kw">let </span>backup_time = now();
         <span class="kw">let </span>backup_queues = state.queues.clone();
 
         <span class="kw">for </span>(delay, events) <span class="kw">in </span>expected_events {
-            MockClock::set_time(backup_time);
+            MockTime::set_time(backup_time);
             state.queues = backup_queues.clone();
 
             <span class="kw">match </span>delay.as_str() {
                 <span class="string">"none" </span>=&gt; {}
-                <span class="string">"short" </span>=&gt; MockClock::advance(Duration::from_millis(<span class="number">10</span>)),
-                <span class="string">"long" </span>=&gt; MockClock::advance(Duration::from_millis(<span class="number">100</span>)),
+                <span class="string">"short" </span>=&gt; MockTime::advance(Duration::from_millis(<span class="number">10</span>)),
+                <span class="string">"long" </span>=&gt; MockTime::advance(Duration::from_millis(<span class="number">100</span>)),
                 <span class="kw">_ </span>=&gt; {
                     <span class="kw">if let </span><span class="prelude-val">Ok</span>(ts) = delay.parse::&lt;u64&gt;() {
-                        <span class="kw">let </span>ts = time + Duration::from_millis(ts);
-                        MockClock::set_time(ts - time);
+                        MockTime::set_time(time + Duration::from_millis(ts));
                     }
                 }
             }
@@ -1656,6 +1800,28 @@
                 <span class="string">"debounced events after a `{delay}` delay"
             </span>);
         }
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>integration() -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt; {
+        <span class="kw">let </span>dir = tempdir()<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>(tx, rx) = std::sync::mpsc::channel();
+
+        <span class="kw">let </span><span class="kw-2">mut </span>debouncer = new_debouncer(Duration::from_millis(<span class="number">10</span>), <span class="prelude-val">None</span>, tx)<span class="question-mark">?</span>;
+
+        debouncer.watch(dir.path(), RecursiveMode::Recursive)<span class="question-mark">?</span>;
+
+        fs::write(dir.path().join(<span class="string">"file.txt"</span>), <span class="string">b"Lorem ipsum"</span>)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>events = rx
+            .recv_timeout(Duration::from_secs(<span class="number">10</span>))
+            .expect(<span class="string">"no events received"</span>)
+            .expect(<span class="string">"received an error"</span>);
+
+        <span class="macro">assert!</span>(!events.is_empty(), <span class="string">"received empty event list"</span>);
+
+        <span class="prelude-val">Ok</span>(())
     }
 }
 </code></pre></div></section></main></body></html>

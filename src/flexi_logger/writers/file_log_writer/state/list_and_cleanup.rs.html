@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/flexi_logger-0.29.4/src/writers/file_log_writer/state/list_and_cleanup.rs`."><title>list_and_cleanup.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="flexi_logger" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/flexi_logger-0.29.6/src/writers/file_log_writer/state/list_and_cleanup.rs`."><title>list_and_cleanup.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="flexi_logger" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -189,7 +189,16 @@
 <a href="#189" id="189">189</a>
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
-</pre></div><pre class="rust"><code><span class="kw">use crate</span>::{Cleanup, FileSpec, LogfileSelector};
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::InfixFilter;
+<span class="kw">use crate</span>::{Cleanup, FileSpec, LogfileSelector};
 <span class="attr">#[cfg(feature = <span class="string">"compress"</span>)]
 </span><span class="kw">use </span>std::fs::File;
 <span class="kw">use </span>std::{
@@ -197,20 +206,14 @@
     thread::{Builder <span class="kw">as </span>ThreadBuilder, JoinHandle},
 };
 
-<span class="comment">// looks like a standard infix if it starts with an r and a digit
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>looks_like_std_infix(s: <span class="kw-2">&amp;</span>str) -&gt; bool {
-    <span class="kw">if </span>s.len() &gt; <span class="number">2 </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>chars = s.chars();
-        chars.next().unwrap() == <span class="string">'r' </span>&amp;&amp; chars.next().unwrap().is_ascii_digit()
-    } <span class="kw">else </span>{
-        <span class="bool-val">false
-    </span>}
-}
-
-<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>list_of_log_and_compressed_files(file_spec: <span class="kw-2">&amp;</span>FileSpec) -&gt; Vec&lt;PathBuf&gt; {
+<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>list_of_log_and_compressed_files(
+    file_spec: <span class="kw-2">&amp;</span>FileSpec,
+    infix_filter: <span class="kw-2">&amp;</span>InfixFilter,
+) -&gt; Vec&lt;PathBuf&gt; {
     existing_log_files(
         file_spec,
         <span class="bool-val">true</span>,
+        infix_filter,
         <span class="kw-2">&amp;</span>LogfileSelector::default().with_compressed_files(),
     )
 }
@@ -218,37 +221,33 @@
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>existing_log_files(
     file_spec: <span class="kw-2">&amp;</span>FileSpec,
     use_rotation: bool,
+    infix_filter: <span class="kw-2">&amp;</span>InfixFilter,
     selector: <span class="kw-2">&amp;</span>LogfileSelector,
 ) -&gt; Vec&lt;PathBuf&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>result = Vec::new();
     <span class="kw">let </span>related_files = file_spec.read_dir_related_files();
-
     <span class="kw">if </span>use_rotation {
         <span class="kw">if </span>selector.with_plain_files {
             result.append(<span class="kw-2">&amp;mut </span>file_spec.filter_files(
                 <span class="kw-2">&amp;</span>related_files,
-                looks_like_std_infix,
+                infix_filter,
                 file_spec.get_suffix().as_deref(),
             ));
         }
         <span class="kw">if </span>selector.with_compressed_files {
-            result.append(<span class="kw-2">&amp;mut </span>file_spec.filter_files(
-                <span class="kw-2">&amp;</span>related_files,
-                looks_like_std_infix,
-                <span class="prelude-val">Some</span>(<span class="string">"gz"</span>),
-            ));
+            result.append(<span class="kw-2">&amp;mut </span>file_spec.filter_files(<span class="kw-2">&amp;</span>related_files, infix_filter, <span class="prelude-val">Some</span>(<span class="string">"gz"</span>)));
         }
         <span class="kw">if </span>selector.with_r_current {
             result.append(<span class="kw-2">&amp;mut </span>file_spec.filter_files(
                 <span class="kw-2">&amp;</span>related_files,
-                |s: <span class="kw-2">&amp;</span>str| s == <span class="kw">super</span>::CURRENT_INFIX,
+                <span class="kw-2">&amp;</span>InfixFilter::Equls(<span class="kw">super</span>::CURRENT_INFIX.to_string()),
                 file_spec.get_suffix().as_deref(),
             ));
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>custom_current) = selector.with_configured_current {
             result.append(<span class="kw-2">&amp;mut </span>file_spec.filter_files(
                 <span class="kw-2">&amp;</span>related_files,
-                |s: <span class="kw-2">&amp;</span>str| s == custom_current,
+                <span class="kw-2">&amp;</span>InfixFilter::Equls(custom_current.to_string()),
                 file_spec.get_suffix().as_deref(),
             ));
         }
@@ -262,10 +261,18 @@
     o_cleanup_thread_handle: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>CleanupThreadHandle&gt;,
     cleanup_config: <span class="kw-2">&amp;</span>Cleanup,
     file_spec: <span class="kw-2">&amp;</span>FileSpec,
+    infix_filter: <span class="kw-2">&amp;</span>InfixFilter,
     writes_direct: bool,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), std::io::Error&gt; {
     o_cleanup_thread_handle.as_ref().map_or_else(
-        || remove_or_compress_too_old_logfiles_impl(cleanup_config, file_spec, writes_direct),
+        || {
+            remove_or_compress_too_old_logfiles_impl(
+                cleanup_config,
+                file_spec,
+                infix_filter,
+                writes_direct,
+            )
+        },
         |cleanup_thread_handle| {
             cleanup_thread_handle
                 .sender
@@ -279,6 +286,7 @@
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>remove_or_compress_too_old_logfiles_impl(
     cleanup_config: <span class="kw-2">&amp;</span>Cleanup,
     file_spec: <span class="kw-2">&amp;</span>FileSpec,
+    infix_filter: <span class="kw-2">&amp;</span>InfixFilter,
     writes_direct: bool,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), std::io::Error&gt; {
     <span class="kw">let </span>(<span class="kw-2">mut </span>log_limit, compress_limit) = <span class="kw">match </span><span class="kw-2">*</span>cleanup_config {
@@ -301,7 +309,7 @@
         log_limit = <span class="number">1</span>;
     }
 
-    <span class="kw">for </span>(index, file) <span class="kw">in </span>list_of_log_and_compressed_files(file_spec)
+    <span class="kw">for </span>(index, file) <span class="kw">in </span>list_of_log_and_compressed_files(file_spec, infix_filter)
         .into_iter()
         .enumerate()
     {
@@ -365,17 +373,25 @@
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>start_cleanup_thread(
     cleanup: Cleanup,
     file_spec: FileSpec,
+    infix_filter: <span class="kw-2">&amp;</span>InfixFilter,
     writes_direct: bool,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;CleanupThreadHandle, std::io::Error&gt; {
     <span class="kw">let </span>(sender, receiver) = std::sync::mpsc::channel();
     <span class="kw">let </span>builder = ThreadBuilder::new().name(CLEANER.to_string());
     <span class="attr">#[cfg(not(feature = <span class="string">"dont_minimize_extra_stacks"</span>))]
     </span><span class="kw">let </span>builder = builder.stack_size(<span class="number">512 </span>* <span class="number">1024</span>);
+    <span class="kw">let </span>infix_filter_cp = infix_filter.clone();
     <span class="prelude-val">Ok</span>(CleanupThreadHandle {
         sender,
         join_handle: builder.spawn(<span class="kw">move </span>|| {
             <span class="kw">while let </span><span class="prelude-val">Ok</span>(MessageToCleanupThread::Act) = receiver.recv() {
-                remove_or_compress_too_old_logfiles_impl(<span class="kw-2">&amp;</span>cleanup, <span class="kw-2">&amp;</span>file_spec, writes_direct).ok();
+                remove_or_compress_too_old_logfiles_impl(
+                    <span class="kw-2">&amp;</span>cleanup,
+                    <span class="kw-2">&amp;</span>file_spec,
+                    <span class="kw-2">&amp;</span>infix_filter_cp,
+                    writes_direct,
+                )
+                .ok();
             }
         })<span class="question-mark">?</span>,
     })

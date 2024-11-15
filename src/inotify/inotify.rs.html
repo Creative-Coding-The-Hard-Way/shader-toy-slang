@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/inotify-0.9.6/src/inotify.rs`."><title>inotify.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="inotify" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/inotify-0.10.2/src/inotify.rs`."><title>inotify.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="inotify" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -392,105 +392,15 @@
 <a href="#392" id="392">392</a>
 <a href="#393" id="393">393</a>
 <a href="#394" id="394">394</a>
-<a href="#395" id="395">395</a>
-<a href="#396" id="396">396</a>
-<a href="#397" id="397">397</a>
-<a href="#398" id="398">398</a>
-<a href="#399" id="399">399</a>
-<a href="#400" id="400">400</a>
-<a href="#401" id="401">401</a>
-<a href="#402" id="402">402</a>
-<a href="#403" id="403">403</a>
-<a href="#404" id="404">404</a>
-<a href="#405" id="405">405</a>
-<a href="#406" id="406">406</a>
-<a href="#407" id="407">407</a>
-<a href="#408" id="408">408</a>
-<a href="#409" id="409">409</a>
-<a href="#410" id="410">410</a>
-<a href="#411" id="411">411</a>
-<a href="#412" id="412">412</a>
-<a href="#413" id="413">413</a>
-<a href="#414" id="414">414</a>
-<a href="#415" id="415">415</a>
-<a href="#416" id="416">416</a>
-<a href="#417" id="417">417</a>
-<a href="#418" id="418">418</a>
-<a href="#419" id="419">419</a>
-<a href="#420" id="420">420</a>
-<a href="#421" id="421">421</a>
-<a href="#422" id="422">422</a>
-<a href="#423" id="423">423</a>
-<a href="#424" id="424">424</a>
-<a href="#425" id="425">425</a>
-<a href="#426" id="426">426</a>
-<a href="#427" id="427">427</a>
-<a href="#428" id="428">428</a>
-<a href="#429" id="429">429</a>
-<a href="#430" id="430">430</a>
-<a href="#431" id="431">431</a>
-<a href="#432" id="432">432</a>
-<a href="#433" id="433">433</a>
-<a href="#434" id="434">434</a>
-<a href="#435" id="435">435</a>
-<a href="#436" id="436">436</a>
-<a href="#437" id="437">437</a>
-<a href="#438" id="438">438</a>
-<a href="#439" id="439">439</a>
-<a href="#440" id="440">440</a>
-<a href="#441" id="441">441</a>
-<a href="#442" id="442">442</a>
-<a href="#443" id="443">443</a>
-<a href="#444" id="444">444</a>
-<a href="#445" id="445">445</a>
-<a href="#446" id="446">446</a>
-<a href="#447" id="447">447</a>
-<a href="#448" id="448">448</a>
-<a href="#449" id="449">449</a>
-<a href="#450" id="450">450</a>
-<a href="#451" id="451">451</a>
-<a href="#452" id="452">452</a>
-<a href="#453" id="453">453</a>
-<a href="#454" id="454">454</a>
-<a href="#455" id="455">455</a>
-<a href="#456" id="456">456</a>
-<a href="#457" id="457">457</a>
-<a href="#458" id="458">458</a>
-<a href="#459" id="459">459</a>
-<a href="#460" id="460">460</a>
-<a href="#461" id="461">461</a>
-<a href="#462" id="462">462</a>
-<a href="#463" id="463">463</a>
-<a href="#464" id="464">464</a>
-<a href="#465" id="465">465</a>
-<a href="#466" id="466">466</a>
-<a href="#467" id="467">467</a>
-<a href="#468" id="468">468</a>
-<a href="#469" id="469">469</a>
-<a href="#470" id="470">470</a>
-<a href="#471" id="471">471</a>
-<a href="#472" id="472">472</a>
-<a href="#473" id="473">473</a>
-<a href="#474" id="474">474</a>
-<a href="#475" id="475">475</a>
-<a href="#476" id="476">476</a>
-<a href="#477" id="477">477</a>
-<a href="#478" id="478">478</a>
-<a href="#479" id="479">479</a>
-<a href="#480" id="480">480</a>
-<a href="#481" id="481">481</a>
-<a href="#482" id="482">482</a>
-<a href="#483" id="483">483</a>
-<a href="#484" id="484">484</a>
-<a href="#485" id="485">485</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
-    ffi::CString,
     io,
-    os::unix::ffi::OsStrExt,
     os::unix::io::{
+        AsFd,
         AsRawFd,
+        BorrowedFd,
         FromRawFd,
         IntoRawFd,
+        OwnedFd,
         RawFd,
     },
     path::Path,
@@ -503,9 +413,7 @@
 <span class="kw">use </span>inotify_sys <span class="kw">as </span>ffi;
 <span class="kw">use </span>libc::{
     F_GETFL,
-    F_SETFD,
     F_SETFL,
-    FD_CLOEXEC,
     O_NONBLOCK,
     fcntl,
 };
@@ -516,6 +424,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::watches::{
     WatchDescriptor,
     WatchMask,
+    Watches,
 };
 
 
@@ -570,33 +479,28 @@
     /// [`IN_CLOEXEC`]: ../inotify_sys/constant.IN_CLOEXEC.html
     /// [`IN_NONBLOCK`]: ../inotify_sys/constant.IN_NONBLOCK.html
     </span><span class="kw">pub fn </span>init() -&gt; io::Result&lt;Inotify&gt; {
-        <span class="comment">// Initialize inotify and set CLOEXEC and NONBLOCK flags.
-        //
-        // NONBLOCK is needed, because `Inotify` manages blocking behavior for
-        // the API consumer, and the way we do that is to make everything non-
-        // blocking by default and later override that as required.
-        //
-        // CLOEXEC prevents leaking file descriptors to processes executed by
-        // this process and seems to be a best practice. I don't grasp this
-        // issue completely and failed to find any authoritative sources on the
-        // topic. There's some discussion in the open(2) and fcntl(2) man pages,
-        // but I didn't find that helpful in understanding the issue of leaked
-        // file descriptors. For what it's worth, there's a Rust issue about
-        // this:
-        // https://github.com/rust-lang/rust/issues/12148
-        </span><span class="kw">let </span>fd = <span class="kw">unsafe </span>{
-            <span class="kw">let </span>fd = ffi::inotify_init();
-            <span class="kw">if </span>fd == -<span class="number">1 </span>{
-                <span class="kw">return </span><span class="prelude-val">Err</span>(io::Error::last_os_error());
-            }
-            <span class="kw">if </span>fcntl(fd, F_SETFD, FD_CLOEXEC) == -<span class="number">1 </span>{
-                <span class="kw">return </span><span class="prelude-val">Err</span>(io::Error::last_os_error());
-            }
-            <span class="kw">if </span>fcntl(fd, F_SETFL, O_NONBLOCK) == -<span class="number">1 </span>{
-                <span class="kw">return </span><span class="prelude-val">Err</span>(io::Error::last_os_error());
-            }
-            fd
+        <span class="kw">let </span>fd = <span class="kw">unsafe </span>{
+            <span class="comment">// Initialize inotify and pass both `IN_CLOEXEC` and `IN_NONBLOCK`.
+            //
+            // `IN_NONBLOCK` is needed, because `Inotify` manages blocking
+            // behavior for the API consumer, and the way we do that is to make
+            // everything non-blocking by default and later override that as
+            // required.
+            //
+            // Passing `IN_CLOEXEC` prevents leaking file descriptors to
+            // processes executed by this process and seems to be a best
+            // practice. I don't grasp this issue completely and failed to find
+            // any authoritative sources on the topic. There's some discussion in
+            // the open(2) and fcntl(2) man pages, but I didn't find that
+            // helpful in understanding the issue of leaked file descriptors.
+            // For what it's worth, there's a Rust issue about this:
+            // https://github.com/rust-lang/rust/issues/12148
+            </span>ffi::inotify_init1(ffi::IN_CLOEXEC | ffi::IN_NONBLOCK)
         };
+
+        <span class="kw">if </span>fd == -<span class="number">1 </span>{
+            <span class="kw">return </span><span class="prelude-val">Err</span>(io::Error::last_os_error());
+        }
 
         <span class="prelude-val">Ok</span>(Inotify {
             fd: Arc::new(FdGuard {
@@ -606,157 +510,28 @@
         })
     }
 
-    <span class="doccomment">/// Adds or updates a watch for the given path
+    <span class="doccomment">/// Gets an interface that allows adding and removing watches.
+    /// See [`Watches::add`] and [`Watches::remove`].
     ///
-    /// Adds a new watch or updates an existing one for the file referred to by
-    /// `path`. Returns a watch descriptor that can be used to refer to this
-    /// watch later.
-    ///
-    /// The `mask` argument defines what kind of changes the file should be
-    /// watched for, and how to do that. See the documentation of [`WatchMask`]
-    /// for details.
-    ///
-    /// If this method is used to add a new watch, a new [`WatchDescriptor`] is
-    /// returned. If it is used to update an existing watch, a
-    /// [`WatchDescriptor`] that equals the previously returned
-    /// [`WatchDescriptor`] for that watch is returned instead.
-    ///
-    /// Under the hood, this method just calls [`inotify_add_watch`] and does
-    /// some trivial translation between the types on the Rust side and the C
-    /// side.
-    ///
-    /// # Attention: Updating watches and hardlinks
-    ///
-    /// As mentioned above, this method can be used to update an existing watch.
-    /// This is usually done by calling this method with the same `path`
-    /// argument that it has been called with before. But less obviously, it can
-    /// also happen if the method is called with a different path that happens
-    /// to link to the same inode.
-    ///
-    /// You can detect this by keeping track of [`WatchDescriptor`]s and the
-    /// paths they have been returned for. If the same [`WatchDescriptor`] is
-    /// returned for a different path (and you haven't freed the
-    /// [`WatchDescriptor`] by removing the watch), you know you have two paths
-    /// pointing to the same inode, being watched by the same watch.
-    ///
-    /// # Errors
-    ///
-    /// Directly returns the error from the call to
-    /// [`inotify_add_watch`][`inotify_add_watch`] (translated into an
-    /// `io::Error`), without adding any error conditions of
-    /// its own.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use inotify::{
-    ///     Inotify,
-    ///     WatchMask,
-    /// };
-    ///
-    /// let mut inotify = Inotify::init()
-    ///     .expect("Failed to initialize an inotify instance");
-    ///
-    /// # // Create a temporary file, so `add_watch` won't return an error.
-    /// # use std::fs::File;
-    /// # File::create("/tmp/inotify-rs-test-file")
-    /// #     .expect("Failed to create test file");
-    /// #
-    /// inotify.add_watch("/tmp/inotify-rs-test-file", WatchMask::MODIFY)
-    ///     .expect("Failed to add file watch");
-    ///
-    /// // Handle events for the file here
-    /// ```
-    ///
-    /// [`inotify_add_watch`]: ../inotify_sys/fn.inotify_add_watch.html
-    /// [`WatchMask`]: struct.WatchMask.html
-    /// [`WatchDescriptor`]: struct.WatchDescriptor.html
+    /// [`Watches::add`]: struct.Watches.html#method.add
+    /// [`Watches::remove`]: struct.Watches.html#method.remove
+    </span><span class="kw">pub fn </span>watches(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Watches {
+        Watches::new(<span class="self">self</span>.fd.clone())
+    }
+
+    <span class="doccomment">/// Deprecated: use `Inotify.watches().add()` instead
+    </span><span class="attr">#[deprecated = <span class="string">"use `Inotify.watches().add()` instead"</span>]
     </span><span class="kw">pub fn </span>add_watch&lt;P&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: P, mask: WatchMask)
         -&gt; io::Result&lt;WatchDescriptor&gt;
         <span class="kw">where </span>P: AsRef&lt;Path&gt;
     {
-        <span class="kw">let </span>path = CString::new(path.as_ref().as_os_str().as_bytes())<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>wd = <span class="kw">unsafe </span>{
-            ffi::inotify_add_watch(
-                <span class="kw-2">**</span><span class="self">self</span>.fd,
-                path.as_ptr() <span class="kw">as </span><span class="kw-2">*const </span><span class="kw">_</span>,
-                mask.bits(),
-            )
-        };
-
-        <span class="kw">match </span>wd {
-            -<span class="number">1 </span>=&gt; <span class="prelude-val">Err</span>(io::Error::last_os_error()),
-            <span class="kw">_  </span>=&gt; <span class="prelude-val">Ok</span>(WatchDescriptor{ id: wd, fd: Arc::downgrade(<span class="kw-2">&amp;</span><span class="self">self</span>.fd) }),
-        }
+        <span class="self">self</span>.watches().add(path, mask)
     }
 
-    <span class="doccomment">/// Stops watching a file
-    ///
-    /// Removes the watch represented by the provided [`WatchDescriptor`] by
-    /// calling [`inotify_rm_watch`]. [`WatchDescriptor`]s can be obtained via
-    /// [`Inotify::add_watch`], or from the `wd` field of [`Event`].
-    ///
-    /// # Errors
-    ///
-    /// Directly returns the error from the call to [`inotify_rm_watch`].
-    /// Returns an [`io::Error`] with [`ErrorKind`]`::InvalidInput`, if the given
-    /// [`WatchDescriptor`] did not originate from this [`Inotify`] instance.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use inotify::Inotify;
-    ///
-    /// let mut inotify = Inotify::init()
-    ///     .expect("Failed to initialize an inotify instance");
-    ///
-    /// # // Create a temporary file, so `add_watch` won't return an error.
-    /// # use std::fs::File;
-    /// # let mut test_file = File::create("/tmp/inotify-rs-test-file")
-    /// #     .expect("Failed to create test file");
-    /// #
-    /// # // Add a watch and modify the file, so the code below doesn't block
-    /// # // forever.
-    /// # use inotify::WatchMask;
-    /// # inotify.add_watch("/tmp/inotify-rs-test-file", WatchMask::MODIFY)
-    /// #     .expect("Failed to add file watch");
-    /// # use std::io::Write;
-    /// # write!(&amp;mut test_file, "something\n")
-    /// #     .expect("Failed to write something to test file");
-    /// #
-    /// let mut buffer = [0; 1024];
-    /// let events = inotify
-    ///     .read_events_blocking(&amp;mut buffer)
-    ///     .expect("Error while waiting for events");
-    ///
-    /// for event in events {
-    ///     inotify.rm_watch(event.wd);
-    /// }
-    /// ```
-    ///
-    /// [`WatchDescriptor`]: struct.WatchDescriptor.html
-    /// [`inotify_rm_watch`]: ../inotify_sys/fn.inotify_rm_watch.html
-    /// [`Inotify::add_watch`]: struct.Inotify.html#method.add_watch
-    /// [`Event`]: struct.Event.html
-    /// [`Inotify`]: struct.Inotify.html
-    /// [`io::Error`]: https://doc.rust-lang.org/std/io/struct.Error.html
-    /// [`ErrorKind`]: https://doc.rust-lang.org/std/io/enum.ErrorKind.html
+    <span class="doccomment">/// Deprecated: use `Inotify.watches().remove()` instead
+    </span><span class="attr">#[deprecated = <span class="string">"use `Inotify.watches().remove()` instead"</span>]
     </span><span class="kw">pub fn </span>rm_watch(<span class="kw-2">&amp;mut </span><span class="self">self</span>, wd: WatchDescriptor) -&gt; io::Result&lt;()&gt; {
-        <span class="kw">if </span>wd.fd.upgrade().as_ref() != <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.fd) {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                <span class="string">"Invalid WatchDescriptor"</span>,
-            ));
-        }
-
-        <span class="kw">let </span>result = <span class="kw">unsafe </span>{ ffi::inotify_rm_watch(<span class="kw-2">**</span><span class="self">self</span>.fd, wd.id) };
-        <span class="kw">match </span>result {
-            <span class="number">0  </span>=&gt; <span class="prelude-val">Ok</span>(()),
-            -<span class="number">1 </span>=&gt; <span class="prelude-val">Err</span>(io::Error::last_os_error()),
-            <span class="kw">_  </span>=&gt; <span class="macro">panic!</span>(
-                <span class="string">"unexpected return code from inotify_rm_watch ({})"</span>, result)
-        }
+        <span class="self">self</span>.watches().remove(wd)
     }
 
     <span class="doccomment">/// Waits until events are available, then returns them
@@ -812,9 +587,8 @@
     ///
     /// # Errors
     ///
-    /// This function directly returns all errors from the call to [`read`]
-    /// (except EGAIN/EWOULDBLOCK, which result in an empty iterator). In
-    /// addition, [`ErrorKind::UnexpectedEof`] is returned, if the call to
+    /// This function directly returns all errors from the call to [`read`].
+    /// In addition, [`ErrorKind::UnexpectedEof`] is returned, if the call to
     /// [`read`] returns `0`, signaling end-of-file.
     ///
     /// If `buffer` is too small, this will result in an error with
@@ -823,15 +597,21 @@
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```no_run
     /// use inotify::Inotify;
+    /// use std::io::ErrorKind;
     ///
     /// let mut inotify = Inotify::init()
     ///     .expect("Failed to initialize an inotify instance");
     ///
     /// let mut buffer = [0; 1024];
-    /// let events = inotify.read_events(&amp;mut buffer)
-    ///     .expect("Error while reading events");
+    /// let events = loop {
+    ///     match inotify.read_events(&amp;mut buffer) {
+    ///         Ok(events) =&gt; break events,
+    ///         Err(error) if error.kind() == ErrorKind::WouldBlock =&gt; continue,
+    ///         _ =&gt; panic!("Error while reading events"),
+    ///     }
+    /// };
     ///
     /// for event in events {
     ///     // Handle event
@@ -858,12 +638,7 @@
             }
             -<span class="number">1 </span>=&gt; {
                 <span class="kw">let </span>error = io::Error::last_os_error();
-                <span class="kw">if </span>error.kind() == io::ErrorKind::WouldBlock {
-                    <span class="kw">return </span><span class="prelude-val">Ok</span>(Events::new(Arc::downgrade(<span class="kw-2">&amp;</span><span class="self">self</span>.fd), buffer, <span class="number">0</span>));
-                }
-                <span class="kw">else </span>{
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(error);
-                }
+                <span class="kw">return </span><span class="prelude-val">Err</span>(error);
             },
             <span class="kw">_ if </span>num_bytes &lt; <span class="number">0 </span>=&gt; {
                 <span class="macro">panic!</span>(<span class="string">"{} {} {} {} {} {}"</span>,
@@ -892,19 +667,43 @@
         <span class="prelude-val">Ok</span>(Events::new(Arc::downgrade(<span class="kw-2">&amp;</span><span class="self">self</span>.fd), buffer, num_bytes))
     }
 
-    <span class="doccomment">/// Create a stream which collects events
-    ///
-    /// Returns a `Stream` over all events that are available. This stream is an
-    /// infinite source of events.
-    ///
-    /// An internal buffer which can hold the largest possible event is used.
-    </span><span class="attr">#[cfg(feature = <span class="string">"stream"</span>)]
+    <span class="doccomment">/// Deprecated: use `into_event_stream()` instead, which enforces a single `Stream` and predictable reads.
+    /// Using this method to create multiple `EventStream` instances from one `Inotify` is unsupported,
+    /// as they will contend over one event source and each produce unpredictable stream contents.
+    </span><span class="attr">#[deprecated = <span class="string">"use `into_event_stream()` instead, which enforces a single Stream and predictable reads"</span>]
+    #[cfg(feature = <span class="string">"stream"</span>)]
     </span><span class="kw">pub fn </span>event_stream&lt;T&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, buffer: T)
         -&gt; io::Result&lt;EventStream&lt;T&gt;&gt;
     <span class="kw">where
         </span>T: AsMut&lt;[u8]&gt; + AsRef&lt;[u8]&gt;,
     {
         EventStream::new(<span class="self">self</span>.fd.clone(), buffer)
+    }
+
+    <span class="doccomment">/// Create a stream which collects events. Consumes the `Inotify` instance.
+    ///
+    /// Returns a `Stream` over all events that are available. This stream is an
+    /// infinite source of events.
+    ///
+    /// An internal buffer which can hold the largest possible event is used.
+    </span><span class="attr">#[cfg(feature = <span class="string">"stream"</span>)]
+    </span><span class="kw">pub fn </span>into_event_stream&lt;T&gt;(<span class="self">self</span>, buffer: T)
+        -&gt; io::Result&lt;EventStream&lt;T&gt;&gt;
+    <span class="kw">where
+        </span>T: AsMut&lt;[u8]&gt; + AsRef&lt;[u8]&gt;,
+    {
+        EventStream::new(<span class="self">self</span>.fd, buffer)
+    }
+
+    <span class="doccomment">/// Creates an `Inotify` instance using the file descriptor which was originally
+    /// initialized in `Inotify::init`. This is intended to be used to transform an
+    /// `EventStream` back into an `Inotify`. Do not attempt to clone `Inotify` with this.
+    </span><span class="attr">#[cfg(feature = <span class="string">"stream"</span>)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>from_file_descriptor(fd: Arc&lt;FdGuard&gt;) -&gt; <span class="self">Self
+    </span>{
+        Inotify {
+            fd,
+        }
     }
 
     <span class="doccomment">/// Closes the inotify instance
@@ -966,6 +765,25 @@
     </span><span class="kw">fn </span>into_raw_fd(<span class="self">self</span>) -&gt; RawFd {
         <span class="self">self</span>.fd.should_not_close();
         <span class="self">self</span>.fd.fd
+    }
+}
+
+<span class="kw">impl </span>AsFd <span class="kw">for </span>Inotify {
+    <span class="attr">#[inline]
+    </span><span class="kw">fn </span>as_fd(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; BorrowedFd&lt;<span class="lifetime">'_</span>&gt; {
+        <span class="self">self</span>.fd.as_fd()
+    }
+}
+
+<span class="kw">impl </span>From&lt;Inotify&gt; <span class="kw">for </span>OwnedFd {
+    <span class="kw">fn </span>from(fd: Inotify) -&gt; OwnedFd {
+        <span class="kw">unsafe </span>{ OwnedFd::from_raw_fd(fd.into_raw_fd()) }
+    }
+}
+
+<span class="kw">impl </span>From&lt;OwnedFd&gt; <span class="kw">for </span>Inotify {
+    <span class="kw">fn </span>from(fd: OwnedFd) -&gt; Inotify {
+        <span class="kw">unsafe </span>{ Inotify::from_raw_fd(fd.into_raw_fd()) }
     }
 }
 </code></pre></div></section></main></body></html>

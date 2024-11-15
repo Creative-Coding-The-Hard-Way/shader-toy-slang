@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/image-0.25.4/src/image.rs`."><title>image.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="image" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/image-0.25.5/src/image.rs`."><title>image.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="image" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1869,12 +1869,32 @@
 <a href="#1869" id="1869">1869</a>
 <a href="#1870" id="1870">1870</a>
 <a href="#1871" id="1871">1871</a>
+<a href="#1872" id="1872">1872</a>
+<a href="#1873" id="1873">1873</a>
+<a href="#1874" id="1874">1874</a>
+<a href="#1875" id="1875">1875</a>
+<a href="#1876" id="1876">1876</a>
+<a href="#1877" id="1877">1877</a>
+<a href="#1878" id="1878">1878</a>
+<a href="#1879" id="1879">1879</a>
+<a href="#1880" id="1880">1880</a>
+<a href="#1881" id="1881">1881</a>
+<a href="#1882" id="1882">1882</a>
+<a href="#1883" id="1883">1883</a>
+<a href="#1884" id="1884">1884</a>
+<a href="#1885" id="1885">1885</a>
+<a href="#1886" id="1886">1886</a>
+<a href="#1887" id="1887">1887</a>
+<a href="#1888" id="1888">1888</a>
 </pre></div><pre class="rust"><code><span class="attr">#![allow(clippy::too_many_arguments)]
 </span><span class="kw">use </span>std::ffi::OsStr;
 <span class="kw">use </span>std::io::{<span class="self">self</span>, Write};
 <span class="kw">use </span>std::mem::size_of;
 <span class="kw">use </span>std::ops::{Deref, DerefMut};
 <span class="kw">use </span>std::path::Path;
+
+<span class="attr">#[cfg(feature = <span class="string">"serde"</span>)]
+</span><span class="kw">use </span>serde::{Deserialize, Serialize};
 
 <span class="kw">use </span><span class="kw">crate</span>::color::{ColorType, ExtendedColorType};
 <span class="kw">use </span><span class="kw">crate</span>::error::{
@@ -1891,6 +1911,7 @@
 <span class="doccomment">/// An enumeration of supported image formats.
 /// Not all formats support both encoding and decoding.
 </span><span class="attr">#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+#[cfg_attr(feature = <span class="string">"serde"</span>, derive(Serialize, Deserialize))]
 #[non_exhaustive]
 </span><span class="kw">pub enum </span>ImageFormat {
     <span class="doccomment">/// An Image in PNG Format
@@ -1937,6 +1958,9 @@
 
     <span class="doccomment">/// An Image in QOI Format
     </span>Qoi,
+
+    <span class="doccomment">/// An Image in PCX Format
+    </span>Pcx,
 }
 
 <span class="kw">impl </span>ImageFormat {
@@ -1961,7 +1985,7 @@
 
             <span class="prelude-val">Some</span>(<span class="kw">match </span>ext.as_str() {
                 <span class="string">"avif" </span>=&gt; ImageFormat::Avif,
-                <span class="string">"jpg" </span>| <span class="string">"jpeg" </span>=&gt; ImageFormat::Jpeg,
+                <span class="string">"jpg" </span>| <span class="string">"jpeg" </span>| <span class="string">"jfif" </span>=&gt; ImageFormat::Jpeg,
                 <span class="string">"png" </span>| <span class="string">"apng" </span>=&gt; ImageFormat::Png,
                 <span class="string">"gif" </span>=&gt; ImageFormat::Gif,
                 <span class="string">"webp" </span>=&gt; ImageFormat::WebP,
@@ -1975,6 +1999,7 @@
                 <span class="string">"pbm" </span>| <span class="string">"pam" </span>| <span class="string">"ppm" </span>| <span class="string">"pgm" </span>=&gt; ImageFormat::Pnm,
                 <span class="string">"ff" </span>=&gt; ImageFormat::Farbfeld,
                 <span class="string">"qoi" </span>=&gt; ImageFormat::Qoi,
+                <span class="string">"pcx" </span>=&gt; ImageFormat::Pcx,
                 <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
             })
         }
@@ -2050,6 +2075,7 @@
             <span class="comment">// Qoi's MIME type is being worked on.
             // See: https://github.com/phoboslab/qoi/issues/167
             </span><span class="string">"image/x-qoi" </span>=&gt; <span class="prelude-val">Some</span>(ImageFormat::Qoi),
+            <span class="string">"image/vnd.zbrush.pcx" </span>| <span class="string">"image/x-pcx" </span>=&gt; <span class="prelude-val">Some</span>(ImageFormat::Pcx),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         }
     }
@@ -2097,6 +2123,7 @@
             </span>ImageFormat::Qoi =&gt; <span class="string">"image/x-qoi"</span>,
             <span class="comment">// farbfeld's MIME type taken from https://www.wikidata.org/wiki/Q28206109
             </span>ImageFormat::Farbfeld =&gt; <span class="string">"application/octet-stream"</span>,
+            ImageFormat::Pcx =&gt; <span class="string">"image/vnd.zbrush.pcx"</span>,
         }
     }
 
@@ -2121,6 +2148,7 @@
             ImageFormat::Farbfeld =&gt; <span class="bool-val">true</span>,
             ImageFormat::Avif =&gt; <span class="bool-val">true</span>,
             ImageFormat::Qoi =&gt; <span class="bool-val">true</span>,
+            ImageFormat::Pcx =&gt; <span class="bool-val">true</span>,
         }
     }
 
@@ -2145,6 +2173,7 @@
             ImageFormat::OpenExr =&gt; <span class="bool-val">true</span>,
             ImageFormat::Dds =&gt; <span class="bool-val">false</span>,
             ImageFormat::Qoi =&gt; <span class="bool-val">true</span>,
+            ImageFormat::Pcx =&gt; <span class="bool-val">false</span>,
         }
     }
 
@@ -2176,6 +2205,7 @@
             <span class="comment">// According to: https://aomediacodec.github.io/av1-avif/#mime-registration
             </span>ImageFormat::Avif =&gt; <span class="kw-2">&amp;</span>[<span class="string">"avif"</span>],
             ImageFormat::Qoi =&gt; <span class="kw-2">&amp;</span>[<span class="string">"qoi"</span>],
+            ImageFormat::Pcx =&gt; <span class="kw-2">&amp;</span>[<span class="string">"pcx"</span>],
         }
     }
 
@@ -2198,6 +2228,7 @@
             ImageFormat::Farbfeld =&gt; <span class="macro">cfg!</span>(feature = <span class="string">"ff"</span>),
             ImageFormat::Avif =&gt; <span class="macro">cfg!</span>(feature = <span class="string">"avif"</span>),
             ImageFormat::Qoi =&gt; <span class="macro">cfg!</span>(feature = <span class="string">"qoi"</span>),
+            ImageFormat::Pcx =&gt; <span class="macro">cfg!</span>(feature = <span class="string">"pcx"</span>),
             ImageFormat::Dds =&gt; <span class="bool-val">false</span>,
         }
     }
@@ -2221,6 +2252,7 @@
             ImageFormat::OpenExr =&gt; <span class="macro">cfg!</span>(feature = <span class="string">"exr"</span>),
             ImageFormat::Qoi =&gt; <span class="macro">cfg!</span>(feature = <span class="string">"qoi"</span>),
             ImageFormat::Hdr =&gt; <span class="macro">cfg!</span>(feature = <span class="string">"hdr"</span>),
+            ImageFormat::Pcx =&gt; <span class="bool-val">false</span>,
             ImageFormat::Dds =&gt; <span class="bool-val">false</span>,
         }
     }
@@ -2243,6 +2275,7 @@
             ImageFormat::Qoi,
             ImageFormat::Dds,
             ImageFormat::Hdr,
+            ImageFormat::Pcx,
         ]
         .iter()
         .copied()
@@ -3518,6 +3551,7 @@
         <span class="macro">assert_eq!</span>(from_path(<span class="string">"./a.Ppm"</span>).unwrap(), ImageFormat::Pnm);
         <span class="macro">assert_eq!</span>(from_path(<span class="string">"./a.pgm"</span>).unwrap(), ImageFormat::Pnm);
         <span class="macro">assert_eq!</span>(from_path(<span class="string">"./a.AViF"</span>).unwrap(), ImageFormat::Avif);
+        <span class="macro">assert_eq!</span>(from_path(<span class="string">"./a.PCX"</span>).unwrap(), ImageFormat::Pcx);
         <span class="macro">assert!</span>(from_path(<span class="string">"./a.txt"</span>).is_err());
         <span class="macro">assert!</span>(from_path(<span class="string">"./a"</span>).is_err());
     }
@@ -3673,7 +3707,7 @@
     </span><span class="kw">fn </span>image_formats_are_recognized() {
         <span class="kw">use </span>ImageFormat::<span class="kw-2">*</span>;
         <span class="kw">const </span>ALL_FORMATS: <span class="kw-2">&amp;</span>[ImageFormat] = <span class="kw-2">&amp;</span>[
-            Avif, Png, Jpeg, Gif, WebP, Pnm, Tiff, Tga, Dds, Bmp, Ico, Hdr, Farbfeld, OpenExr,
+            Avif, Png, Jpeg, Gif, WebP, Pnm, Tiff, Tga, Dds, Bmp, Ico, Hdr, Farbfeld, OpenExr, Pcx,
         ];
         <span class="kw">for </span><span class="kw-2">&amp;</span>format <span class="kw">in </span>ALL_FORMATS {
             <span class="kw">let </span><span class="kw-2">mut </span>file = Path::new(<span class="string">"file.nothing"</span>).to_owned();
