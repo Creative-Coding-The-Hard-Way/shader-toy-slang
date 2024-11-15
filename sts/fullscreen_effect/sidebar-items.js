@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["descriptors","fullscreen_effect_builder","pipeline"],"struct":["FrameData","FullscreenEffect","FullscreenEffectBuilder"]};

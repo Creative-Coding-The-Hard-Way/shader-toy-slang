@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["map"],"macro":["trace"],"mod":["app","graphics"]};
+window.SIDEBAR_ITEMS = {"fn":["main"],"mod":["fullscreen_effect"],"struct":["Args","ShaderToySlang"]};

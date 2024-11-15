@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["sealed"],"struct":["Empty","SetCtx","SetEffectShader","SetFramesInFlight","SetRenderPass","SetTextureAtlasLayout"],"trait":["IsComplete","IsSet","IsUnset","State"]};

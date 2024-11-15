@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["ortho_projection"],"mod":["vulkan"],"struct":["BindlessTextureAtlas","FullscreenQuad","Recompiler","Sprite","SpriteLayer","StreamingSprites","SwapchainColorPass","Texture","TextureLoader"]};

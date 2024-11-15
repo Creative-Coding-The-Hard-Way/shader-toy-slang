@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bon-macros-2.3.0/src/builder/builder_gen/member/into_conversion.rs`."><title>into_conversion.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="bon_macros" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bon-macros-3.0.0/src/builder/builder_gen/member/into_conversion.rs`."><title>into_conversion.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="bon_macros" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -72,124 +72,78 @@
 <a href="#72" id="72">72</a>
 <a href="#73" id="73">73</a>
 <a href="#74" id="74">74</a>
-<a href="#75" id="75">75</a>
-<a href="#76" id="76">76</a>
-<a href="#77" id="77">77</a>
-<a href="#78" id="78">78</a>
-<a href="#79" id="79">79</a>
-<a href="#80" id="80">80</a>
-<a href="#81" id="81">81</a>
-<a href="#82" id="82">82</a>
-<a href="#83" id="83">83</a>
-<a href="#84" id="84">84</a>
-<a href="#85" id="85">85</a>
-<a href="#86" id="86">86</a>
-<a href="#87" id="87">87</a>
-<a href="#88" id="88">88</a>
-<a href="#89" id="89">89</a>
-<a href="#90" id="90">90</a>
-<a href="#91" id="91">91</a>
-<a href="#92" id="92">92</a>
-<a href="#93" id="93">93</a>
-<a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a>
-<a href="#96" id="96">96</a>
-<a href="#97" id="97">97</a>
-</pre></div><pre class="rust"><code><span class="kw">use super</span>::{MemberOrigin, MemberParams, NamedMember, PositionalFnArgMember};
-<span class="kw">use </span><span class="kw">crate</span>::builder::params::ConditionalParams;
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::config::{BlanketParamName, EvalBlanketFlagParam};
+<span class="kw">use super</span>::{NamedMember, PositionalFnArgMember};
+<span class="kw">use </span><span class="kw">crate</span>::builder::builder_gen::top_level_config::OnConfig;
 <span class="kw">use </span><span class="kw">crate</span>::util::prelude::<span class="kw-2">*</span>;
-<span class="kw">use </span>quote::{quote, ToTokens};
 
 <span class="kw">impl </span>NamedMember {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>param_into(<span class="kw-2">&amp;</span><span class="self">self</span>, conditional_params: <span class="kw-2">&amp;</span>[ConditionalParams]) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>merge_config_into(<span class="kw-2">&amp;mut </span><span class="self">self</span>, on: <span class="kw-2">&amp;</span>[OnConfig]) -&gt; <span class="prelude-ty">Result </span>{
+        <span class="comment">// `with` is mutually exclusive with `into`. So there is nothing to merge here
+        // if `with` is present.
+        </span><span class="kw">if </span><span class="self">self</span>.config.with.is_some() {
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+        }
+
         <span class="comment">// For optional named members the target of the `Into` conversion is the type
         // inside of the `Option&lt;T&gt;`, not the `Option&lt;T&gt;` itself because we generate
         // a setter that accepts `T` itself. It also makes this logic stable regardless
         // if `Option&lt;T&gt;` is used or the member of type `T` has `#[builder(default)]` on it.
-        </span><span class="kw">let </span>scrutinee = <span class="self">self
-            </span>.as_optional_with_ty(<span class="kw-2">&amp;</span><span class="self">self</span>.orig_ty)
-            .unwrap_or(<span class="kw-2">&amp;</span><span class="self">self</span>.orig_ty);
+        </span><span class="kw">let </span>scrutinee = <span class="self">self</span>.underlying_orig_ty();
 
-        is_into_enabled(<span class="self">self</span>.origin, <span class="kw-2">&amp;</span><span class="self">self</span>.params, scrutinee, conditional_params)
-    }
+        <span class="self">self</span>.config.into = EvalBlanketFlagParam {
+            on,
+            param_name: BlanketParamName::Into,
+            member_config: <span class="kw-2">&amp;</span><span class="self">self</span>.config,
+            scrutinee,
+            origin: <span class="self">self</span>.origin,
+        }
+        .eval()<span class="question-mark">?</span>;
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>setter_method_core_name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>syn::Ident {
-        <span class="self">self</span>.params.name.as_ref().unwrap_or(<span class="kw-2">&amp;</span><span class="self">self</span>.norm_ident)
+        <span class="prelude-val">Ok</span>(())
     }
 }
 
 <span class="kw">impl </span>PositionalFnArgMember {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>param_into(<span class="kw-2">&amp;</span><span class="self">self</span>, conditional_params: <span class="kw-2">&amp;</span>[ConditionalParams]) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>merge_config_into(<span class="kw-2">&amp;mut </span><span class="self">self</span>, on: <span class="kw-2">&amp;</span>[OnConfig]) -&gt; <span class="prelude-ty">Result </span>{
         <span class="comment">// Positional members are never optional. Users must always specify them, so there
         // is no need for us to look into the `Option&lt;T&gt;` generic parameter, because the
         // `Option&lt;T&gt;` itself is the target of the into conversion, not the `T` inside it.
-        </span><span class="kw">let </span>scrutinee = <span class="self">self</span>.orig_ty.as_ref();
+        </span><span class="kw">let </span>scrutinee = <span class="self">self</span>.ty.orig.as_ref();
 
-        is_into_enabled(<span class="self">self</span>.origin, <span class="kw-2">&amp;</span><span class="self">self</span>.params, scrutinee, conditional_params)
+        <span class="self">self</span>.config.into = EvalBlanketFlagParam {
+            on,
+            param_name: BlanketParamName::Into,
+            member_config: <span class="kw-2">&amp;</span><span class="self">self</span>.config,
+            scrutinee,
+            origin: <span class="self">self</span>.origin,
+        }
+        .eval()<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fn_input_param(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        conditional_params: <span class="kw-2">&amp;</span>[ConditionalParams],
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream2&gt; {
-        <span class="kw">let </span>has_into = <span class="self">self</span>.param_into(conditional_params)<span class="question-mark">?</span>;
-        <span class="kw">let </span>norm_ty = <span class="kw-2">&amp;</span><span class="self">self</span>.norm_ty;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fn_input_param(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TokenStream {
+        <span class="kw">let </span>ty = <span class="kw-2">&amp;</span><span class="self">self</span>.ty.norm;
         <span class="kw">let </span>ident = <span class="kw-2">&amp;</span><span class="self">self</span>.ident;
 
-        <span class="kw">let </span>input = <span class="kw">if </span>has_into {
-            <span class="macro">quote!</span> { #ident: <span class="kw">impl </span>Into&lt;#norm_ty&gt; }
+        <span class="kw">if </span><span class="self">self</span>.config.into.is_present() {
+            <span class="macro">quote!</span> { #ident: <span class="kw">impl </span>Into&lt;#ty&gt; }
         } <span class="kw">else </span>{
-            <span class="macro">quote!</span> { #ident: #norm_ty }
-        };
-
-        <span class="prelude-val">Ok</span>(input)
+            <span class="macro">quote!</span> { #ident: #ty }
+        }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>maybe_into_ident_expr(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        conditional_params: <span class="kw-2">&amp;</span>[ConditionalParams],
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream2&gt; {
-        <span class="kw">let </span>has_into = <span class="self">self</span>.param_into(conditional_params)<span class="question-mark">?</span>;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>init_expr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TokenStream {
         <span class="kw">let </span>ident = <span class="kw-2">&amp;</span><span class="self">self</span>.ident;
 
-        <span class="kw">let </span>expr = <span class="kw">if </span>has_into {
+        <span class="kw">if </span><span class="self">self</span>.config.into.is_present() {
             <span class="macro">quote!</span> {
-                ::core::convert::Into::into(#ident)
+                Into::into(#ident)
             }
         } <span class="kw">else </span>{
             ident.to_token_stream()
-        };
-
-        <span class="prelude-val">Ok</span>(expr)
+        }
     }
-}
-
-<span class="kw">fn </span>is_into_enabled(
-    origin: MemberOrigin,
-    member_params: <span class="kw-2">&amp;</span>MemberParams,
-    scrutinee: <span class="kw-2">&amp;</span>syn::Type,
-    conditional_params: <span class="kw-2">&amp;</span>[ConditionalParams],
-) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-    <span class="kw">let </span>verdict_from_defaults = conditional_params
-        .iter()
-        .map(|params| <span class="prelude-val">Ok</span>((params, scrutinee.matches(<span class="kw-2">&amp;</span>params.type_pattern)<span class="question-mark">?</span>)))
-        .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?
-        </span>.into_iter()
-        .filter(|(<span class="kw">_</span>, matched)| <span class="kw-2">*</span>matched)
-        .any(|(params, <span class="kw">_</span>)| params.into.is_present());
-
-    <span class="kw">let </span>verdict_from_override = member_params.into.is_present();
-
-    <span class="kw">if </span>verdict_from_defaults &amp;&amp; verdict_from_override {
-        <span class="macro">bail!</span>(
-            <span class="kw-2">&amp;</span>member_params.into.span(),
-            <span class="string">"this `#[builder(into)]` attribute is redundant, because `into` \
-            is already implied for this member via the `#[builder(on(...))]` \
-            at the top of the {}"</span>,
-            origin.parent_construct(),
-        );
-    }
-
-    <span class="prelude-val">Ok</span>(verdict_from_override || verdict_from_defaults)
 }
 </code></pre></div></section></main></body></html>

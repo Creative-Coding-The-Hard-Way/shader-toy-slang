@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["demo_main"],"struct":["Graphics"],"trait":["Demo"]};

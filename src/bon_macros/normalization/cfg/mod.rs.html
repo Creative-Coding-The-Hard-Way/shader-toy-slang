@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bon-macros-2.3.0/src/normalization/cfg/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="bon_macros" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bon-macros-3.0.0/src/normalization/cfg/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="bon_macros" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -241,46 +241,66 @@
 <a href="#241" id="241">241</a>
 <a href="#242" id="242">242</a>
 <a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>parse;
 <span class="kw">mod </span>visit;
 
 <span class="kw">use </span><span class="kw">crate</span>::util::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>darling::ast::NestedMeta;
 <span class="kw">use </span>parse::CfgSyntax;
-<span class="kw">use </span>quote::{quote, ToTokens};
 <span class="kw">use </span>std::collections::BTreeSet;
+<span class="kw">use </span>syn::parse::Parser;
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>ExpansionOutput {
-    Expanded {
-        params: TokenStream2,
-        item: syn::Item,
-    },
-    Recurse(TokenStream2),
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>Expansion {
+    Expanded(Expanded),
+    Recurse(TokenStream),
+}
+
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Expanded {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) config: TokenStream,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) item: syn::Item,
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>ExpandCfg {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) macro_path: syn::Path,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) params: TokenStream2,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) current_macro: syn::Ident,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) config: TokenStream,
     <span class="kw">pub</span>(<span class="kw">crate</span>) item: syn::Item,
 }
 
 <span class="kw">impl </span>ExpandCfg {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>expand_cfg(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ExpansionOutput&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>expand_cfg(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Expansion&gt; {
         <span class="kw">let </span>predicates = <span class="self">self</span>.collect_predicates()<span class="question-mark">?</span>;
 
         <span class="kw">if </span>predicates.is_empty() {
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(ExpansionOutput::Expanded {
-                params: <span class="self">self</span>.params,
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(Expansion::Expanded(Expanded {
+                config: <span class="self">self</span>.config,
                 item: <span class="self">self</span>.item,
-            });
+            }));
         }
 
-        <span class="kw">let </span>predicate_results = <span class="kw">match </span>parse::parse_predicate_results(<span class="self">self</span>.params.clone())<span class="question-mark">? </span>{
+        <span class="kw">let </span>predicate_results = <span class="kw">match </span>parse::parse_predicate_results(<span class="self">self</span>.config.clone())<span class="question-mark">? </span>{
             <span class="prelude-val">Some</span>(predicate_results) =&gt; predicate_results,
             <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="self">self</span>.into_recursion(<span class="number">0</span>, <span class="kw-2">&amp;</span>predicates),
         };
 
-        <span class="comment">// Update the parameters to remove the `@cfgs(...)` prefix from them
-        </span><span class="self">self</span>.params = predicate_results.rest;
+        <span class="comment">// Update the config to remove the `@cfgs(...)` prefix from them
+        </span><span class="self">self</span>.config = predicate_results.rest;
 
         <span class="kw">let </span>true_predicates: BTreeSet&lt;<span class="kw">_</span>&gt; = predicates
             .iter()
@@ -297,10 +317,10 @@
         </span><span class="kw">let </span>predicates = <span class="self">self</span>.collect_predicates()<span class="question-mark">?</span>;
 
         <span class="kw">if </span>predicates.is_empty() {
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(ExpansionOutput::Expanded {
-                params: <span class="self">self</span>.params,
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(Expansion::Expanded(Expanded {
+                config: <span class="self">self</span>.config,
                 item: <span class="self">self</span>.item,
-            });
+            }));
         }
 
         <span class="self">self</span>.into_recursion(predicate_results.recursion_counter + <span class="number">1</span>, <span class="kw-2">&amp;</span>predicates)
@@ -308,7 +328,7 @@
 
     <span class="doccomment">/// There is no mutation happening here, but we just reuse the same
     /// visitor implementation that works with mutable references.
-    </span><span class="kw">fn </span>collect_predicates(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;TokenStream2&gt;&gt; {
+    </span><span class="kw">fn </span>collect_predicates(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;TokenStream&gt;&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>predicates = <span class="macro">vec!</span>[];
         <span class="kw">let </span><span class="kw-2">mut </span>visited = BTreeSet::new();
 
@@ -316,7 +336,7 @@
             <span class="kw">for </span>attr <span class="kw">in </span>attrs {
                 <span class="kw">let </span>cfg_syntax = <span class="kw">match </span>CfgSyntax::from_meta(<span class="kw-2">&amp;</span>attr.meta)<span class="question-mark">? </span>{
                     <span class="prelude-val">Some</span>(cfg_syntax) =&gt; cfg_syntax,
-                    <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="bool-val">true</span>),
+                    <span class="prelude-val">None </span>=&gt; <span class="kw">continue</span>,
                 };
 
                 <span class="kw">let </span>predicate = <span class="kw">match </span>cfg_syntax {
@@ -338,35 +358,49 @@
     <span class="kw">fn </span>into_recursion(
         <span class="self">self</span>,
         recursion_counter: usize,
-        predicates: <span class="kw-2">&amp;</span>[TokenStream2],
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;ExpansionOutput&gt; {
+        predicates: <span class="kw-2">&amp;</span>[TokenStream],
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Expansion&gt; {
         <span class="kw">let </span><span class="self">Self </span>{
-            params,
+            config,
             item,
-            macro_path,
-        } = <span class="kw-2">&amp;</span><span class="self">self</span>;
+            current_macro,
+        } = <span class="self">self</span>;
 
-        <span class="kw">let </span>invocation_name = <span class="self">self</span>.unique_invocation_name()<span class="question-mark">?</span>;
+        <span class="kw">let </span>bon = NestedMeta::parse_meta_list(config.clone())<span class="question-mark">?
+            </span>.iter()
+            .find_map(|meta| <span class="kw">match </span>meta {
+                NestedMeta::Meta(syn::Meta::NameValue(meta)) <span class="kw">if </span>meta.path.is_ident(<span class="string">"crate"</span>) =&gt; {
+                    <span class="kw">let </span>path = <span class="kw-2">&amp;</span>meta.value;
+                    <span class="prelude-val">Some</span>(syn::Path::parse_mod_style.parse2(<span class="macro">quote!</span>(#path)))
+                }
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+            })
+            .transpose()<span class="question-mark">?
+            </span>.unwrap_or_else(|| <span class="macro">syn::parse_quote!</span>(::bon));
+
+        <span class="kw">let </span>current_macro = <span class="macro">syn::parse_quote!</span>(#bon::#current_macro);
+
+        <span class="kw">let </span>invocation_name = <span class="self">Self</span>::unique_invocation_name(<span class="kw-2">&amp;</span>item, <span class="kw-2">&amp;</span>current_macro)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>predicates = predicates.iter().enumerate().map(|(i, predicate)| {
             <span class="comment">// We need to insert the recursion counter into the name so that
             // the name is unique on every recursive iteration of the cfg eval.
-            </span><span class="kw">let </span>pred_id = <span class="macro">quote::format_ident!</span>(<span class="string">"{invocation_name}_{recursion_counter}_{i}"</span>);
+            </span><span class="kw">let </span>pred_id = <span class="macro">format_ident!</span>(<span class="string">"{invocation_name}_{recursion_counter}_{i}"</span>);
             <span class="macro">quote!</span>(#pred_id: #predicate)
         });
 
         <span class="kw">let </span>expansion = <span class="macro">quote!</span> {
-            <span class="macro">::bon::__eval_cfg_callback!</span> {
+            #<span class="macro">bon::__eval_cfg_callback!</span> {
                 {}
                 #((#predicates))*
-                #macro_path,
+                #current_macro,
                 #recursion_counter,
-                ( #params )
+                ( #config )
                 #item
             }
         };
 
-        <span class="prelude-val">Ok</span>(ExpansionOutput::Recurse(expansion))
+        <span class="prelude-val">Ok</span>(Expansion::Recurse(expansion))
     }
 
     <span class="doccomment">/// The macro `__eval_cfg_callback` needs to generate a use statement for
@@ -395,16 +429,16 @@
     ///
     /// However, in most of the cases it will be a simple path, so its combination
     /// with the name of the first function in the `impl` block should be unique enough.
-    </span><span class="kw">fn </span>unique_invocation_name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;String&gt; {
+    </span><span class="kw">fn </span>unique_invocation_name(item: <span class="kw-2">&amp;</span>syn::Item, current_macro: <span class="kw-2">&amp;</span>syn::Path) -&gt; <span class="prelude-ty">Result</span>&lt;String&gt; {
         <span class="kw">let </span>path_to_ident =
             |path: <span class="kw-2">&amp;</span>syn::Path| path.segments.iter().map(|segment| <span class="kw-2">&amp;</span>segment.ident).join(<span class="string">"_"</span>);
 
         <span class="comment">// Include the name of the proc macro in the unique name to avoid
         // collisions when different proc macros are placed on the same item
         // and they use this code to generate unique names.
-        </span><span class="kw">let </span>macro_path_str = path_to_ident(<span class="kw-2">&amp;</span><span class="self">self</span>.macro_path);
+        </span><span class="kw">let </span>macro_path_str = path_to_ident(current_macro);
 
-        <span class="kw">let </span>item_name = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.item {
+        <span class="kw">let </span>item_name = <span class="kw">match </span>item {
             syn::Item::Fn(item) =&gt; item.sig.ident.to_string(),
             syn::Item::Impl(item) =&gt; {
                 <span class="kw">let </span>self_ty = item

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bon-macros-2.3.0/src/builder/item_impl.rs`."><title>item_impl.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="bon_macros" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bon-macros-3.0.0/src/builder/item_impl.rs`."><title>item_impl.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="bon_macros" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -150,20 +150,88 @@
 <a href="#150" id="150">150</a>
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::builder_gen::input_func::{FuncInputCtx, FuncInputParams, ImplCtx};
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::builder_gen::input_fn::{FnInputCtx, FnInputCtxParams, ImplCtx};
+<span class="kw">use </span><span class="kw">super</span>::builder_gen::TopLevelConfig;
+<span class="kw">use </span><span class="kw">crate</span>::normalization::{GenericsNamespace, SyntaxVariant};
 <span class="kw">use </span><span class="kw">crate</span>::util::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>darling::ast::NestedMeta;
 <span class="kw">use </span>darling::FromMeta;
-<span class="kw">use </span>quote::quote;
 <span class="kw">use </span>std::rc::Rc;
+<span class="kw">use </span>syn::visit::Visit;
 <span class="kw">use </span>syn::visit_mut::VisitMut;
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>generate(<span class="kw-2">mut </span>orig_impl_block: syn::ItemImpl) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream2&gt; {
+<span class="attr">#[derive(FromMeta)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>ImplInputParams {
+    <span class="doccomment">/// Overrides the path to the `bon` crate. This is usedfule when the macro is
+    /// wrapped in another macro that also reexports `bon`.
+    </span><span class="attr">#[darling(rename = <span class="string">"crate"</span>, default, map = <span class="prelude-val">Some</span>, with = <span class="kw">crate</span>::parsing::parse_bon_crate_path)]
+    </span>bon: <span class="prelude-ty">Option</span>&lt;syn::Path&gt;,
+}
+
+<span class="comment">// ImplInputParams will evolve in the future where we'll probably want to move from it
+</span><span class="attr">#[allow(clippy::needless_pass_by_value)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>generate(
+    impl_params: ImplInputParams,
+    <span class="kw-2">mut </span>orig_impl_block: syn::ItemImpl,
+) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>namespace = GenericsNamespace::default();
+    namespace.visit_item_impl(<span class="kw-2">&amp;</span>orig_impl_block);
+
     <span class="kw">if let </span><span class="prelude-val">Some</span>((<span class="kw">_</span>, trait_path, <span class="kw">_</span>)) = <span class="kw-2">&amp;</span>orig_impl_block.trait_ {
         <span class="macro">bail!</span>(trait_path, <span class="string">"Impls of traits are not supported yet"</span>);
     }
 
-    <span class="kw">let </span>(builder_funcs, other_items): (Vec&lt;<span class="kw">_</span>&gt;, Vec&lt;<span class="kw">_</span>&gt;) =
+    <span class="kw">let </span>(builder_fns, other_items): (Vec&lt;<span class="kw">_</span>&gt;, Vec&lt;<span class="kw">_</span>&gt;) =
         orig_impl_block.items.into_iter().partition(|item| {
             <span class="kw">let </span>fn_item = <span class="kw">match </span>item {
                 syn::ImplItem::Fn(fn_item) =&gt; fn_item,
@@ -176,15 +244,15 @@
                 .any(|attr| attr.path().is_ident(<span class="string">"builder"</span>))
         });
 
-    <span class="kw">if </span>builder_funcs.is_empty() {
+    <span class="kw">if </span>builder_fns.is_empty() {
         <span class="macro">bail!</span>(
             <span class="kw-2">&amp;</span>Span::call_site(),
-            <span class="string">"There are no #[builder] functions in the impl block, so there is no \
-            need for a #[bon] attribute on the impl block"
+            <span class="string">"there are no #[builder] functions in the impl block, so there is no \
+            need for a #[bon] attribute here"
         </span>);
     }
 
-    orig_impl_block.items = builder_funcs;
+    orig_impl_block.items = builder_fns;
 
     <span class="comment">// We do this back-and-forth with normalizing various syntax and saving original
     // to provide cleaner code generation that is easier to consume for IDEs and for
@@ -200,10 +268,17 @@
     // the input. It would highlight `Self` as an "unresolved symbol"
     </span><span class="kw">let </span><span class="kw-2">mut </span>norm_impl_block = orig_impl_block.clone();
 
-    <span class="kw">crate</span>::normalization::NormalizeLifetimes.visit_item_impl_mut(<span class="kw-2">&amp;mut </span>norm_impl_block);
-    <span class="kw">crate</span>::normalization::NormalizeImplTraits.visit_item_impl_mut(<span class="kw-2">&amp;mut </span>norm_impl_block);
+    <span class="kw">crate</span>::normalization::NormalizeLifetimes::new(<span class="kw-2">&amp;</span>namespace)
+        .visit_item_impl_mut(<span class="kw-2">&amp;mut </span>norm_impl_block);
 
-    <span class="kw">let </span><span class="kw-2">mut </span>norm_selfful_impl_block = norm_impl_block.clone();
+    <span class="kw">crate</span>::normalization::NormalizeImplTraits::new(<span class="kw-2">&amp;</span>namespace)
+        .visit_item_impl_mut(<span class="kw-2">&amp;mut </span>norm_impl_block);
+
+    <span class="comment">// Retain a variant of the impl block without the normalized `Self` mentions.
+    // This way we preserve the original code that the user wrote with `Self` mentions
+    // as much as possible, therefore IDE's are able to provide correct syntax highlighting
+    // for `Self` mentions, because they aren't removed from the generated code output
+    </span><span class="kw">let </span><span class="kw-2">mut </span>norm_selfful_impl_block = norm_impl_block.clone();
 
     <span class="kw">crate</span>::normalization::NormalizeSelfTy {
         self_ty: <span class="kw-2">&amp;</span>norm_impl_block.self_ty.clone(),
@@ -225,23 +300,28 @@
         .into_iter()
         .zip(norm_impl_block.items)
         .map(|(orig_item, norm_item)| {
-            <span class="kw">let </span>norm_func = <span class="kw">match </span>norm_item {
-                syn::ImplItem::Fn(norm_func) =&gt; norm_func,
+            <span class="kw">let </span>norm_fn = <span class="kw">match </span>norm_item {
+                syn::ImplItem::Fn(norm_fn) =&gt; norm_fn,
                 <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
             };
-            <span class="kw">let </span>orig_func = <span class="kw">match </span>orig_item {
-                syn::ImplItem::Fn(orig_func) =&gt; orig_func,
+            <span class="kw">let </span>orig_fn = <span class="kw">match </span>orig_item {
+                syn::ImplItem::Fn(orig_fn) =&gt; orig_fn,
                 <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
             };
 
-            <span class="kw">let </span>norm_func = impl_item_fn_into_fn_item(norm_func)<span class="question-mark">?</span>;
-            <span class="kw">let </span>orig_func = impl_item_fn_into_fn_item(orig_func)<span class="question-mark">?</span>;
+            <span class="kw">let </span>norm_fn = conv_impl_item_fn_into_fn_item(norm_fn)<span class="question-mark">?</span>;
+            <span class="kw">let </span>orig_fn = conv_impl_item_fn_into_fn_item(orig_fn)<span class="question-mark">?</span>;
 
-            <span class="kw">let </span>meta = orig_func
+            <span class="kw">let </span>meta = orig_fn
                 .attrs
                 .iter()
                 .filter(|attr| attr.path().is_ident(<span class="string">"builder"</span>))
                 .map(|attr| {
+                    <span class="kw">if let </span>syn::Meta::List(<span class="kw">_</span>) = attr.meta {
+                        <span class="kw">crate</span>::parsing::require_non_empty_paren_meta_list_or_name_value(
+                            <span class="kw-2">&amp;</span>attr.meta,
+                        )<span class="question-mark">?</span>;
+                    }
                     <span class="kw">let </span>meta_list = darling::util::parse_attribute_to_meta_list(attr)<span class="question-mark">?</span>;
                     NestedMeta::parse_meta_list(meta_list.tokens).map_err(Into::into)
                 })
@@ -250,25 +330,38 @@
                 .flatten()
                 .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
-            <span class="kw">let </span>params = FuncInputParams::from_list(<span class="kw-2">&amp;</span>meta)<span class="question-mark">?</span>;
+            <span class="kw">let </span><span class="kw-2">mut </span>config = TopLevelConfig::parse_for_fn(<span class="kw-2">&amp;</span>meta)<span class="question-mark">?</span>;
 
-            <span class="kw">let </span>ctx = FuncInputCtx {
-                orig_func,
-                norm_func,
-                impl_ctx: <span class="prelude-val">Some</span>(impl_ctx.clone()),
-                params,
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(bon) = config.bon {
+                <span class="macro">bail!</span>(
+                    <span class="kw-2">&amp;</span>bon,
+                    <span class="string">"`crate` parameter should be specified via `#[bon(crate = path::to::bon)]` \
+                    when impl block syntax is used; no need to specify it in the method's \
+                    `#[builder]` attribute"
+                </span>);
+            }
+
+            config.bon.clone_from(<span class="kw-2">&amp;</span>impl_params.bon);
+
+            <span class="kw">let </span>fn_item = SyntaxVariant {
+                orig: orig_fn,
+                norm: norm_fn,
             };
 
-            <span class="prelude-ty">Result</span>::&lt;<span class="kw">_</span>&gt;::Ok((ctx.adapted_func()<span class="question-mark">?</span>, ctx.into_builder_gen_ctx()<span class="question-mark">?</span>.output()<span class="question-mark">?</span>))
+            <span class="kw">let </span>ctx = FnInputCtx::new(FnInputCtxParams {
+                namespace: <span class="kw-2">&amp;</span>namespace,
+                fn_item,
+                impl_ctx: <span class="prelude-val">Some</span>(impl_ctx.clone()),
+                config,
+            });
+
+            <span class="prelude-ty">Result</span>::&lt;<span class="kw">_</span>&gt;::Ok((ctx.adapted_fn()<span class="question-mark">?</span>, ctx.into_builder_gen_ctx()<span class="question-mark">?</span>.output()<span class="question-mark">?</span>))
         })
         .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>new_impl_items = outputs.iter().flat_map(|(adapted_func, output)| {
-        <span class="kw">let </span>start_func = <span class="kw-2">&amp;</span>output.start_func;
-        [
-            <span class="macro">syn::parse_quote!</span>(#start_func),
-            <span class="macro">syn::parse_quote!</span>(#adapted_func),
-        ]
+    <span class="kw">let </span>new_impl_items = outputs.iter().flat_map(|(adapted_fn, output)| {
+        <span class="kw">let </span>start_fn = <span class="kw-2">&amp;</span>output.start_fn;
+        [<span class="macro">syn::parse_quote!</span>(#adapted_fn), <span class="macro">syn::parse_quote!</span>(#start_fn)]
     });
 
     norm_selfful_impl_block.items = other_items;
@@ -277,12 +370,19 @@
     <span class="kw">let </span>other_items = outputs.iter().map(|(<span class="kw">_</span>, output)| <span class="kw-2">&amp;</span>output.other_items);
 
     <span class="prelude-val">Ok</span>(<span class="macro">quote!</span> {
+        <span class="comment">// Keep the original impl block at the top. It seems like rust-analyzer
+        // does better job of highlighting syntax when it is here. Assuming
+        // this is because rust-analyzer prefers the first occurrence of the
+        // span when highlighting.
+        //
+        // See this issue for details: https://github.com/rust-lang/rust-analyzer/issues/18438
+        </span>#norm_selfful_impl_block
+
         #(#other_items)*
-        #norm_selfful_impl_block
     })
 }
 
-<span class="kw">fn </span>impl_item_fn_into_fn_item(func: syn::ImplItemFn) -&gt; <span class="prelude-ty">Result</span>&lt;syn::ItemFn&gt; {
+<span class="kw">fn </span>conv_impl_item_fn_into_fn_item(func: syn::ImplItemFn) -&gt; <span class="prelude-ty">Result</span>&lt;syn::ItemFn&gt; {
     <span class="kw">let </span>syn::ImplItemFn {
         attrs,
         vis,

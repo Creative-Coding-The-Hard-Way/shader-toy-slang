@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bon-macros-2.3.0/src/builder/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="bon_macros" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bon-macros-3.0.0/src/builder/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="bon_macros" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -84,29 +84,25 @@
 <a href="#84" id="84">84</a>
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
-<a href="#87" id="87">87</a>
-<a href="#88" id="88">88</a>
-<a href="#89" id="89">89</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>builder_gen;
-<span class="kw">mod </span>params;
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>item_impl;
 
-<span class="kw">mod </span>item_func;
+<span class="kw">mod </span>item_fn;
 <span class="kw">mod </span>item_struct;
 
-<span class="kw">use </span><span class="kw">crate</span>::normalization::{ExpandCfg, ExpansionOutput};
+<span class="kw">use </span><span class="kw">crate</span>::normalization::{ExpandCfg, Expansion, GenericsNamespace};
 <span class="kw">use </span><span class="kw">crate</span>::util;
 <span class="kw">use </span><span class="kw">crate</span>::util::prelude::<span class="kw-2">*</span>;
-<span class="kw">use </span>darling::FromMeta;
-<span class="kw">use </span>quote::quote;
+<span class="kw">use </span>builder_gen::TopLevelConfig;
 <span class="kw">use </span>syn::parse::Parser;
+<span class="kw">use </span>syn::visit::Visit;
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>generate_from_derive(item: TokenStream2) -&gt; TokenStream2 {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>generate_from_derive(item: TokenStream) -&gt; TokenStream {
     try_generate_from_derive(item).unwrap_or_else(Error::write_errors)
 }
 
-<span class="kw">fn </span>try_generate_from_derive(item: TokenStream2) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream2&gt; {
+<span class="kw">fn </span>try_generate_from_derive(item: TokenStream) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream&gt; {
     <span class="kw">match </span>syn::parse2(item)<span class="question-mark">? </span>{
         syn::Item::Struct(item_struct) =&gt; item_struct::generate(item_struct),
         <span class="kw">_ </span>=&gt; <span class="macro">bail!</span>(
@@ -116,60 +112,58 @@
     }
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>generate_from_attr(params: TokenStream2, item: TokenStream2) -&gt; TokenStream2 {
-    try_generate_from_attr(params.clone(), item.clone()).unwrap_or_else(|err| {
-        [
-            generate_completion_triggers(params),
-            <span class="kw">crate</span>::error::error_into_token_stream(err, item),
-        ]
-        .concat()
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>generate_from_attr(params: TokenStream, item: TokenStream) -&gt; TokenStream {
+    <span class="kw">crate</span>::error::handle_errors(item.clone(), || {
+        try_generate_from_attr(params.clone(), item)
     })
+    .unwrap_or_else(|fallback| [generate_completion_triggers(params), fallback].concat())
 }
 
-<span class="kw">fn </span>try_generate_from_attr(params: TokenStream2, item: TokenStream2) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream2&gt; {
+<span class="kw">fn </span>try_generate_from_attr(params: TokenStream, item: TokenStream) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream&gt; {
     <span class="kw">let </span>item: syn::Item = syn::parse2(item)<span class="question-mark">?</span>;
 
-    <span class="kw">if let </span>syn::Item::Struct(item_struct) = item {
-        <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="macro">quote!</span> {
-            <span class="comment">// Triggers a deprecation warning if the user is using the old attribute
-            // syntax on the structs instead of the derive syntax.
-            </span><span class="kw">use </span>::bon::private::deprecations::builder_attribute_on_a_struct <span class="kw">as _</span>;
-
-            <span class="attr">#[derive(::bon::Builder)]
-            #[builder(#params)]
-            </span>#item_struct
-        });
-    }
-
-    <span class="kw">let </span>macro_path = <span class="macro">syn::parse_quote!</span>(::bon::builder);
-
     <span class="kw">let </span>ctx = ExpandCfg {
-        macro_path,
-        params,
+        current_macro: <span class="macro">format_ident!</span>(<span class="string">"builder"</span>),
+        config: params,
         item,
     };
 
-    <span class="kw">let </span>(params, item) = <span class="kw">match </span>ctx.expand_cfg()<span class="question-mark">? </span>{
-        ExpansionOutput::Expanded { params, item } =&gt; (params, item),
-        ExpansionOutput::Recurse(output) =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(output),
+    <span class="kw">let </span>input = <span class="kw">match </span>ctx.expand_cfg()<span class="question-mark">? </span>{
+        Expansion::Expanded(input) =&gt; input,
+        Expansion::Recurse(output) =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(output),
     };
 
-    <span class="kw">let </span>nested_meta = <span class="kw-2">&amp;</span>darling::ast::NestedMeta::parse_meta_list(params.clone())<span class="question-mark">?</span>;
+    <span class="kw">let </span>main_output = <span class="kw">match </span>input.item {
+        syn::Item::Fn(item_fn) =&gt; {
+            <span class="kw">let </span><span class="kw-2">mut </span>namespace = GenericsNamespace::default();
 
-    <span class="kw">let </span>main_output = <span class="kw">match </span>item {
-        syn::Item::Fn(item_fn) =&gt; item_func::generate(FromMeta::from_list(nested_meta)<span class="question-mark">?</span>, item_fn)<span class="question-mark">?</span>,
+            namespace.visit_token_stream(input.config.clone());
+            namespace.visit_item_fn(<span class="kw-2">&amp;</span>item_fn);
+
+            <span class="kw">let </span>meta_list = darling::ast::NestedMeta::parse_meta_list(input.config.clone())<span class="question-mark">?</span>;
+            <span class="kw">let </span>config = TopLevelConfig::parse_for_fn(<span class="kw-2">&amp;</span>meta_list)<span class="question-mark">?</span>;
+
+            item_fn::generate(config, item_fn, <span class="kw-2">&amp;</span>namespace)<span class="question-mark">?
+        </span>}
+        syn::Item::Struct(struct_item) =&gt; {
+            <span class="macro">bail!</span>(
+                <span class="kw-2">&amp;</span>struct_item.struct_token,
+                <span class="string">"to generate a builder for a struct, use `#[derive(bon::Builder)]` instead; \
+                 `#[bon::builder]` syntax is supported only for functions starting with bon v3"
+            </span>)
+        }
         <span class="kw">_ </span>=&gt; <span class="macro">bail!</span>(
             <span class="kw-2">&amp;</span>Span::call_site(),
             <span class="string">"only `fn` items are supported by the `#[bon::builder]` attribute"
         </span>),
     };
 
-    <span class="kw">let </span>output = [generate_completion_triggers(params), main_output].concat();
+    <span class="kw">let </span>output = [generate_completion_triggers(input.config), main_output].concat();
 
     <span class="prelude-val">Ok</span>(output)
 }
 
-<span class="kw">fn </span>generate_completion_triggers(params: TokenStream2) -&gt; TokenStream2 {
+<span class="kw">fn </span>generate_completion_triggers(params: TokenStream) -&gt; TokenStream {
     <span class="kw">let </span>meta = util::ide::parse_comma_separated_meta
         .parse2(params)
         .unwrap_or_default();

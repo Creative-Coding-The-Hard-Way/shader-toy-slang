@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bon-macros-2.3.0/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bon_macros" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bon-macros-3.0.0/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bon_macros" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -306,16 +306,6 @@
 <a href="#306" id="306">306</a>
 <a href="#307" id="307">307</a>
 <a href="#308" id="308">308</a>
-<a href="#309" id="309">309</a>
-<a href="#310" id="310">310</a>
-<a href="#311" id="311">311</a>
-<a href="#312" id="312">312</a>
-<a href="#313" id="313">313</a>
-<a href="#314" id="314">314</a>
-<a href="#315" id="315">315</a>
-<a href="#316" id="316">316</a>
-<a href="#317" id="317">317</a>
-<a href="#318" id="318">318</a>
 </pre></div><pre class="rust"><code><span class="attr">#![doc = <span class="macro">include_str!</span>(<span class="string">"../README.md"</span>)]
 #![allow(
     clippy::redundant_pub_crate,
@@ -326,7 +316,11 @@
     clippy::option_option,
     clippy::option_if_let_else,
     clippy::enum_glob_use,
-    clippy::too_many_lines
+    clippy::too_many_lines,
+    clippy::if_not_else,
+
+    <span class="comment">// We can't use the explicit captures syntax due to the MSRV
+    </span>impl_trait_overcaptures,
 )]
 
 </span><span class="kw">mod </span>bon;
@@ -334,10 +328,11 @@
 <span class="kw">mod </span>collections;
 <span class="kw">mod </span>error;
 <span class="kw">mod </span>normalization;
+<span class="kw">mod </span>parsing;
 <span class="kw">mod </span>util;
 
-<span class="kw">use </span>proc_macro::TokenStream;
-<span class="kw">use </span>quote::ToTokens;
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>tests;
 
 <span class="doccomment">/// Generates a builder for the function or method it's placed on.
 ///
@@ -412,10 +407,13 @@
 /// or setting the same field twice will be reported as compile-time errors.
 ///
 /// See the full documentation for more details:
-/// - [Guide](https://elastio.github.io/bon/guide/overview)
-/// - [Attributes reference](https://elastio.github.io/bon/reference/builder)
+/// - [Guide](https://bon-rs.com/guide/overview)
+/// - [Attributes reference](https://bon-rs.com/reference/builder)
 </span><span class="attr">#[proc_macro_attribute]
-</span><span class="kw">pub fn </span>builder(params: TokenStream, item: TokenStream) -&gt; TokenStream {
+</span><span class="kw">pub fn </span>builder(
+    params: proc_macro::TokenStream,
+    item: proc_macro::TokenStream,
+) -&gt; proc_macro::TokenStream {
     builder::generate_from_attr(params.into(), item.into()).into()
 }
 
@@ -452,10 +450,10 @@
 /// or setting the same field twice will be reported as compile-time errors.
 ///
 /// See the full documentation for more details:
-/// - [Guide](https://elastio.github.io/bon/guide/overview)
-/// - [Attributes reference](https://elastio.github.io/bon/reference/builder)
+/// - [Guide](https://bon-rs.com/guide/overview)
+/// - [Attributes reference](https://bon-rs.com/reference/builder)
 </span><span class="attr">#[proc_macro_derive(Builder, attributes(builder))]
-</span><span class="kw">pub fn </span>derive_builder(item: TokenStream) -&gt; TokenStream {
+</span><span class="kw">pub fn </span>derive_builder(item: proc_macro::TokenStream) -&gt; proc_macro::TokenStream {
     builder::generate_from_derive(item.into()).into()
 }
 
@@ -512,12 +510,14 @@
 /// The builder never panics. Any mistakes such as missing required fields
 /// or setting the same field twice will be reported as compile-time errors.
 ///
-/// For details on this macro including the reason why it's needed see
-/// [this paragraph in the overview](https://elastio.github.io/bon/guide/overview#builder-for-an-associated-method).
+/// For details on this macro [see the overview](https://bon-rs.com/guide/overview).
 ///
 /// [`builder`]: macro@builder
 </span><span class="attr">#[proc_macro_attribute]
-</span><span class="kw">pub fn </span>bon(params: TokenStream, item: TokenStream) -&gt; TokenStream {
+</span><span class="kw">pub fn </span>bon(
+    params: proc_macro::TokenStream,
+    item: proc_macro::TokenStream,
+) -&gt; proc_macro::TokenStream {
     bon::generate(params.into(), item.into()).into()
 }
 
@@ -561,7 +561,7 @@
 /// [`BTreeMap`]: https://doc.rust-lang.org/stable/std/collections/struct.BTreeMap.html
 /// [`HashMap`]: https://doc.rust-lang.org/stable/std/collections/struct.HashMap.html
 </span><span class="attr">#[proc_macro]
-</span><span class="kw">pub fn </span>map(input: TokenStream) -&gt; TokenStream {
+</span><span class="kw">pub fn </span>map(input: proc_macro::TokenStream) -&gt; proc_macro::TokenStream {
     <span class="kw">let </span>entries = <span class="macro">syn::parse_macro_input!</span>(input with collections::map::parse_macro_input);
 
     collections::map::generate(entries).into()
@@ -607,31 +607,11 @@
 /// [`BTreeSet`]: https://doc.rust-lang.org/stable/std/collections/struct.BTreeSet.html
 /// [`HashSet`]: https://doc.rust-lang.org/stable/std/collections/struct.HashSet.html
 </span><span class="attr">#[proc_macro]
-</span><span class="kw">pub fn </span>set(input: TokenStream) -&gt; TokenStream {
+</span><span class="kw">pub fn </span>set(input: proc_macro::TokenStream) -&gt; proc_macro::TokenStream {
     <span class="kw">use </span>syn::punctuated::Punctuated;
 
     <span class="kw">let </span>entries = <span class="macro">syn::parse_macro_input!</span>(input with Punctuated::parse_terminated);
 
     collections::set::generate(entries).into()
-}
-
-<span class="doccomment">/// Private proc macro! Don't use it directly, it's an implementation detail.
-///
-/// This macro takes a function and overrides its return type with the provided one.
-/// It's used in combination with `cfg_attr` to conditionally change the return type
-/// of a function based on the `cfg(doc)` value.
-</span><span class="attr">#[doc(hidden)]
-#[proc_macro_attribute]
-</span><span class="kw">pub fn </span>__return_type(ret_ty: TokenStream, item: TokenStream) -&gt; TokenStream {
-    <span class="kw">let </span><span class="kw-2">mut </span>func: syn::ItemFn = <span class="kw">match </span>syn::parse(item.clone()) {
-        <span class="prelude-val">Ok</span>(func) =&gt; func,
-        <span class="prelude-val">Err</span>(err) =&gt; <span class="kw">return </span>error::error_into_token_stream(err.into(), item.into()).into(),
-    };
-
-    <span class="kw">let </span>ret_ty = proc_macro2::TokenStream::from(ret_ty);
-
-    func.sig.output = <span class="macro">syn::parse_quote!</span>(-&gt; #ret_ty);
-
-    func.into_token_stream().into()
 }
 </code></pre></div></section></main></body></html>

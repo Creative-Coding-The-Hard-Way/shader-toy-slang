@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bon-macros-2.3.0/src/util/ty/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="bon_macros" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bon-macros-3.0.0/src/util/ty/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="bon_macros" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -106,26 +106,34 @@
 <a href="#106" id="106">106</a>
 <a href="#107" id="107">107</a>
 <a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>match_types;
 
 <span class="kw">use </span><span class="kw">crate</span>::util::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>syn::punctuated::Punctuated;
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>TypeExt {
     <span class="doccomment">/// Try downcasting the type to [`syn::Type::Path`]
     </span><span class="kw">fn </span>as_path(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>syn::TypePath&gt;;
 
-    <span class="doccomment">/// Returns the last identifier of the path if this type is a simple path
-    </span><span class="kw">fn </span>last_path_segment_ident(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>syn::Ident&gt;;
-
-    <span class="doccomment">/// Returns `true` if the given type is p [`syn::Type::Path`] and its
-    /// final segment is equal to `needle` identifier.
-    </span><span class="kw">fn </span>is_last_segment(<span class="kw-2">&amp;</span><span class="self">self</span>, needle: <span class="kw-2">&amp;</span>str) -&gt; bool;
-
-    <span class="doccomment">/// Detects if the type is `desired_type` and returns its generic type parameter
-    </span><span class="kw">fn </span>type_param(<span class="kw-2">&amp;</span><span class="self">self</span>, desired_type: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>syn::Type&gt;;
+    <span class="doccomment">/// Try downcasting the type to [`syn::Type::Path`]. If it has a [`syn::QSelf`]
+    /// then this method will return `None`.
+    </span><span class="kw">fn </span>as_path_no_qself(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>syn::Path&gt;;
 
     <span class="doccomment">/// Detects if the type is [`Option`] and returns its generic type parameter
     </span><span class="kw">fn </span>option_type_param(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>syn::Type&gt;;
+
+    <span class="doccomment">/// Validates that this type is a generic type (path without [`syn::QSelf`])
+    /// which ends with the given last segment that passes the predicate
+    /// `is_desired_last_segment`.
+    </span><span class="kw">fn </span>as_generic_angle_bracketed_path(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        is_desired_last_segment: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;</span>syn::Ident) -&gt; bool,
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;GenericAngleBracketedPath&lt;<span class="lifetime">'_</span>&gt;&gt;;
 
     <span class="doccomment">/// Heuristically detects if the type is [`Option`]
     </span><span class="kw">fn </span>is_option(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool;
@@ -150,41 +158,22 @@
         }
     }
 
-    <span class="kw">fn </span>last_path_segment_ident(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>syn::Ident&gt; {
-        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.as_path()<span class="question-mark">?</span>.path.segments.last()<span class="question-mark">?</span>.ident)
-    }
-
-    <span class="kw">fn </span>is_last_segment(<span class="kw-2">&amp;</span><span class="self">self</span>, needle: <span class="kw-2">&amp;</span>str) -&gt; bool {
-        <span class="kw">let </span>path = <span class="kw">match </span><span class="self">self</span>.as_path() {
-            <span class="prelude-val">Some</span>(path) =&gt; path,
-            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="bool-val">false</span>,
-        };
-
-        <span class="kw">let </span>last_segment = <span class="kw-2">&amp;</span>path
-            .path
-            .segments
-            .last()
-            .expect(<span class="string">"BUG: empty path is not possible"</span>)
-            .ident;
-
-        last_segment == needle
-    }
-
-    <span class="kw">fn </span>type_param(<span class="kw-2">&amp;</span><span class="self">self</span>, desired_type: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>syn::Type&gt; {
+    <span class="kw">fn </span>as_path_no_qself(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>syn::Path&gt; {
         <span class="kw">let </span>path = <span class="self">self</span>.as_path()<span class="question-mark">?</span>;
+        <span class="kw">if </span>path.qself.is_some() {
+            <span class="kw">return </span><span class="prelude-val">None</span>;
+        }
+        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>path.path)
+    }
 
-        <span class="kw">let </span>segment = path
-            .path
-            .segments
-            .iter()
-            .find(|<span class="kw-2">&amp;</span>segment| segment.ident == desired_type)<span class="question-mark">?</span>;
+    <span class="kw">fn </span>option_type_param(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>syn::Type&gt; {
+        <span class="kw">let </span>ty = <span class="self">self</span>.as_generic_angle_bracketed_path(|last_segment| last_segment == <span class="string">"Option"</span>)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>args = <span class="kw">match </span><span class="kw-2">&amp;</span>segment.arguments {
-            syn::PathArguments::AngleBracketed(args) =&gt; args,
-            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
-        };
+        <span class="kw">if </span>ty.args.len() != <span class="number">1 </span>{
+            <span class="kw">return </span><span class="prelude-val">None</span>;
+        }
 
-        <span class="kw">let </span>arg = args.args.first()<span class="question-mark">?</span>;
+        <span class="kw">let </span>arg = ty.args.first()<span class="question-mark">?</span>;
 
         <span class="kw">let </span>arg = <span class="kw">match </span>arg {
             syn::GenericArgument::Type(arg) =&gt; arg,
@@ -194,12 +183,28 @@
         <span class="prelude-val">Some</span>(arg)
     }
 
-    <span class="kw">fn </span>option_type_param(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>syn::Type&gt; {
-        <span class="self">self</span>.type_param(<span class="string">"Option"</span>)
+    <span class="kw">fn </span>as_generic_angle_bracketed_path(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        is_desired_last_segment: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;</span>syn::Ident) -&gt; bool,
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;GenericAngleBracketedPath&lt;<span class="lifetime">'_</span>&gt;&gt; {
+        <span class="kw">let </span>path = <span class="self">self</span>.as_path_no_qself()<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>last_segment = path.segments.last()<span class="question-mark">?</span>;
+
+        <span class="kw">if </span>!is_desired_last_segment(<span class="kw-2">&amp;</span>last_segment.ident) {
+            <span class="kw">return </span><span class="prelude-val">None</span>;
+        }
+
+        <span class="kw">let </span>args = <span class="kw">match </span><span class="kw-2">&amp;</span>last_segment.arguments {
+            syn::PathArguments::AngleBracketed(args) =&gt; <span class="kw-2">&amp;</span>args.args,
+            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
+        };
+
+        <span class="prelude-val">Some</span>(GenericAngleBracketedPath { path, args })
     }
 
     <span class="kw">fn </span>is_option(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="self">self</span>.is_last_segment(<span class="string">"Option"</span>)
+        <span class="self">self</span>.option_type_param().is_some()
     }
 
     <span class="kw">fn </span>peel(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self </span>{
@@ -213,5 +218,10 @@
     <span class="kw">fn </span>matches(<span class="kw-2">&amp;</span><span class="self">self</span>, pattern: <span class="kw-2">&amp;</span>syn::Type) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
         match_types::match_types(<span class="self">self</span>, pattern)
     }
+}
+
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>GenericAngleBracketedPath&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) path: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>syn::Path,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) args: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Punctuated&lt;syn::GenericArgument, <span class="macro">syn::Token!</span>[,]&gt;,
 }
 </code></pre></div></section></main></body></html>
